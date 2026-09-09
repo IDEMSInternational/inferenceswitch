@@ -45,4 +45,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip build twine
           python -m build
-          twine check dist/*
+          # --strict to match the release workflow. Without it CI can pass on a
+          # warning that then fails the release, which is the wrong way round:
+          # the cheap gate should be at least as strict as the expensive one.
+          twine check --strict dist/*
