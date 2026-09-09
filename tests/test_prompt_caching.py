@@ -9,19 +9,19 @@ from types import SimpleNamespace as NS
 
 import pytest
 
-from llmswitchboard import (
+from inferenceswitch import (
     CacheHandle,
     Capability,
     LLMClient,
     LLMResponse,
-    LLMSwitchboardError,
+    InferenceSwitchError,
     Message,
     Text,
     Tool,
     UnsupportedCapabilityError,
     user,
 )
-from llmswitchboard.adapters.anthropic import encode_anthropic_messages, encode_anthropic_tools
+from inferenceswitch.adapters.anthropic import encode_anthropic_messages, encode_anthropic_tools
 
 
 @pytest.fixture
@@ -131,10 +131,10 @@ def test_create_cache_on_unsupported_provider_raises(client):
 def test_chat_with_cache_rejects_system_or_tools(client):
     # The cached prefix owns system/tools; passing them again is a uniform error.
     handle = CacheHandle(provider="gemini", name="cachedContents/x", model="m")
-    with pytest.raises(LLMSwitchboardError):
+    with pytest.raises(InferenceSwitchError):
         client.chat(model="x", provider="gemini", messages=[user("q")],
                     cache=handle, system="sys")
-    with pytest.raises(LLMSwitchboardError):
+    with pytest.raises(InferenceSwitchError):
         client.chat(model="x", provider="gemini", messages=[user("q")],
                     cache=handle, tools=[Tool("t", "d", {"type": "object"})])
 
@@ -142,7 +142,7 @@ def test_chat_with_cache_rejects_system_or_tools(client):
 def test_chat_rejects_a_foreign_cache_handle(client):
     # Handle was minted for another provider than the request routes to.
     handle = CacheHandle(provider="openai", name="cachedContents/x", model="m")
-    with pytest.raises(LLMSwitchboardError):
+    with pytest.raises(InferenceSwitchError):
         client.chat(model="x", provider="gemini", messages=[user("tail")], cache=handle)
 
 
@@ -186,8 +186,8 @@ def test_gemini_create_cache_then_reference_it():
     # Real google.genai types, fake transport — exercises the config plumbing
     # end to end without a network call.
     pytest.importorskip("google.genai")
-    from llmswitchboard.adapters.gemini import GeminiAdapter
-    from llmswitchboard.registry import default_registry
+    from inferenceswitch.adapters.gemini import GeminiAdapter
+    from inferenceswitch.registry import default_registry
 
     spec = default_registry().get("gemini")
     fake = _FakeGemini()
@@ -268,8 +268,8 @@ class _FakeAnthropic:
 
 
 def test_anthropic_create_cache_is_pure_and_replays_with_breakpoint():
-    from llmswitchboard.adapters.anthropic import AnthropicAdapter
-    from llmswitchboard.registry import default_registry
+    from inferenceswitch.adapters.anthropic import AnthropicAdapter
+    from inferenceswitch.registry import default_registry
 
     spec = default_registry().get("anthropic")
     fake = _FakeAnthropic()

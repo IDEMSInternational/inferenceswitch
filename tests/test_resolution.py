@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from llmswitchboard import LLMClient, ProviderResolutionError
+from inferenceswitch import LLMClient, ProviderResolutionError
 
 
 @pytest.fixture

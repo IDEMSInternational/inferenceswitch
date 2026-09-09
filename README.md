@@ -1,4 +1,4 @@
-# llmswitchboard
+# inferenceswitch
 
 A lightweight, **import-only** multi-provider LLM dispatch library with
 first-class structured output. Think liteLLM/OpenRouter, minus the proxy server,
@@ -9,7 +9,7 @@ thick client so you stop re-writing `match provider` blocks across projects.
 
 Several of our projects were each re-implementing the same provider dispatch: map a
 model name to a provider, build the right SDK client, and — the hard part —
-force schema-valid JSON in each provider's own way. `llmswitchboard` owns that once.
+force schema-valid JSON in each provider's own way. `inferenceswitch` owns that once.
 
 It is deliberately small. No network proxy, no plugin system, no
 caller-injected base URLs, and no logging at all — so keys cannot be logged.
@@ -22,16 +22,16 @@ runtime surface is the provider SDKs you already trust.
 Provider SDKs are optional extras — install only what you use:
 
 ```
-pip install "llmswitchboard[anthropic]"   # Anthropic (native)
-pip install "llmswitchboard[gemini]"      # Google Gemini (native)
-pip install "llmswitchboard[openai]"      # OpenAI + Mistral/DeepSeek/Groq/Ollama/LM Studio
-pip install "llmswitchboard[all]"
+pip install "inferenceswitch[anthropic]"   # Anthropic (native)
+pip install "inferenceswitch[gemini]"      # Google Gemini (native)
+pip install "inferenceswitch[openai]"      # OpenAI + Mistral/DeepSeek/Groq/Ollama/LM Studio
+pip install "inferenceswitch[all]"
 ```
 
 ## Usage
 
 ```python
-from llmswitchboard import LLMClient
+from inferenceswitch import LLMClient
 
 client = LLMClient()
 
@@ -85,7 +85,7 @@ The full flow you'd build a UI/config around — *declare what the call needs �
 list models that can serve it → user picks one → run it*:
 
 ```python
-from llmswitchboard import LLMClient, Capability, Tool, user
+from inferenceswitch import LLMClient, Capability, Tool, user
 
 client = LLMClient()
 
@@ -135,7 +135,7 @@ mechanism — Anthropic adaptive thinking + `output_config.effort`, OpenAI
 `reasoning_effort`, Gemini thinking-token budget. No provider switch/case:
 
 ```python
-from llmswitchboard import LLMClient, Effort, Capability, user
+from inferenceswitch import LLMClient, Effort, Capability, user
 
 client = LLMClient()
 
@@ -159,7 +159,7 @@ without `Capability.REASONING_EFFORT` (Groq, Mistral, DeepSeek, locals) raises
 
 ## Output caps (Anthropic and Gemini)
 
-Anthropic requires `max_tokens` on every request, so llmswitchboard has to choose one
+Anthropic requires `max_tokens` on every request, so inferenceswitch has to choose one
 when you don't. It sends **that model's own maximum** — 128000 on Sonnet/Opus,
 64000 on Haiku 4.5 — rather than a single conservative number: output is billed
 per token *generated*, not per token requested, so a lower default only buys you
@@ -168,13 +168,13 @@ silent truncation (`StopReason.MAX_TOKENS`) on long answers.
 Three levels of control, narrowest first:
 
 ```python
-from llmswitchboard import CLAUDE_MAX_OUTPUT_TOKENS, claude_max_output_tokens
+from inferenceswitch import CLAUDE_MAX_OUTPUT_TOKENS, claude_max_output_tokens
 
 # 1. Per call — wins over everything, and is never clamped to the model max.
 client.chat(model="claude-opus-4-8", messages=[...], max_tokens=4000)
 
 # 2. Process-wide — the table is the control surface. Lower a row for a house
-#    ceiling, or add one for a model llmswitchboard doesn't know yet.
+#    ceiling, or add one for a model inferenceswitch doesn't know yet.
 CLAUDE_MAX_OUTPUT_TOKENS["claude-opus-4-8"] = 32_000
 CLAUDE_MAX_OUTPUT_TOKENS["claude-newthing-9"] = 128_000
 
@@ -203,7 +203,7 @@ fallback. Retired pre-2.5 models capped at 8192; add an explicit row if you are
 pinned to one.
 
 ```python
-from llmswitchboard import GEMINI_MAX_OUTPUT_TOKENS, gemini_max_output_tokens
+from inferenceswitch import GEMINI_MAX_OUTPUT_TOKENS, gemini_max_output_tokens
 
 gemini_max_output_tokens("gemini-3-flash-preview")   # 65536
 GEMINI_MAX_OUTPUT_TOKENS["gemini-3.5-flash"] = 16_000
@@ -216,7 +216,7 @@ with a character offset into a document that was simply unfinished.
 `generate_text` returns the partial string (truncated prose is still usable);
 `chat` reports `StopReason.MAX_TOKENS` on the response.
 
-The remaining providers treat `max_tokens` as optional — llmswitchboard omits it when
+The remaining providers treat `max_tokens` as optional — inferenceswitch omits it when
 you don't pass one, leaving each provider on its own default.
 
 ## Capability introspection (for model-specific workflows)
@@ -227,7 +227,7 @@ Discover and gate on them so model-specific code fails loudly instead of 400-ing
 deep in an SDK:
 
 ```python
-from llmswitchboard import LLMClient, Capability
+from inferenceswitch import LLMClient, Capability
 
 client = LLMClient()
 
@@ -241,7 +241,7 @@ client.capabilities("anthropic").features   # the full frozenset
 ```
 
 A feature flag means *the provider* supports it, independent of whether
-llmswitchboard wraps it with a first-class method yet. For anything not yet wrapped,
+inferenceswitch wraps it with a first-class method yet. For anything not yet wrapped,
 use the **escape hatch** — the native SDK client, with routing and keys still
 handled here:
 
@@ -278,7 +278,7 @@ There are two layers. The **portable** one — write it once, run it on Anthropi
 *or* Gemini, no branching:
 
 ```python
-from llmswitchboard import LLMClient, Message, Text
+from inferenceswitch import LLMClient, Message, Text
 
 client = LLMClient()
 
@@ -350,15 +350,15 @@ example per mechanism.
 
 The built-in provider set is not a closed list. `LLMClient` takes a `registry`,
 so you can add a provider — a self-hosted server, a regional or national API, a
-gateway, another OpenAI clone — **without forking llmswitchboard**. A provider is a
+gateway, another OpenAI clone — **without forking inferenceswitch**. A provider is a
 `ProviderSpec` value; adding one is writing that value, not writing code.
 
 ```python
-from llmswitchboard import (
+from inferenceswitch import (
     LLMClient, ProviderSpec, Capabilities, Capability,
     SchemaDialect, StructuredMode, default_registry,
 )
-from llmswitchboard.registry import KIND_OPENAI
+from inferenceswitch.registry import KIND_OPENAI
 
 registry = default_registry()          # start from the built-ins ...
 registry.add(                          # ... and add your own

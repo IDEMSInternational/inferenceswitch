@@ -14,14 +14,14 @@ from dataclasses import dataclass, field
 
 from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMode
 
-#: Adapter kinds. Maps to a concrete adapter class in :mod:`llmswitchboard.adapters`.
+#: Adapter kinds. Maps to a concrete adapter class in :mod:`inferenceswitch.adapters`.
 KIND_OPENAI = "openai"        # OpenAI + every OpenAI-compatible server
 KIND_ANTHROPIC = "anthropic"  # native
 KIND_GEMINI = "gemini"        # native
 
 #: Placeholder key for local servers that require *some* key string but don't
 #: authenticate (Ollama, LM Studio). Never a real secret.
-LOCAL_PLACEHOLDER_KEY = "llmswitchboard-local"
+LOCAL_PLACEHOLDER_KEY = "inferenceswitch-local"
 
 
 @dataclass(frozen=True)
@@ -83,7 +83,7 @@ class Registry:
 # ── capability presets ───────────────────────────────────────────────────────
 #
 # Feature sets describe what each PROVIDER can do (from real advanced usage), not
-# only what llmswitchboard currently wraps — so workflows can discover a capability
+# only what inferenceswitch currently wraps — so workflows can discover a capability
 # and, where the library has no first-class method yet, drop to raw_client().
 # Populated conservatively (fail-closed): a token is present only where support
 # is reliable across the provider, so `require()` never green-lights a 400.

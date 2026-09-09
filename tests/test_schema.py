@@ -2,7 +2,7 @@
 cannot handle."""
 from __future__ import annotations
 
-from llmswitchboard.schema import restore_gemini_dicts, to_gemini_schema
+from inferenceswitch.schema import restore_gemini_dicts, to_gemini_schema
 
 
 def test_dict_field_becomes_key_value_array_and_back():

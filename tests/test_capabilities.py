@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from llmswitchboard import (
+from inferenceswitch import (
     Capabilities,
     Capability,
     LLMClient,
@@ -14,7 +14,7 @@ from llmswitchboard import (
     StructuredMode,
     UnsupportedCapabilityError,
 )
-from llmswitchboard.registry import KIND_OPENAI
+from inferenceswitch.registry import KIND_OPENAI
 
 
 @pytest.fixture

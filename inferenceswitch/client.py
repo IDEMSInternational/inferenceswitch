@@ -20,7 +20,7 @@ from typing import Any, Callable
 from .adapters import Adapter, build_adapter
 from .capabilities import Capabilities, Capability
 from .errors import (
-    LLMSwitchboardError,
+    InferenceSwitchError,
     MissingAPIKeyError,
     ProviderResolutionError,
     UnsupportedCapabilityError,
@@ -193,7 +193,7 @@ class LLMClient:
     ) -> bool:
         """Whether the resolved provider advertises ``capability``.
 
-        Presence reflects what the *provider* can do; for a capability llmswitchboard
+        Presence reflects what the *provider* can do; for a capability inferenceswitch
         doesn't wrap with a first-class method yet, reach it via
         :meth:`raw_client`.
         """
@@ -336,7 +336,7 @@ class LLMClient:
         if cache is not None:
             self.require(Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name)
             if cache.provider != resolution.spec.name:
-                raise LLMSwitchboardError(
+                raise InferenceSwitchError(
                     f"Cache handle was created for provider {cache.provider!r} but "
                     f"this request routes to {resolution.spec.name!r}; a handle is "
                     "not portable across providers."
@@ -345,7 +345,7 @@ class LLMClient:
                 # Uniform contract across providers: the cached prefix supplies
                 # the system prompt and tools (Gemini physically can't take them
                 # again alongside a cache). Pass only the dynamic tail here.
-                raise LLMSwitchboardError(
+                raise InferenceSwitchError(
                     "With cache=, the cached prefix supplies the system prompt and "
                     "tools; pass only the dynamic tail in messages (not system=/tools=)."
                 )
@@ -375,7 +375,7 @@ class LLMClient:
         api_key: str | None = None,
     ) -> CacheHandle:
         """Create a reusable server-side prompt cache and return a
-        :class:`~llmswitchboard.CacheHandle` to pass to :meth:`chat` as ``cache=``.
+        :class:`~inferenceswitch.CacheHandle` to pass to :meth:`chat` as ``cache=``.
 
         For a large static prefix (system prompt, few-shot context, tool set)
         reused across many requests: create the cache once, then reference the
@@ -425,7 +425,7 @@ class LLMClient:
 
         Returns the final :class:`LLMResponse`. A handler exception, or a call to
         an unmapped tool, is returned to the model as an error tool result rather
-        than raised — so the model can recover. Raises :class:`LLMSwitchboardError`
+        than raised — so the model can recover. Raises :class:`InferenceSwitchError`
         only if ``max_turns`` is exceeded.
         """
         history = list(messages)
@@ -469,7 +469,7 @@ class LLMClient:
                     )
             history.append(Message(role="user", content=results))
 
-        raise LLMSwitchboardError(f"run_tools exceeded max_turns={max_turns} without finishing.")
+        raise InferenceSwitchError(f"run_tools exceeded max_turns={max_turns} without finishing.")
 
     def providers_for(self, *capabilities: Capability) -> list[str]:
         """Provider names that support **all** of ``capabilities`` — the basis for

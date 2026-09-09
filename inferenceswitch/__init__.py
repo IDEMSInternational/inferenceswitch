@@ -1,6 +1,6 @@
-"""llmswitchboard — lightweight, import-only multi-provider LLM dispatch.
+"""inferenceswitch — lightweight, import-only multi-provider LLM dispatch.
 
-    from llmswitchboard import LLMClient
+    from inferenceswitch import LLMClient
 
     client = LLMClient()
     data = client.generate_structured_json(
@@ -46,7 +46,7 @@ from .messages import (
     user,
 )
 from .errors import (
-    LLMSwitchboardError,
+    InferenceSwitchError,
     MissingAPIKeyError,
     MissingDependencyError,
     ProviderResolutionError,
@@ -69,7 +69,7 @@ __all__ = [
     "Capability",
     "StructuredMode",
     "SchemaDialect",
-    "LLMSwitchboardError",
+    "InferenceSwitchError",
     "ProviderResolutionError",
     "MissingAPIKeyError",
     "MissingDependencyError",

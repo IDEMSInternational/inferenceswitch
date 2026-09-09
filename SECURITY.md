@@ -3,14 +3,14 @@
 ## Reporting a vulnerability
 
 Please report security issues privately via GitHub's
-[Report a vulnerability](https://github.com/IDEMSInternational/llmswitchboard/security/advisories/new)
+[Report a vulnerability](https://github.com/IDEMSInternational/inferenceswitch/security/advisories/new)
 form rather than opening a public issue.
 
 We aim to acknowledge a report within five working days.
 
 ## What this library does with your API keys
 
-`llmswitchboard` handles provider API keys, so it is worth being explicit about
+`inferenceswitch` handles provider API keys, so it is worth being explicit about
 the boundaries:
 
 - **Keys are never logged.** The package contains no logging calls of any kind —

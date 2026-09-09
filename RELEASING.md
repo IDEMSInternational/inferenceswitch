@@ -12,9 +12,9 @@ that does not exist yet this is done as a **pending publisher**:
 
 1. Sign in to PyPI → *Your projects* → *Publishing* → *Add a pending publisher*.
 2. Fill in exactly:
-   - PyPI project name: `llmswitchboard`
+   - PyPI project name: `inferenceswitch`
    - Owner: `IDEMSInternational`
-   - Repository: `llmswitchboard`
+   - Repository: `inferenceswitch`
    - Workflow name: `release.yml`
    - Environment name: `pypi`
 3. Repeat on [test.pypi.org](https://test.pypi.org) with environment `testpypi`
@@ -37,7 +37,7 @@ Install the result with:
 
 ```bash
 pip install --index-url https://test.pypi.org/simple/ \
-            --extra-index-url https://pypi.org/simple/ llmswitchboard
+            --extra-index-url https://pypi.org/simple/ inferenceswitch
 ```
 
 The extra index is needed because TestPyPI does not carry the provider SDKs.
@@ -65,9 +65,9 @@ superseded.
 because it was not on PyPI:
 
 ```toml
-"llmswitchboard[anthropic,gemini] @ git+https://github.com/IDEMSInternational/llmswitchboard.git@main"
+"inferenceswitch[anthropic,gemini] @ git+https://github.com/IDEMSInternational/inferenceswitch.git@main"
 ```
 
 Once a release exists that becomes an ordinary specifier
-(`"llmswitchboard[anthropic,gemini]>=0.1.0"`), which is worth doing — a git
+(`"inferenceswitch[anthropic,gemini]>=0.1.0"`), which is worth doing — a git
 reference always resolves to a moving branch rather than a fixed version.

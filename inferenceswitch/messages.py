@@ -151,7 +151,7 @@ class CacheHandle:
 
     Either way the caller holds the handle, so reuse (and its cost) is explicit.
     A handle is not portable across providers. Requires the
-    :class:`~llmswitchboard.Capability` REUSABLE_PROMPT_CACHE.
+    :class:`~inferenceswitch.Capability` REUSABLE_PROMPT_CACHE.
     """
 
     provider: str          # the provider that created it — a handle is not portable

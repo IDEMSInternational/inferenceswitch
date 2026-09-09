@@ -10,7 +10,7 @@ from types import SimpleNamespace as NS
 
 import pytest
 
-from llmswitchboard import (
+from inferenceswitch import (
     Capability,
     LLMClient,
     LLMResponse,
@@ -25,13 +25,13 @@ from llmswitchboard import (
     system,
     user,
 )
-from llmswitchboard.adapters.anthropic import (
+from inferenceswitch.adapters.anthropic import (
     decode_anthropic_response,
     encode_anthropic_messages,
 )
-from llmswitchboard.adapters.base import split_system
-from llmswitchboard.adapters.gemini import decode_gemini_response, encode_gemini_contents
-from llmswitchboard.adapters.openai_compat import (
+from inferenceswitch.adapters.base import split_system
+from inferenceswitch.adapters.gemini import decode_gemini_response, encode_gemini_contents
+from inferenceswitch.adapters.openai_compat import (
     decode_openai_response,
     encode_openai_messages,
 )
@@ -190,8 +190,8 @@ def test_discovery_lists_capable_providers_and_models():
 
 
 def test_chat_with_tools_requires_capability():
-    from llmswitchboard.capabilities import Capabilities, SchemaDialect, StructuredMode
-    from llmswitchboard.registry import KIND_OPENAI, ProviderSpec, Registry
+    from inferenceswitch.capabilities import Capabilities, SchemaDialect, StructuredMode
+    from inferenceswitch.registry import KIND_OPENAI, ProviderSpec, Registry
 
     no_tools = ProviderSpec(
         name="notools",

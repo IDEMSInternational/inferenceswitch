@@ -1,6 +1,6 @@
-"""Exception hierarchy for llmswitchboard.
+"""Exception hierarchy for inferenceswitch.
 
-All errors derive from :class:`LLMSwitchboardError`, so a caller can catch the whole
+All errors derive from :class:`InferenceSwitchError`, so a caller can catch the whole
 library with one clause while still discriminating on the specific subclass. No
 error ever carries an API key in its message — keys stay out of tracebacks by
 design (one of the security properties that keeps this library "lighter than
@@ -9,11 +9,11 @@ liteLLM").
 from __future__ import annotations
 
 
-class LLMSwitchboardError(Exception):
-    """Base class for every error raised by llmswitchboard."""
+class InferenceSwitchError(Exception):
+    """Base class for every error raised by inferenceswitch."""
 
 
-class ProviderResolutionError(LLMSwitchboardError):
+class ProviderResolutionError(InferenceSwitchError):
     """A model string could not be mapped to exactly one registered provider.
 
     Raised when a bare model name matches no provider (or more than one) and no
@@ -22,11 +22,11 @@ class ProviderResolutionError(LLMSwitchboardError):
     """
 
 
-class MissingAPIKeyError(LLMSwitchboardError):
+class MissingAPIKeyError(InferenceSwitchError):
     """The env var (or key provider) for the resolved provider yielded no key."""
 
 
-class MissingDependencyError(LLMSwitchboardError):
+class MissingDependencyError(InferenceSwitchError):
     """The provider's SDK is not installed.
 
     Provider SDKs are optional extras; this is raised (with the exact
@@ -35,7 +35,7 @@ class MissingDependencyError(LLMSwitchboardError):
     """
 
 
-class UnsupportedCapabilityError(LLMSwitchboardError):
+class UnsupportedCapabilityError(InferenceSwitchError):
     """A workflow asked a provider for a capability it does not have.
 
     Raised by :meth:`LLMClient.require` (and intended for callers to raise via
@@ -44,7 +44,7 @@ class UnsupportedCapabilityError(LLMSwitchboardError):
     """
 
 
-class StructuredOutputError(LLMSwitchboardError):
+class StructuredOutputError(InferenceSwitchError):
     """The model did not return usable schema-constrained JSON.
 
     Covers truncation (hit the output-token cap mid-object), a provider that

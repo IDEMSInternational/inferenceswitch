@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import pytest
 
-from llmswitchboard import Capability, Effort, LLMClient, UnsupportedCapabilityError, user
-from llmswitchboard.adapters.anthropic import anthropic_reasoning_kwargs
-from llmswitchboard.adapters.gemini import gemini_thinking_budget
-from llmswitchboard.adapters.openai_compat import openai_reasoning_kwargs
+from inferenceswitch import Capability, Effort, LLMClient, UnsupportedCapabilityError, user
+from inferenceswitch.adapters.anthropic import anthropic_reasoning_kwargs
+from inferenceswitch.adapters.gemini import gemini_thinking_budget
+from inferenceswitch.adapters.openai_compat import openai_reasoning_kwargs
 
 
 # ── OpenAI: reasoning_effort, only when the provider declares the param ────────

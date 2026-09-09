@@ -27,16 +27,16 @@ from ..messages import (
 from .base import Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Claude line. Anthropic requires ``max_tokens``
-#: on every request, so llmswitchboard has to pick a default when the caller doesn't —
+#: on every request, so inferenceswitch has to pick a default when the caller doesn't —
 #: and the right default is *that model's* maximum: anything lower silently
 #: truncates a long answer (``stop_reason: "max_tokens"``) for no benefit, since
 #: output is billed per token generated, not per token requested.
 #:
 #: This table is the control surface. It is deliberately a plain mutable dict:
-#: add a row for a model llmswitchboard doesn't know yet, or lower one to put a hard
+#: add a row for a model inferenceswitch doesn't know yet, or lower one to put a hard
 #: ceiling on a model process-wide::
 #:
-#:     from llmswitchboard import CLAUDE_MAX_OUTPUT_TOKENS
+#:     from inferenceswitch import CLAUDE_MAX_OUTPUT_TOKENS
 #:     CLAUDE_MAX_OUTPUT_TOKENS["claude-opus-5"] = 32_000   # house limit
 #:
 #: A per-call ``max_tokens=`` still wins over the table, and is never clamped to

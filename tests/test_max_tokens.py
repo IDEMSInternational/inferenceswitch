@@ -1,7 +1,7 @@
 """Anthropic output caps: default to the model's own maximum, caller-controllable.
 
 Offline — the adapter is driven with a fake SDK client that records the request
-payload, so every assertion is about what llmswitchboard *sends*.
+payload, so every assertion is about what inferenceswitch *sends*.
 """
 from __future__ import annotations
 
@@ -9,18 +9,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from llmswitchboard import (
+from inferenceswitch import (
     CLAUDE_MAX_OUTPUT_TOKENS,
     StructuredOutputError,
     claude_max_output_tokens,
     user,
 )
-from llmswitchboard.adapters.anthropic import (
+from inferenceswitch.adapters.anthropic import (
     UNKNOWN_MODEL_MAX_OUTPUT_TOKENS,
     AnthropicAdapter,
     resolve_max_tokens,
 )
-from llmswitchboard.registry import default_registry
+from inferenceswitch.registry import default_registry
 
 
 class _FakeAnthropic:
@@ -89,7 +89,7 @@ def test_unknown_model_falls_back_to_the_smallest_current_ceiling():
 
 def test_explicit_max_tokens_wins_and_is_not_clamped():
     # Above the model's max: passed through, so Anthropic's own 400 is what the
-    # caller sees — llmswitchboard never silently rewrites an explicit number.
+    # caller sees — inferenceswitch never silently rewrites an explicit number.
     assert resolve_max_tokens("claude-haiku-4-5", 200_000) == 200_000
     assert resolve_max_tokens("claude-haiku-4-5", 512) == 512
 

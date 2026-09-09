@@ -47,7 +47,7 @@ def require_sdk(module: str, extra: str):
     except ImportError as exc:
         raise MissingDependencyError(
             f"The {module!r} SDK is required for this provider but is not "
-            f'installed. Install it with:  pip install "llmswitchboard[{extra}]"'
+            f'installed. Install it with:  pip install "inferenceswitch[{extra}]"'
         ) from exc
 
 
@@ -66,7 +66,7 @@ class Adapter(ABC):
     def raw_client(self) -> Any:
         """The underlying provider SDK client.
 
-        The escape hatch for provider-specific features llmswitchboard doesn't wrap
+        The escape hatch for provider-specific features inferenceswitch doesn't wrap
         yet — a workflow can call the native SDK directly while still getting
         this library's routing, key resolution, and adapter caching.
         """

@@ -3,8 +3,8 @@
 Gemini enforces schemas via ``response_mime_type="application/json"`` +
 ``response_schema``, but its schema dialect rejects open-ended dicts
 (``additionalProperties``). The translation is applied here and nowhere else:
-:func:`llmswitchboard.schema.to_gemini_schema` rewrites dict fields to key/value
-arrays on the way in, and :func:`~llmswitchboard.schema.restore_gemini_dicts` folds
+:func:`inferenceswitch.schema.to_gemini_schema` rewrites dict fields to key/value
+arrays on the way in, and :func:`~inferenceswitch.schema.restore_gemini_dicts` folds
 them back on the way out.
 """
 from __future__ import annotations
@@ -31,8 +31,8 @@ from ..messages import (
 from .base import Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Gemini line, mirroring
-#: :data:`~llmswitchboard.adapters.anthropic.CLAUDE_MAX_OUTPUT_TOKENS` and for the same
-#: reason: llmswitchboard has to pick a default when the caller doesn't, and the right
+#: :data:`~inferenceswitch.adapters.anthropic.CLAUDE_MAX_OUTPUT_TOKENS` and for the same
+#: reason: inferenceswitch has to pick a default when the caller doesn't, and the right
 #: default is *that model's* maximum. Gemini differs from Anthropic in that
 #: ``max_output_tokens`` is optional rather than required — but leaving it unset
 #: is not the safe option it looks like. It hands the ceiling to whatever the
@@ -51,10 +51,10 @@ from .base import Adapter, require_sdk, split_system
 #: expressible as one line rather than a refactor.
 #:
 #: Like the Claude table this is a plain mutable dict, and is the control
-#: surface — add a row for a model llmswitchboard doesn't know yet, or lower one to
+#: surface — add a row for a model inferenceswitch doesn't know yet, or lower one to
 #: put a hard ceiling on a model process-wide::
 #:
-#:     from llmswitchboard import GEMINI_MAX_OUTPUT_TOKENS
+#:     from inferenceswitch import GEMINI_MAX_OUTPUT_TOKENS
 #:     GEMINI_MAX_OUTPUT_TOKENS["gemini-3.7-flash"] = 16_000   # house limit
 #:
 #: A per-call ``max_tokens=`` still wins over the table, and is never clamped to

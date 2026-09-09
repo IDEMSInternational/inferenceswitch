@@ -68,7 +68,7 @@ jobs:
     # repo settings, and so PyPI's trusted publisher can be scoped to it.
     environment:
       name: pypi
-      url: https://pypi.org/p/llmswitchboard
+      url: https://pypi.org/p/inferenceswitch
     permissions:
       # The whole authentication story. Trusted Publishing mints a short-lived
       # OIDC token for this specific workflow in this specific repo, so there
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/llmswitchboard
+      url: https://test.pypi.org/p/inferenceswitch
     permissions:
       id-token: write
     steps:

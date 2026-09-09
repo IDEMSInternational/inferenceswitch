@@ -2,7 +2,7 @@
 and report a truncation as a truncation.
 
 Offline — the adapter is driven with a fake SDK client that records the request
-config, so every assertion is about what llmswitchboard *sends*, or about what it
+config, so every assertion is about what inferenceswitch *sends*, or about what it
 raises when the fake reports a MAX_TOKENS finish.
 
 The companion file is ``test_max_tokens.py`` (Anthropic). The two adapters are
@@ -15,18 +15,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from llmswitchboard import (
+from inferenceswitch import (
     GEMINI_MAX_OUTPUT_TOKENS,
     StructuredOutputError,
     gemini_max_output_tokens,
     user,
 )
-from llmswitchboard.adapters.gemini import (
+from inferenceswitch.adapters.gemini import (
     UNKNOWN_GEMINI_MODEL_MAX_OUTPUT_TOKENS,
     GeminiAdapter,
     resolve_max_tokens,
 )
-from llmswitchboard.registry import default_registry
+from inferenceswitch.registry import default_registry
 
 MODEL = "gemini-3.5-flash"
 
@@ -119,7 +119,7 @@ def test_unknown_model_falls_back_to_the_current_line_ceiling():
 
 def test_explicit_max_tokens_wins_and_is_not_clamped():
     # Above the model's max: passed through, so Gemini's own 400 is what the
-    # caller sees — llmswitchboard never silently rewrites an explicit number.
+    # caller sees — inferenceswitch never silently rewrites an explicit number.
     assert resolve_max_tokens(MODEL, 200_000) == 200_000
     assert resolve_max_tokens(MODEL, 512) == 512
 
@@ -240,7 +240,7 @@ def test_generate_text_returns_the_partial_answer_rather_than_raising(adapter):
 
 
 def test_chat_still_surfaces_max_tokens_as_a_stop_reason(adapter):
-    from llmswitchboard import StopReason
+    from inferenceswitch import StopReason
 
     a, fake = adapter
     fake.finish_reason = "MAX_TOKENS"

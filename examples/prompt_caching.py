@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import sys
 
-from llmswitchboard import Capability, LLMClient, Message, Text, user
+from inferenceswitch import Capability, LLMClient, Message, Text, user
 
 # A big static prefix — the thing we want to pay for once, not once per query.
 # (Cache minimums: Anthropic ~1024 tokens; Gemini ~32k. This is sized to clear

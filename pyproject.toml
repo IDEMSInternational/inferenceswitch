@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llmswitchboard"
+name = "inferenceswitch"
 version = "0.1.0"
 description = "A lightweight, import-only multi-provider LLM dispatch library with first-class structured output."
 readme = "README.md"
@@ -25,17 +25,17 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/IDEMSInternational/llmswitchboard"
-Repository = "https://github.com/IDEMSInternational/llmswitchboard"
-Issues = "https://github.com/IDEMSInternational/llmswitchboard/issues"
+Homepage = "https://github.com/IDEMSInternational/inferenceswitch"
+Repository = "https://github.com/IDEMSInternational/inferenceswitch"
+Issues = "https://github.com/IDEMSInternational/inferenceswitch/issues"
 
 # Provider SDKs are OPTIONAL and lazily imported. Install only the ones you use:
-#   pip install "llmswitchboard[anthropic]"     -> Anthropic (native adapter)
-#   pip install "llmswitchboard[gemini]"        -> Google Gemini (native adapter)
-#   pip install "llmswitchboard[openai]"        -> OpenAI + every OpenAI-compatible
+#   pip install "inferenceswitch[anthropic]"     -> Anthropic (native adapter)
+#   pip install "inferenceswitch[gemini]"        -> Google Gemini (native adapter)
+#   pip install "inferenceswitch[openai]"        -> OpenAI + every OpenAI-compatible
 #                                             provider (Mistral, DeepSeek, Groq,
 #                                             Ollama, LM Studio)
-#   pip install "llmswitchboard[all]"           -> everything
+#   pip install "inferenceswitch[all]"           -> everything
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
 anthropic = ["anthropic>=0.40"]
@@ -44,7 +44,7 @@ all = ["openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
 dev = ["pytest>=8", "openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["llmswitchboard"]
+packages = ["inferenceswitch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

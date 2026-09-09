@@ -9,7 +9,7 @@ Two kinds of thing live here:
   describing what the *provider* can do (tool calling, vision, explicit prompt
   caching, ...), plus an open ``config`` map for per-capability tuning.
 
-Feature flags describe the **provider**, independent of whether llmswitchboard yet
+Feature flags describe the **provider**, independent of whether inferenceswitch yet
 exposes a first-class method for that feature. A workflow uses them to branch or
 degrade deliberately (``client.supports(...)`` / ``client.require(...)``); for a
 capability the library doesn't wrap yet, drop to ``client.raw_client(...)``. New
@@ -45,14 +45,14 @@ class SchemaDialect(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     #: Gemini's OpenAPI subset: rejects ``additionalProperties`` — the divergence
-    #: a plain OpenAI shim cannot handle. See :mod:`llmswitchboard.schema`.
+    #: a plain OpenAI shim cannot handle. See :mod:`inferenceswitch.schema`.
     GEMINI = "gemini"
 
 
 class Capability(str, Enum):
     """A provider feature a workflow can discover and gate on.
 
-    Presence means *the provider supports it*. Whether llmswitchboard exposes a
+    Presence means *the provider supports it*. Whether inferenceswitch exposes a
     first-class method for it is separate — see the module docstring.
     """
 
