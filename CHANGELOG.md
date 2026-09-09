@@ -7,8 +7,10 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [0.1.0] — first public release
 
-Initial release. Previously developed privately as `llmswitch`; renamed on
-publication because that name was already crowded on both PyPI and GitHub.
+Initial release. Developed privately as `llmswitch` and renamed for
+publication: that name was crowded on both PyPI and GitHub, and `llm` was too
+narrow for a library that already dispatches to local small-model servers
+(`ollama`, `lmstudio`) alongside the hosted providers.
 
 - Static provider registry with prefix, `provider/model`, and explicit routing.
   Unroutable or ambiguous model strings raise `ProviderResolutionError` — there
