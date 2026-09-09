@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llmswitchboard"
+version = "0.1.0"
+description = "A lightweight, import-only multi-provider LLM dispatch library with first-class structured output."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "IDEMS International" }]
+keywords = ["llm", "anthropic", "gemini", "openai", "structured-output", "json-schema"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/IDEMSInternational/llmswitchboard"
+Repository = "https://github.com/IDEMSInternational/llmswitchboard"
+Issues = "https://github.com/IDEMSInternational/llmswitchboard/issues"
+
+# Provider SDKs are OPTIONAL and lazily imported. Install only the ones you use:
+#   pip install "llmswitchboard[anthropic]"     -> Anthropic (native adapter)
+#   pip install "llmswitchboard[gemini]"        -> Google Gemini (native adapter)
+#   pip install "llmswitchboard[openai]"        -> OpenAI + every OpenAI-compatible
+#                                             provider (Mistral, DeepSeek, Groq,
+#                                             Ollama, LM Studio)
+#   pip install "llmswitchboard[all]"           -> everything
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+anthropic = ["anthropic>=0.40"]
+gemini = ["google-genai>=0.3"]
+all = ["openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
+dev = ["pytest>=8", "openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["llmswitchboard"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
