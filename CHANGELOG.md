@@ -26,3 +26,9 @@ narrow for a library that already dispatches to local small-model servers
 - Portable prompt-caching surface across providers.
 - Capability introspection (`models_for`, effort control, assertions).
 - Zero required dependencies; provider SDKs are optional extras, lazily imported.
+
+The entry points are `Client` and `Response`, unprefixed like every other
+export (`Message`, `Tool`, `Usage`, `Capability`). They were `LLMClient` and
+`LLMResponse` during private development; the prefix was dropped for the same
+reason `llm` left the package name, and because the package already qualifies
+them.

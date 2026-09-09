@@ -12,8 +12,8 @@ import pytest
 
 from inferenceswitch import (
     Capability,
-    LLMClient,
-    LLMResponse,
+    Client,
+    Response,
     Message,
     StopReason,
     Tool,
@@ -171,7 +171,7 @@ def test_decode_gemini_synthesizes_ids_and_infers_tool_use():
 
 
 def test_discovery_lists_capable_providers_and_models():
-    c = LLMClient()
+    c = Client()
     provs = c.providers_for(Capability.TOOL_CALLING)
     assert {"anthropic", "openai", "gemini", "ollama"} <= set(provs)
 
@@ -202,7 +202,7 @@ def test_chat_with_tools_requires_capability():
         api_key_env=None,
         is_local=True,
     )
-    client = LLMClient(registry=Registry([no_tools]))
+    client = Client(registry=Registry([no_tools]))
     # Raises at the capability gate, before any adapter/SDK is built.
     with pytest.raises(UnsupportedCapabilityError):
         client.chat(
@@ -218,19 +218,19 @@ def test_chat_with_tools_requires_capability():
 
 
 def test_run_tools_drives_the_loop(monkeypatch):
-    client = LLMClient()
+    client = Client()
     turns = {"n": 0}
 
-    def fake_chat(*, model, messages, tools, **kw) -> LLMResponse:
+    def fake_chat(*, model, messages, tools, **kw) -> Response:
         turns["n"] += 1
         if turns["n"] == 1:
-            return LLMResponse(
+            return Response(
                 text="",
                 tool_calls=[ToolCall("id1", "add", {"a": 2, "b": 3})],
                 stop_reason=StopReason.TOOL_USE,
             )
         # Second turn: the model has seen the tool result and wraps up.
-        return LLMResponse(text="The sum is 5.", stop_reason=StopReason.END_TURN)
+        return Response(text="The sum is 5.", stop_reason=StopReason.END_TURN)
 
     monkeypatch.setattr(client, "chat", fake_chat)
 

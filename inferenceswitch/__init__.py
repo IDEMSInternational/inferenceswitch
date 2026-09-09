@@ -1,8 +1,8 @@
 """inferenceswitch — lightweight, import-only multi-provider LLM dispatch.
 
-    from inferenceswitch import LLMClient
+    from inferenceswitch import Client
 
-    client = LLMClient()
+    client = Client()
     data = client.generate_structured_json(
         model="claude-opus-4-8",          # or "gemini-3.5-flash", "groq/llama-3.3-70b", ...
         schema=MyModel.model_json_schema(),
@@ -26,11 +26,11 @@ from .adapters.gemini import (
     gemini_max_output_tokens,
 )
 from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMode
-from .client import LLMClient, ModelChoice, Resolution, env_key_provider
+from .client import Client, ModelChoice, Resolution, env_key_provider
 from .messages import (
     CacheHandle,
     Effort,
-    LLMResponse,
+    Response,
     Message,
     StopReason,
     Text,
@@ -58,7 +58,7 @@ from .registry import ProviderSpec, Registry, default_registry
 __version__ = "0.1.0"
 
 __all__ = [
-    "LLMClient",
+    "Client",
     "ModelChoice",
     "Resolution",
     "env_key_provider",
@@ -85,7 +85,7 @@ __all__ = [
     "Text",
     "CacheHandle",
     "Effort",
-    "LLMResponse",
+    "Response",
     "StopReason",
     "Usage",
     # Per-provider output caps (default = the model's own maximum). Editing a

@@ -17,7 +17,7 @@ from ..capabilities import Capability, StructuredMode
 from ..errors import StructuredOutputError
 from ..messages import (
     Effort,
-    LLMResponse,
+    Response,
     Message,
     StopReason,
     Text,
@@ -114,8 +114,8 @@ def encode_openai_tool_choice(tool_choice: ToolChoice, force_tool: str | None):
     return tool_choice.value  # "auto" | "required" | "none"
 
 
-def decode_openai_response(raw) -> LLMResponse:
-    """OpenAI response object -> normalized LLMResponse."""
+def decode_openai_response(raw) -> Response:
+    """OpenAI response object -> normalized Response."""
     choice = raw.choices[0]
     message = choice.message
     tool_calls: list[ToolCall] = []
@@ -134,7 +134,7 @@ def decode_openai_response(raw) -> LLMResponse:
         if details is not None:
             usage.cache_read_tokens = getattr(details, "cached_tokens", None)
 
-    return LLMResponse(
+    return Response(
         text=message.content or "",
         tool_calls=tool_calls,
         stop_reason=_FINISH_REASON.get(choice.finish_reason, StopReason.OTHER),
@@ -251,7 +251,7 @@ class OpenAICompatibleAdapter(Adapter):
         cache=None,  # reusable-cache handle: not an OpenAI concept; never non-None here
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> LLMResponse:
+    ) -> Response:
         _ = cache
         system_text, rest = split_system(messages, system)
         encoded = encode_openai_messages(rest)

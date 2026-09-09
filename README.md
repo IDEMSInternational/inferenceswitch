@@ -31,9 +31,9 @@ pip install "inferenceswitch[all]"
 ## Usage
 
 ```python
-from inferenceswitch import LLMClient
+from inferenceswitch import Client
 
-client = LLMClient()
+client = Client()
 
 # Structured output — same call regardless of provider mechanics.
 data = client.generate_structured_json(
@@ -85,9 +85,9 @@ The full flow you'd build a UI/config around — *declare what the call needs �
 list models that can serve it → user picks one → run it*:
 
 ```python
-from inferenceswitch import LLMClient, Capability, Tool, user
+from inferenceswitch import Client, Capability, Tool, user
 
-client = LLMClient()
+client = Client()
 
 # 1. Which models can serve a tool-using call?
 choices = client.models_for(Capability.TOOL_CALLING)
@@ -135,9 +135,9 @@ mechanism — Anthropic adaptive thinking + `output_config.effort`, OpenAI
 `reasoning_effort`, Gemini thinking-token budget. No provider switch/case:
 
 ```python
-from inferenceswitch import LLMClient, Effort, Capability, user
+from inferenceswitch import Client, Effort, Capability, user
 
-client = LLMClient()
+client = Client()
 
 # Discover which models let you control effort, then run with it:
 for model in client.models_for(Capability.REASONING_EFFORT):
@@ -227,9 +227,9 @@ Discover and gate on them so model-specific code fails loudly instead of 400-ing
 deep in an SDK:
 
 ```python
-from inferenceswitch import LLMClient, Capability
+from inferenceswitch import Client, Capability
 
-client = LLMClient()
+client = Client()
 
 if client.supports(Capability.EXPLICIT_PROMPT_CACHING, model="claude-opus-4-8"):
     ...  # this model takes inline cache breakpoints (see Prompt caching below)
@@ -278,9 +278,9 @@ There are two layers. The **portable** one — write it once, run it on Anthropi
 *or* Gemini, no branching:
 
 ```python
-from inferenceswitch import LLMClient, Message, Text
+from inferenceswitch import Client, Message, Text
 
-client = LLMClient()
+client = Client()
 
 def answer(model, questions):                 # model picked from a dropdown / .env
     handle = client.create_cache(              # Gemini: server resource; Anthropic: replay handle
@@ -348,14 +348,14 @@ example per mechanism.
 
 ### Adding a provider
 
-The built-in provider set is not a closed list. `LLMClient` takes a `registry`,
+The built-in provider set is not a closed list. `Client` takes a `registry`,
 so you can add a provider — a self-hosted server, a regional or national API, a
 gateway, another OpenAI clone — **without forking inferenceswitch**. A provider is a
 `ProviderSpec` value; adding one is writing that value, not writing code.
 
 ```python
 from inferenceswitch import (
-    LLMClient, ProviderSpec, Capabilities, Capability,
+    Client, ProviderSpec, Capabilities, Capability,
     SchemaDialect, StructuredMode, default_registry,
 )
 from inferenceswitch.registry import KIND_OPENAI
@@ -381,7 +381,7 @@ registry.add(                          # ... and add your own
     )
 )
 
-client = LLMClient(registry=registry)
+client = Client(registry=registry)
 client.generate_text(model="mylab-7b-instruct", prompt="...")
 ```
 
@@ -417,7 +417,7 @@ provider's env var. For per-user BYOK, pass a `key_provider` (or a per-call
 def key_provider(spec):
     return decrypt_for_current_user(spec.name)   # your storage/crypto
 
-client = LLMClient(key_provider=key_provider)
+client = Client(key_provider=key_provider)
 ```
 
 ## Why not just use the OpenAI format for everything?

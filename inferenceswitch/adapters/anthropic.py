@@ -13,7 +13,7 @@ from ..errors import StructuredOutputError
 from ..messages import (
     CacheHandle,
     Effort,
-    LLMResponse,
+    Response,
     Message,
     StopReason,
     Text,
@@ -168,7 +168,7 @@ def encode_anthropic_tool_choice(tool_choice: ToolChoice, force_tool: str | None
     }[tool_choice]
 
 
-def decode_anthropic_response(raw) -> LLMResponse:
+def decode_anthropic_response(raw) -> Response:
     text_chunks: list[str] = []
     tool_calls: list[ToolCall] = []
     for block in raw.content:
@@ -184,7 +184,7 @@ def decode_anthropic_response(raw) -> LLMResponse:
         usage.cache_read_tokens = getattr(raw.usage, "cache_read_input_tokens", None)
         usage.cache_write_tokens = getattr(raw.usage, "cache_creation_input_tokens", None)
 
-    return LLMResponse(
+    return Response(
         text="".join(text_chunks),
         tool_calls=tool_calls,
         stop_reason=_STOP_REASON.get(raw.stop_reason, StopReason.OTHER),
@@ -328,7 +328,7 @@ class AnthropicAdapter(Adapter):
         cache: CacheHandle | None = None,
         temperature: float = 0.1,  # not forwarded — see structured-output note
         max_tokens: int | None = None,
-    ) -> LLMResponse:
+    ) -> Response:
         _ = temperature
         if cache is not None:
             return self._chat_cached(
@@ -378,7 +378,7 @@ class AnthropicAdapter(Adapter):
 
     def _chat_cached(
         self, *, model: str, cache: CacheHandle, tail: list[Message], effort, max_tokens
-    ) -> LLMResponse:
+    ) -> Response:
         """Replay the cached prefix (system + messages + tools) with a single
         ``cache_control`` breakpoint at its deepest segment — which caches the
         whole contiguous prefix above it — then append the dynamic ``tail``."""

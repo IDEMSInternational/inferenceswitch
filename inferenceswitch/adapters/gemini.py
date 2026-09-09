@@ -17,7 +17,7 @@ from ..errors import StructuredOutputError
 from ..messages import (
     CacheHandle,
     Effort,
-    LLMResponse,
+    Response,
     Message,
     StopReason,
     Text,
@@ -195,8 +195,8 @@ def encode_gemini_contents(messages: list[Message]) -> list[dict]:
     return out
 
 
-def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) -> LLMResponse:
-    """Gemini response -> normalized LLMResponse.
+def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) -> Response:
+    """Gemini response -> normalized Response.
 
     Synthesizes stable ids for tool calls (Gemini emits none) and restores any
     dict-typed tool arguments that were flattened to key/value arrays by the
@@ -230,7 +230,7 @@ def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) ->
         usage.cache_read_tokens = getattr(meta, "cached_content_token_count", None)
         usage.reasoning_tokens = getattr(meta, "thoughts_token_count", None)
 
-    return LLMResponse(
+    return Response(
         text="".join(text_chunks), tool_calls=tool_calls, stop_reason=stop, usage=usage, raw=raw
     )
 
@@ -426,7 +426,7 @@ class GeminiAdapter(Adapter):
         cache: CacheHandle | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> LLMResponse:
+    ) -> Response:
         types = require_sdk("google.genai", "gemini").types
         system_text, rest = split_system(messages, system)
 

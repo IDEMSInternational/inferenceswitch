@@ -138,8 +138,8 @@ class Usage:
 
 @dataclass(frozen=True)
 class CacheHandle:
-    """A reusable prompt cache created once via :meth:`LLMClient.create_cache`
-    and passed to :meth:`~LLMClient.chat` as ``cache=`` to avoid resending — and
+    """A reusable prompt cache created once via :meth:`Client.create_cache`
+    and passed to :meth:`~Client.chat` as ``cache=`` to avoid resending — and
     re-billing — a large static prefix. One handle type, two backings:
 
     * **Server-backed** (Gemini ``CachedContent``): ``name`` references a
@@ -168,7 +168,7 @@ class CacheHandle:
 
 
 @dataclass
-class LLMResponse:
+class Response:
     text: str
     tool_calls: list[ToolCall] = field(default_factory=list)
     stop_reason: StopReason = StopReason.END_TURN

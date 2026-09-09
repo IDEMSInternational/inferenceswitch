@@ -6,7 +6,7 @@ import pytest
 from inferenceswitch import (
     Capabilities,
     Capability,
-    LLMClient,
+    Client,
     ModelChoice,
     ProviderSpec,
     Registry,
@@ -19,7 +19,7 @@ from inferenceswitch.registry import KIND_OPENAI
 
 @pytest.fixture
 def client():
-    return LLMClient()
+    return Client()
 
 
 def test_supports_by_provider_and_by_model(client):
@@ -121,7 +121,7 @@ def test_uncurated_custom_provider_appears_in_the_menu():
             )
         ]
     )
-    (choice,) = LLMClient(registry=registry).models_for(Capability.TOOL_CALLING)
+    (choice,) = Client(registry=registry).models_for(Capability.TOOL_CALLING)
     assert choice == "mylab" and choice.needs_model
 
 

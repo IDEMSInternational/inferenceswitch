@@ -38,7 +38,7 @@ class MissingDependencyError(InferenceSwitchError):
 class UnsupportedCapabilityError(InferenceSwitchError):
     """A workflow asked a provider for a capability it does not have.
 
-    Raised by :meth:`LLMClient.require` (and intended for callers to raise via
+    Raised by :meth:`Client.require` (and intended for callers to raise via
     their own ``supports`` checks) so unsupported model-specific features fail
     loudly and predictably rather than silently degrading.
     """

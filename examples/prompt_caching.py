@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import sys
 
-from inferenceswitch import Capability, LLMClient, Message, Text, user
+from inferenceswitch import Capability, Client, Message, Text, user
 
 # A big static prefix — the thing we want to pay for once, not once per query.
 # (Cache minimums: Anthropic ~1024 tokens; Gemini ~32k. This is sized to clear
@@ -43,7 +43,7 @@ def reusable(model: str) -> None:
     ``CachedContent`` resource or an Anthropic replay handle as appropriate. The
     cached prefix (system + messages) is not resent — only the varying tail is.
     """
-    client = LLMClient()
+    client = Client()
     client.require(Capability.REUSABLE_PROMPT_CACHE, model=model)  # clear error if unsupported
 
     handle = client.create_cache(
@@ -66,7 +66,7 @@ def explicit(model: str) -> None:
     prefix and bills cache-read price on a hit. Stateless — nothing to create or
     release. Supported where the provider takes inline breakpoints (Anthropic).
     """
-    client = LLMClient()
+    client = Client()
     client.require(Capability.EXPLICIT_PROMPT_CACHING, model=model)
 
     for q in QUESTIONS:
@@ -86,7 +86,7 @@ def implicit(model: str) -> None:
     prefix and observe the savings. Supported where the provider auto-caches
     (OpenAI, DeepSeek, Gemini).
     """
-    client = LLMClient()
+    client = Client()
     client.require(Capability.IMPLICIT_PROMPT_CACHING, model=model)
 
     for q in QUESTIONS:

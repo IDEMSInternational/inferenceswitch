@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from inferenceswitch import Capability, Effort, LLMClient, UnsupportedCapabilityError, user
+from inferenceswitch import Capability, Effort, Client, UnsupportedCapabilityError, user
 from inferenceswitch.adapters.anthropic import anthropic_reasoning_kwargs
 from inferenceswitch.adapters.gemini import gemini_thinking_budget
 from inferenceswitch.adapters.openai_compat import openai_reasoning_kwargs
@@ -60,7 +60,7 @@ def test_gemini_reasoning_maps_to_budget():
 
 
 def test_effort_requires_capability():
-    client = LLMClient()
+    client = Client()
     # Groq has no REASONING_EFFORT — the gate fires before any adapter is built.
     with pytest.raises(UnsupportedCapabilityError):
         client.chat(model="llama-3.3-70b", provider="groq",
@@ -68,7 +68,7 @@ def test_effort_requires_capability():
 
 
 def test_discovery_lists_effort_capable_models():
-    client = LLMClient()
+    client = Client()
     provs = set(client.providers_for(Capability.REASONING_EFFORT))
     assert {"anthropic", "openai", "gemini"} == provs   # exactly these
     assert "deepseek" not in provs                       # reasoning via model choice, not effort

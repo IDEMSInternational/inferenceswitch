@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from ..errors import MissingDependencyError, UnsupportedCapabilityError
-from ..messages import CacheHandle, Effort, LLMResponse, Message, Tool, ToolChoice
+from ..messages import CacheHandle, Effort, Response, Message, Tool, ToolChoice
 from ..registry import ProviderSpec
 
 
@@ -115,8 +115,8 @@ class Adapter(ABC):
         cache: CacheHandle | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> LLMResponse:
-        """A normalized, optionally tool-using turn. Returns an :class:`LLMResponse`
+    ) -> Response:
+        """A normalized, optionally tool-using turn. Returns an :class:`Response`
         with any tool calls the model requested, unified across providers.
 
         ``cache`` references a reusable prompt cache created by

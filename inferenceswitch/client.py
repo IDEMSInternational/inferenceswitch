@@ -1,6 +1,6 @@
 """The thick client facade.
 
-``LLMClient`` is the single entry point. It resolves a model string to a provider,
+``Client`` is the single entry point. It resolves a model string to a provider,
 resolves that provider's API key, builds (and caches) the right adapter, and
 forwards the uniform structured-output / text calls. Callers never touch an
 adapter or an SDK directly, and never write a ``match provider`` block.
@@ -28,7 +28,7 @@ from .errors import (
 from .messages import (
     CacheHandle,
     Effort,
-    LLMResponse,
+    Response,
     Message,
     Text,
     Tool,
@@ -81,10 +81,10 @@ class Resolution:
 
 
 class ModelChoice(str):
-    """One selectable option returned by :meth:`LLMClient.models_for`.
+    """One selectable option returned by :meth:`Client.models_for`.
 
     It *is* a ``str``, so a curated option — ``"anthropic/claude-opus-4-8"`` —
-    can be passed straight to :meth:`LLMClient.chat` as before.
+    can be passed straight to :meth:`Client.chat` as before.
 
     Providers with no curated catalog (Groq, the local servers, your own
     registry entries) still appear, as the bare provider name with
@@ -111,7 +111,7 @@ class ModelChoice(str):
         return f"ModelChoice({str.__str__(self)!r})"
 
 
-class LLMClient:
+class Client:
     def __init__(
         self,
         registry: Registry | None = None,
@@ -310,7 +310,7 @@ class LLMClient:
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> LLMResponse:
+    ) -> Response:
         """A normalized, optionally tool-using turn.
 
         Same call regardless of provider — the adapter maps tools, reasoning
@@ -418,12 +418,12 @@ class LLMClient:
         max_turns: int = 10,
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> LLMResponse:
+    ) -> Response:
         """Drive the full tool-use loop: call the model, run the requested tools
         via ``handlers`` (``{tool_name: fn(input) -> result}``), feed results
         back, and repeat until the model stops calling tools.
 
-        Returns the final :class:`LLMResponse`. A handler exception, or a call to
+        Returns the final :class:`Response`. A handler exception, or a call to
         an unmapped tool, is returned to the model as an error tool result rather
         than raised — so the model can recover. Raises :class:`InferenceSwitchError`
         only if ``max_turns`` is exceeded.

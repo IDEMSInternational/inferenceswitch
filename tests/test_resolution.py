@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from inferenceswitch import LLMClient, ProviderResolutionError
+from inferenceswitch import Client, ProviderResolutionError
 
 
 @pytest.fixture
 def client():
-    return LLMClient()
+    return Client()
 
 
 def test_prefix_routes_native_providers(client):

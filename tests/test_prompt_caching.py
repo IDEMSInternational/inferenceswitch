@@ -12,8 +12,8 @@ import pytest
 from inferenceswitch import (
     CacheHandle,
     Capability,
-    LLMClient,
-    LLMResponse,
+    Client,
+    Response,
     InferenceSwitchError,
     Message,
     Text,
@@ -26,7 +26,7 @@ from inferenceswitch.adapters.anthropic import encode_anthropic_messages, encode
 
 @pytest.fixture
 def client():
-    return LLMClient()
+    return Client()
 
 
 # ── the two capabilities have distinct, deliberate provider matrices ───────────
@@ -220,7 +220,7 @@ def test_gemini_create_cache_then_reference_it():
 def test_delete_cache_is_a_noop_for_replay_handles():
     # A replay-backed (Anthropic) handle names no server resource, so the client
     # short-circuits — no adapter is built and no key is needed.
-    client = LLMClient()
+    client = Client()
     handle = CacheHandle(provider="anthropic", model="claude-opus-4-8", system="SYS")
     assert handle.name is None
     client.delete_cache(handle)  # must not raise (no ANTHROPIC_API_KEY required)
@@ -297,7 +297,7 @@ def test_anthropic_create_cache_is_pure_and_replays_with_breakpoint():
 def test_same_caller_code_caches_on_both_providers(monkeypatch):
     """The whole point: create_cache + chat(cache=) is written once and works on
     an Anthropic model or a Gemini model, no provider branching in the caller."""
-    client = LLMClient()
+    client = Client()
 
     class _FakeAdapter:
         def __init__(self, name):
@@ -315,7 +315,7 @@ def test_same_caller_code_caches_on_both_providers(monkeypatch):
 
         def chat(self, *, model, messages, cache=None, **kw):
             assert cache is not None and cache.provider == self.spec.name
-            return LLMResponse(text=f"{self.spec.name}:ok")
+            return Response(text=f"{self.spec.name}:ok")
 
     monkeypatch.setattr(client, "_adapter", lambda spec, api_key: _FakeAdapter(spec.name))
 
