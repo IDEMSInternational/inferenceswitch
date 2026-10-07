@@ -43,6 +43,17 @@ data = client.generate_structured_json(
     system="...",
 )
 
+# The same call, with the token usage the provider reported.
+result = client.generate_structured(
+    model="claude-opus-4-8",
+    schema=MyPydanticModel.model_json_schema(),
+    prompt="...",
+)
+result.value                # what generate_structured_json returns
+result.usage.input_tokens   # Usage fields the provider doesn't report are None
+result.usage.output_tokens
+result.stop_reason          # StopReason, and result.raw is the provider response
+
 # Plain text.
 text = client.generate_text(model="gemini-3.5-flash", prompt="Summarize ...")
 
@@ -344,7 +355,8 @@ example per mechanism.
   providers; native `AnthropicAdapter` and `GeminiAdapter` where the wire format
   genuinely differs. SDKs are imported lazily.
 - **Client** (`client.py`) — resolution + key resolution + adapter caching +
-  the uniform `generate_structured_json` / `generate_text` calls.
+  the uniform `generate_structured` / `generate_structured_json` /
+  `generate_text` calls.
 
 ### Adding a provider
 

@@ -181,6 +181,20 @@ class Response:
         return bool(self.tool_calls)
 
 
+@dataclass
+class StructuredResult:
+    """What :meth:`Client.generate_structured` returns: the schema-constrained
+    value plus the call's metadata, which ``generate_structured_json`` drops."""
+
+    #: The parsed, validated JSON — what ``generate_structured_json`` returns.
+    value: Any
+    #: Token counts from the provider response; fields it doesn't report are ``None``.
+    usage: Usage = field(default_factory=Usage)
+    stop_reason: StopReason | None = None
+    #: The untouched provider SDK response, for anything not normalized here.
+    raw: Any = None
+
+
 # ── ergonomic constructors ────────────────────────────────────────────────────
 
 

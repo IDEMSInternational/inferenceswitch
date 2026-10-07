@@ -30,6 +30,7 @@ from .messages import (
     Effort,
     Response,
     Message,
+    StructuredResult,
     Text,
     Tool,
     ToolChoice,
@@ -246,6 +247,38 @@ class Client:
 
     # ── public calls ──────────────────────────────────────────────────────────
 
+    def generate_structured(
+        self,
+        *,
+        model: str,
+        schema: dict,
+        prompt: str,
+        system: str | None = None,
+        provider: str | None = None,
+        api_key: str | None = None,
+        tool_name: str = "generate_json",
+        temperature: float = 0.1,
+        max_tokens: int | None = None,
+    ) -> StructuredResult:
+        """Schema-constrained JSON from whichever provider ``model`` routes to,
+        with the call's token usage, stop reason and raw provider response.
+
+        Same request as :meth:`generate_structured_json`; use this one when you
+        need per-call tokens or cost. ``usage`` fields the provider doesn't
+        report are ``None``.
+        """
+        resolution = self.resolve(model, provider)
+        adapter = self._adapter(resolution.spec, api_key)
+        return adapter.generate_structured(
+            model=resolution.model,
+            prompt=prompt,
+            schema=schema,
+            system=system,
+            tool_name=tool_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
     def generate_structured_json(
         self,
         *,
@@ -260,18 +293,20 @@ class Client:
         max_tokens: int | None = None,
     ) -> Any:
         """Return schema-constrained JSON from whichever provider ``model`` routes
-        to, handling the per-provider mechanism and schema dialect internally."""
-        resolution = self.resolve(model, provider)
-        adapter = self._adapter(resolution.spec, api_key)
-        return adapter.generate_structured_json(
-            model=resolution.model,
-            prompt=prompt,
+        to, handling the per-provider mechanism and schema dialect internally.
+
+        The ``value`` of :meth:`generate_structured`, without the usage."""
+        return self.generate_structured(
+            model=model,
             schema=schema,
+            prompt=prompt,
             system=system,
+            provider=provider,
+            api_key=api_key,
             tool_name=tool_name,
             temperature=temperature,
             max_tokens=max_tokens,
-        )
+        ).value
 
     def generate_text(
         self,

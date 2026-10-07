@@ -20,6 +20,7 @@ from ..messages import (
     Response,
     Message,
     StopReason,
+    StructuredResult,
     Text,
     Tool,
     ToolCall,
@@ -165,6 +166,19 @@ def _prompt_token_count(raw) -> int | None:
     return None if meta is None else getattr(meta, "prompt_token_count", None)
 
 
+def gemini_usage(raw) -> Usage:
+    """The response's token counts, from ``usage_metadata``; ``Usage()`` when
+    it reports none."""
+    usage = Usage()
+    meta = getattr(raw, "usage_metadata", None)
+    if meta is not None:
+        usage.input_tokens = getattr(meta, "prompt_token_count", None)
+        usage.output_tokens = getattr(meta, "candidates_token_count", None)
+        usage.cache_read_tokens = getattr(meta, "cached_content_token_count", None)
+        usage.reasoning_tokens = getattr(meta, "thoughts_token_count", None)
+    return usage
+
+
 def encode_gemini_contents(messages: list[Message]) -> list[dict]:
     """Normalized messages -> Gemini ``contents`` (role user/model + typed parts).
 
@@ -222,16 +236,12 @@ def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) ->
     fr_name = gemini_finish_reason(raw)
     stop = StopReason.TOOL_USE if tool_calls else _FINISH_REASON.get(fr_name, StopReason.END_TURN)
 
-    usage = Usage()
-    meta = getattr(raw, "usage_metadata", None)
-    if meta is not None:
-        usage.input_tokens = getattr(meta, "prompt_token_count", None)
-        usage.output_tokens = getattr(meta, "candidates_token_count", None)
-        usage.cache_read_tokens = getattr(meta, "cached_content_token_count", None)
-        usage.reasoning_tokens = getattr(meta, "thoughts_token_count", None)
-
     return Response(
-        text="".join(text_chunks), tool_calls=tool_calls, stop_reason=stop, usage=usage, raw=raw
+        text="".join(text_chunks),
+        tool_calls=tool_calls,
+        stop_reason=stop,
+        usage=gemini_usage(raw),
+        raw=raw,
     )
 
 
@@ -250,7 +260,7 @@ class GeminiAdapter(Adapter):
             max_output_tokens=max_tokens,
         )
 
-    def generate_structured_json(
+    def generate_structured(
         self,
         *,
         model: str,
@@ -260,7 +270,7 @@ class GeminiAdapter(Adapter):
         tool_name: str = "generate_json",  # unused; Gemini has no tool-name concept
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> Any:
+    ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
         gemini_schema = schema_mod.to_gemini_schema(schema)
         response = self._client.models.generate_content(
@@ -327,9 +337,15 @@ class GeminiAdapter(Adapter):
                     "stop_reason": gemini_finish_reason(response),
                 },
             ) from exc
-        # Fold Gemini's key/value arrays back into real dicts using the ORIGINAL
-        # (untranslated) schema to know which fields were dicts.
-        return schema_mod.restore_gemini_dicts(raw, schema)
+        fr_name = gemini_finish_reason(response)
+        return StructuredResult(
+            # Fold Gemini's key/value arrays back into real dicts using the
+            # ORIGINAL (untranslated) schema to know which fields were dicts.
+            value=schema_mod.restore_gemini_dicts(raw, schema),
+            usage=gemini_usage(response),
+            stop_reason=None if fr_name is None else _FINISH_REASON.get(fr_name, StopReason.OTHER),
+            raw=response,
+        )
 
     def generate_text(
         self,

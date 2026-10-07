@@ -33,6 +33,7 @@ from .messages import (
     Response,
     Message,
     StopReason,
+    StructuredResult,
     Text,
     Tool,
     ToolCall,
@@ -89,6 +90,7 @@ __all__ = [
     "Effort",
     "Response",
     "StopReason",
+    "StructuredResult",
     "Usage",
     # Per-provider output caps (default = the model's own maximum). Editing a
     # table imposes a house ceiling process-wide; a per-call max_tokens still wins.
