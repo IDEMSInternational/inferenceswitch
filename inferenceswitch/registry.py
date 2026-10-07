@@ -168,6 +168,27 @@ _ANTHROPIC_CAPS = Capabilities(
         "claude-opus-4-2025": StructuredMode.TOOL_USE,
         "claude-opus-4-1": StructuredMode.TOOL_USE,
     },
+    # Forced tool_choice ("tool" / "any") returns a 400 on Opus 5.5, Sonnet 5.5,
+    # Fable 5.1 and Mythos 5.1. Off by default, so a model released after this
+    # table was written gets the auto-plus-instruction path rather than a 400;
+    # the models known to accept it keep it. Matched by substring, longest key
+    # winning, so each 5.x row needs its point-release row beside it:
+    # "claude-opus-5" alone would also match "claude-opus-5-5".
+    forced_tool_choice=False,
+    model_forced_tool_choice={
+        "claude-3": True,
+        "claude-haiku-4": True,
+        "claude-sonnet-4": True,
+        "claude-opus-4": True,
+        "claude-sonnet-5": True,
+        "claude-sonnet-5-5": False,
+        "claude-opus-5": True,
+        "claude-opus-5-5": False,
+        "claude-fable-5": True,
+        "claude-fable-5-1": False,
+        "claude-mythos-5": True,
+        "claude-mythos-5-1": False,
+    },
     # NOTE: SAMPLING_PARAMS deliberately absent — support is per-MODEL (Opus
     # 4.7/4.8 & Fable reject temperature with a 400; Sonnet 4.6 / Haiku 4.5
     # accept it). Fail-closed at the provider level; a per-model policy can add
