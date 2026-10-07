@@ -52,6 +52,7 @@ from .errors import (
     ProviderResolutionError,
     StructuredOutputError,
     UnsupportedCapabilityError,
+    UnsupportedSchemaError,
 )
 from .registry import ProviderSpec, Registry, default_registry
 
@@ -75,6 +76,7 @@ __all__ = [
     "MissingDependencyError",
     "StructuredOutputError",
     "UnsupportedCapabilityError",
+    "UnsupportedSchemaError",
     # chat / tool-calling surface
     "Message",
     "Tool",
