@@ -109,17 +109,35 @@ class Capabilities:
     #: substring (longest wins), so dated snapshots and provider-prefixed IDs
     #: resolve like the bare alias. See :meth:`structured_output_for`.
     model_structured_output: Mapping[str, StructuredMode] = field(default_factory=dict)
+    #: Whether the provider honors a *forced* tool choice — one named tool
+    #: (``chat(force_tool=...)``) or "some tool" (``ToolChoice.REQUIRED``). Where
+    #: it does not, the adapter offers the tools with an automatic choice plus a
+    #: prompt instruction, and raises :class:`~inferenceswitch.ToolChoiceError`
+    #: on a turn that ignored it.
+    forced_tool_choice: bool = True
+    #: Per-model overrides of :attr:`forced_tool_choice`, matched like
+    #: :attr:`model_structured_output`. See :meth:`forced_tool_choice_for`.
+    model_forced_tool_choice: Mapping[str, bool] = field(default_factory=dict)
 
     def has(self, capability: Capability) -> bool:
         return capability in self.features
 
     def structured_output_for(self, model: str) -> StructuredMode:
         """The structured-output mechanism for ``model`` on this provider."""
-        table = self.model_structured_output
-        exact = table.get(model)
-        if exact is not None:
-            return exact
-        matches = [name for name in table if name in model]
-        if matches:
-            return table[max(matches, key=len)]
-        return self.structured_output
+        return _for_model(self.model_structured_output, model, self.structured_output)
+
+    def forced_tool_choice_for(self, model: str) -> bool:
+        """Whether ``model`` on this provider honors a forced tool choice."""
+        return _for_model(self.model_forced_tool_choice, model, self.forced_tool_choice)
+
+
+def _for_model(table: Mapping[str, Any], model: str, default: Any) -> Any:
+    """``table``'s entry for ``model``: an exact key, else the longest key that is
+    a substring of ``model``, else ``default``."""
+    exact = table.get(model)
+    if exact is not None:
+        return exact
+    matches = [name for name in table if name in model]
+    if matches:
+        return table[max(matches, key=len)]
+    return default

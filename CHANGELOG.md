@@ -13,6 +13,15 @@ All notable changes to this project are documented here. This project adheres to
   `generate_structured_json` works on Claude Opus 5.5, Sonnet 5.5, Fable 5.1 and
   Mythos 5.1, which reject forced `tool_choice` with a 400, and the result can no
   longer arrive nested under a stray key such as `{"$PARAMETER_NAME": {...}}`.
+- **`chat(force_tool=...)` and `ToolChoice.REQUIRED` work on Claude Opus 5.5,
+  Sonnet 5.5, Fable 5.1 and Mythos 5.1**, which reject `tool_choice` `"tool"`
+  and `"any"` with a 400. On those models the request goes out with
+  `tool_choice: auto` and a system-prompt line asking for the tool (appended
+  after any system prompt you passed). Since the model can still answer without
+  calling it, a turn with no call to the forced tool (or, for `REQUIRED`, no
+  tool call at all) raises `ToolChoiceError`. Older Claude models are unchanged:
+  they still get a forced `tool_choice`, and a turn without the call is returned
+  as before.
 - Gemini schema translation no longer rewrites an object carrying
   `additionalProperties: false` (as Pydantic's `extra="forbid"` emits) into a
   key/value array. The boolean is dropped instead, so callers no longer need to
@@ -46,6 +55,14 @@ All notable changes to this project are documented here. This project adheres to
   instruction to call it. On that non-strict path, an answer wrapped in a single
   stray key is unwrapped only when the key is not a schema property and the
   inner value validates.
+- Per-model forced tool choice: `Capabilities.forced_tool_choice`,
+  `Capabilities.model_forced_tool_choice` and
+  `Capabilities.forced_tool_choice_for(model)`, matched like
+  `model_structured_output`. Anthropic defaults to no forced choice, so a model
+  newer than the table is not sent a request it would reject. Claude 3.x, 4.x,
+  Opus 5, Sonnet 5, Fable 5 and Mythos 5 keep forced choice.
+- `ToolChoiceError`, carrying the turn that came back as `.response` and the
+  provider, model, requested choice, stop reason and tools called in `.context`.
 - `StructuredOutputError` for an Anthropic refusal (`stop_reason: "refusal"`,
   with the category in `context["refusal_category"]`) and for a fallback
   response that did not call the tool.

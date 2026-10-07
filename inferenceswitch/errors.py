@@ -64,3 +64,22 @@ class StructuredOutputError(InferenceSwitchError):
     def __init__(self, message: str, *, context: dict | None = None) -> None:
         super().__init__(message)
         self.context = context or {}
+
+
+class ToolChoiceError(InferenceSwitchError):
+    """A turn did not make the tool call the caller forced.
+
+    Raised by :meth:`Client.chat` when ``force_tool=`` or
+    ``ToolChoice.REQUIRED`` was requested of a model that cannot enforce it
+    server-side (see :meth:`Capabilities.forced_tool_choice_for`), so the
+    request went out with an automatic choice plus an instruction, and the
+    model answered without the required call. ``response`` is the normalized
+    turn that came back (its text often says why), so a caller can append it to
+    the conversation and retry, or handle it as a plain reply. ``context``
+    carries provider/model/stop-reason detail for logging.
+    """
+
+    def __init__(self, message: str, *, response=None, context: dict | None = None) -> None:
+        super().__init__(message)
+        self.response = response
+        self.context = context or {}

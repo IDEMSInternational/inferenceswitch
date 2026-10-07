@@ -13,7 +13,7 @@ from typing import Any
 
 from .. import schema as schema_mod
 from ..capabilities import StructuredMode
-from ..errors import StructuredOutputError
+from ..errors import StructuredOutputError, ToolChoiceError
 from ..schema import to_anthropic_schema
 from ..messages import (
     CacheHandle,
@@ -164,7 +164,14 @@ def encode_anthropic_tools(tools: list[Tool]) -> list[dict]:
     return out
 
 
-def encode_anthropic_tool_choice(tool_choice: ToolChoice, force_tool: str | None):
+def encode_anthropic_tool_choice(
+    tool_choice: ToolChoice, force_tool: str | None, *, forced: bool = True
+):
+    """The ``tool_choice`` field. With ``forced=False`` (a model that rejects
+    ``"tool"`` and ``"any"`` with a 400), a forced choice degrades to ``"auto"``;
+    pair it with :func:`anthropic_tool_choice_instruction`."""
+    if not forced and (force_tool is not None or tool_choice is ToolChoice.REQUIRED):
+        return {"type": "auto"}
     if force_tool is not None:
         return {"type": "tool", "name": force_tool}
     return {
@@ -183,6 +190,27 @@ def anthropic_usage(raw) -> Usage:
         usage.cache_read_tokens = getattr(raw.usage, "cache_read_input_tokens", None)
         usage.cache_write_tokens = getattr(raw.usage, "cache_creation_input_tokens", None)
     return usage
+
+
+def anthropic_tool_choice_instruction(
+    tool_choice: ToolChoice, force_tool: str | None, tools: list[Tool]
+) -> str | None:
+    """The system-prompt line that stands in for a forced ``tool_choice`` on a
+    model without one, or ``None`` when nothing was forced."""
+    if force_tool is not None:
+        return f"Respond by calling the `{force_tool}` tool."
+    if tool_choice is ToolChoice.REQUIRED:
+        names = ", ".join(f"`{t.name}`" for t in tools)
+        return f"Respond by calling at least one of these tools: {names}."
+    return None
+
+
+def _tool_choice_met(response: Response, tool_choice: ToolChoice, force_tool: str | None) -> bool:
+    if force_tool is not None:
+        return any(call.name == force_tool for call in response.tool_calls)
+    if tool_choice is ToolChoice.REQUIRED:
+        return bool(response.tool_calls)
+    return True
 
 
 def decode_anthropic_response(raw) -> Response:
@@ -452,16 +480,43 @@ class AnthropicAdapter(Adapter):
             "max_tokens": resolve_max_tokens(model, max_tokens),
             "messages": encode_anthropic_messages(rest),
         }
-        if system_text:
-            create_kwargs["system"] = system_text
+        # On a model that rejects forced tool_choice, a forced choice is sent as
+        # "auto" plus an instruction, and checked once the reply is back.
+        instruction = None
         if tools:
+            forced = self.capabilities.forced_tool_choice_for(model)
             create_kwargs["tools"] = encode_anthropic_tools(tools)
             create_kwargs["tool_choice"] = encode_anthropic_tool_choice(
-                tool_choice, force_tool
+                tool_choice, force_tool, forced=forced
             )
+            if not forced:
+                instruction = anthropic_tool_choice_instruction(tool_choice, force_tool, tools)
+                if instruction:
+                    system_text = f"{system_text}\n\n{instruction}" if system_text else instruction
+        if system_text:
+            create_kwargs["system"] = system_text
         create_kwargs.update(anthropic_reasoning_kwargs(effort))
         raw = self._send(**create_kwargs)
-        return decode_anthropic_response(raw)
+        response = decode_anthropic_response(raw)
+        if instruction and not _tool_choice_met(response, tool_choice, force_tool):
+            wanted = (
+                f"the '{force_tool}' tool" if force_tool is not None else "any of its tools"
+            )
+            raise ToolChoiceError(
+                f"Claude answered without calling {wanted}. {model} does not accept "
+                "a forced tool_choice, so the call was requested in the system "
+                "prompt instead; the reply is on this error's .response.",
+                response=response,
+                context={
+                    "provider": self.spec.name,
+                    "model": model,
+                    "force_tool": force_tool,
+                    "tool_choice": tool_choice.value,
+                    "stop_reason": response.stop_reason.value,
+                    "tool_calls": [call.name for call in response.tool_calls],
+                },
+            )
+        return response
 
     def create_cache(
         self,

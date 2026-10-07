@@ -52,6 +52,7 @@ from .errors import (
     MissingDependencyError,
     ProviderResolutionError,
     StructuredOutputError,
+    ToolChoiceError,
     UnsupportedCapabilityError,
     UnsupportedSchemaError,
 )
@@ -76,6 +77,7 @@ __all__ = [
     "MissingAPIKeyError",
     "MissingDependencyError",
     "StructuredOutputError",
+    "ToolChoiceError",
     "UnsupportedCapabilityError",
     "UnsupportedSchemaError",
     # chat / tool-calling surface
