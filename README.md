@@ -65,7 +65,7 @@ no silent default provider.
 
 | Provider | Kind | Key env | Notes |
 |---|---|---|---|
-| `anthropic` | native | `ANTHROPIC_API_KEY` | structured output via forced tool use |
+| `anthropic` | native | `ANTHROPIC_API_KEY` | structured output via `output_config.format` (tool fallback on models that predate it) + dialect translation |
 | `gemini` | native | `GEMINI_API_KEY` | structured output via `response_schema` + dict-dialect translation |
 | `openai` | openai-compat | `OPENAI_API_KEY` | |
 | `mistral` | openai-compat | `MISTRAL_API_KEY` | |
@@ -425,8 +425,9 @@ client = Client(key_provider=key_provider)
 For plain chat you can — that's why the OpenAI-compatible base adapter carries
 six providers. But structured output is where the wire formats diverge
 irreconcilably: Gemini rejects `additionalProperties` (so dict fields are
-rewritten to key/value arrays and back), Anthropic forces JSON via tool use, and
-each accepts a different schema dialect. A shim that "speaks OpenAI" to Gemini or
+rewritten to key/value arrays and back), Anthropic constrains JSON through
+`output_config.format` and accepts only closed, non-recursive objects without
+numeric or length constraints, and each accepts a different schema dialect. A shim that "speaks OpenAI" to Gemini or
 Anthropic drops schema enforcement, prompt caching, and thinking controls. The
 native adapters exist to preserve exactly those.
 
