@@ -44,11 +44,20 @@ class UnsupportedCapabilityError(InferenceSwitchError):
     """
 
 
+class UnsupportedSchemaError(InferenceSwitchError, ValueError):
+    """A caller's JSON schema cannot be expressed in a provider's dialect.
+
+    Raised before any request is sent, e.g. for a recursive schema or a
+    free-form object on Anthropic structured outputs, which supports neither.
+    """
+
+
 class StructuredOutputError(InferenceSwitchError):
     """The model did not return usable schema-constrained JSON.
 
-    Covers truncation (hit the output-token cap mid-object), a provider that
-    declined to emit the forced tool call, or JSON that would not parse.
+    Covers truncation (hit the output-token cap mid-object), a refusal, a model
+    that did not call the structured-output tool, JSON that would not parse, and
+    JSON that parsed but does not match the schema.
     ``context`` carries provider/model/stop-reason detail for logging.
     """
 

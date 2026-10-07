@@ -132,13 +132,15 @@ def test_table_edit_lowers_the_default_process_wide(adapter, monkeypatch):
 
 # ── truncation reporting ─────────────────────────────────────────────────────
 
+_SCHEMA = {"type": "object", "properties": {"a": {"type": "string"}}}
+
 
 def test_truncated_structured_json_reports_the_model_max(adapter):
     a, fake = adapter
     fake.stop_reason = "max_tokens"
     with pytest.raises(StructuredOutputError) as excinfo:
         a.generate_structured_json(
-            model="claude-opus-4-8", prompt="p", schema={"type": "object"}, max_tokens=1000
+            model="claude-opus-4-8", prompt="p", schema=_SCHEMA, max_tokens=1000
         )
     err = excinfo.value
     assert err.context["max_tokens"] == 1000
@@ -151,6 +153,6 @@ def test_truncation_at_the_model_max_advises_splitting(adapter):
     fake.stop_reason = "max_tokens"
     with pytest.raises(StructuredOutputError) as excinfo:
         a.generate_structured_json(
-            model="claude-opus-4-8", prompt="p", schema={"type": "object"}
+            model="claude-opus-4-8", prompt="p", schema=_SCHEMA
         )
     assert "split the request" in str(excinfo.value)

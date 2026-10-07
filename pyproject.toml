@@ -38,10 +38,10 @@ Issues = "https://github.com/IDEMSInternational/inferenceswitch/issues"
 #   pip install "inferenceswitch[all]"           -> everything
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
-anthropic = ["anthropic>=0.40"]
+anthropic = ["anthropic>=0.77"]
 gemini = ["google-genai>=0.3"]
-all = ["openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
-dev = ["pytest>=8", "openai>=1.40", "anthropic>=0.40", "google-genai>=0.3"]
+all = ["openai>=1.40", "anthropic>=0.77", "google-genai>=0.3"]
+dev = ["pytest>=8", "openai>=1.40", "anthropic>=0.77", "google-genai>=0.3"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["inferenceswitch"]

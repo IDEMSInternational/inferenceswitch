@@ -1,15 +1,20 @@
 """Native Anthropic adapter.
 
-Anthropic is not OpenAI-shaped: schema-constrained JSON is obtained by declaring
-the schema as a tool's ``input_schema`` and forcing that tool via ``tool_choice``,
-then reading ``tool_use.input``. Anthropic's schema dialect is the most permissive
-of the three, so no translation is needed on the way in or out.
+Anthropic is not OpenAI-shaped. Schema-constrained JSON comes from structured
+outputs (``output_config.format``) on models that have it, and otherwise from a
+tool whose ``input_schema`` is the schema; the capability registry picks per
+model. Structured outputs take a stricter schema dialect, translated by
+:func:`inferenceswitch.schema.to_anthropic_schema`.
 """
 from __future__ import annotations
 
+import json
 from typing import Any
 
+from .. import schema as schema_mod
+from ..capabilities import StructuredMode
 from ..errors import StructuredOutputError
+from ..schema import to_anthropic_schema
 from ..messages import (
     CacheHandle,
     Effort,
@@ -193,6 +198,18 @@ def decode_anthropic_response(raw) -> Response:
     )
 
 
+def _unwrap_stray_key(result: Any, schema: dict) -> Any:
+    """The value under ``result``'s single key, if that key is not a schema
+    property and the value conforms to the schema; else ``None``."""
+    if not isinstance(result, dict) or len(result) != 1:
+        return None
+    (key, inner), = result.items()
+    properties = schema_mod._resolve_ref(schema, schema).get("properties", {})
+    if key in properties or schema_mod.schema_errors(inner, schema):
+        return None
+    return inner
+
+
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
@@ -227,6 +244,21 @@ class AnthropicAdapter(Adapter):
         temperature: float = 0.1,
         max_tokens: int | None = None,
     ) -> Any:
+        """Schema-constrained JSON, by the mechanism the capability registry names
+        for ``model`` (see :meth:`Capabilities.structured_output_for`):
+
+        * ``OUTPUT_CONFIG_JSON_SCHEMA`` — structured outputs: the schema, in
+          Anthropic's dialect, as ``output_config.format``; the reply's text is
+          the JSON.
+        * ``STRICT_TOOL_USE`` / ``TOOL_USE`` — the schema as a tool's
+          ``input_schema`` (``strict: true`` for the former), offered with
+          ``tool_choice: auto`` and an instruction to call it. Forced
+          ``tool_choice`` is not used: the newest models reject it with a 400.
+
+        Whatever the mechanism, the result is checked against the caller's
+        original schema, including the constraints the Anthropic dialect drops,
+        and a mismatch raises :class:`StructuredOutputError`.
+        """
         max_tokens = resolve_max_tokens(model, max_tokens)
         # NOTE: temperature/top_p/top_k are deliberately NOT forwarded. Newer
         # Anthropic models (Opus 4.7/4.8, Fable 5) reject sampling params with a
@@ -235,29 +267,116 @@ class AnthropicAdapter(Adapter):
         # express it — see the sampling-params discussion. Omitting them is safe
         # on every model.
         _ = temperature
+        mode = self.capabilities.structured_output_for(model)
+        context: dict[str, Any] = {
+            "provider": self.spec.name,
+            "model": model,
+            "mode": mode.value,
+        }
         create_kwargs: dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
             "messages": [{"role": "user", "content": prompt}],
-            "tools": [
-                {
-                    "name": tool_name,
-                    "description": f"Return the {tool_name} result as structured JSON.",
-                    "input_schema": schema,
-                }
-            ],
-            # Force the tool so the model must emit schema-shaped input.
-            "tool_choice": {"type": "tool", "name": tool_name},
         }
         if system:
             create_kwargs["system"] = system
 
-        response = self._send(**create_kwargs)
+        if mode is StructuredMode.OUTPUT_CONFIG_JSON_SCHEMA:
+            create_kwargs["output_config"] = {
+                "format": {"type": "json_schema", "schema": to_anthropic_schema(schema)}
+            }
+        elif mode in (StructuredMode.STRICT_TOOL_USE, StructuredMode.TOOL_USE):
+            context["tool_name"] = tool_name
+            strict = mode is StructuredMode.STRICT_TOOL_USE
+            tool: dict[str, Any] = {
+                "name": tool_name,
+                "description": f"Return the {tool_name} result as structured JSON.",
+                # Non-strict tools take the caller's schema as-is: the dialect is
+                # permissive there, and the result is validated below anyway.
+                "input_schema": to_anthropic_schema(schema) if strict else schema,
+            }
+            if strict:
+                tool["strict"] = True
+            create_kwargs["tools"] = [tool]
+            create_kwargs["tool_choice"] = {"type": "auto", "disable_parallel_tool_use": True}
+            instruction = (
+                f"Respond only by calling the `{tool_name}` tool, exactly once. "
+                "Its input is your answer."
+            )
+            create_kwargs["system"] = f"{system}\n\n{instruction}" if system else instruction
+        else:
+            raise StructuredOutputError(
+                f"Anthropic adapter cannot honor structured mode {mode!r}.",
+                context=context,
+            )
 
-        # A max_tokens stop means the tool-call JSON was cut off mid-object; the
-        # partial input would be missing trailing (often required) fields. Fail
-        # loudly here rather than letting a downstream validator report a
-        # misleading "field required".
+        response = self._send(**create_kwargs)
+        context["stop_reason"] = response.stop_reason
+        self._check_structured_stop(response, model, max_tokens, context)
+
+        if mode is StructuredMode.OUTPUT_CONFIG_JSON_SCHEMA:
+            text = next((b.text for b in response.content if b.type == "text"), None)
+            if text is None:
+                raise StructuredOutputError(
+                    "Claude returned no text block for a structured-output request.",
+                    context=context,
+                )
+            try:
+                result = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise StructuredOutputError(
+                    f"Claude's structured output is not valid JSON: {exc}",
+                    context=context,
+                ) from exc
+        else:
+            tool_use = next(
+                (b for b in response.content if b.type == "tool_use" and b.name == tool_name),
+                None,
+            )
+            if tool_use is None:
+                raise StructuredOutputError(
+                    f"Claude did not call the '{tool_name}' tool, so there is no "
+                    "structured result.",
+                    context=context,
+                )
+            # The Anthropic SDK parses tool inputs into native dicts already.
+            result = tool_use.input
+
+        result = schema_mod.restore_gemini_dicts(result, schema)
+        errors = schema_mod.schema_errors(result, schema)
+        if errors and mode is StructuredMode.TOOL_USE:
+            # A non-strict tool call sometimes nests a valid answer under one
+            # stray key, e.g. {"$PARAMETER_NAME": {...}}. Unwrap only when that key
+            # is not a schema property and the inner value conforms.
+            unwrapped = _unwrap_stray_key(result, schema)
+            if unwrapped is not None:
+                return unwrapped
+        if errors:
+            raise StructuredOutputError(
+                "Claude's structured output does not match the schema: "
+                + "; ".join(errors[:5])
+                + (f" (and {len(errors) - 5} more)" if len(errors) > 5 else ""),
+                context={**context, "schema_errors": errors},
+            )
+        return result
+
+    def _check_structured_stop(self, response, model: str, max_tokens: int, context: dict) -> None:
+        """Raise for the stop reasons that leave no trustworthy structured result."""
+        if response.stop_reason == "refusal":
+            details = getattr(response, "stop_details", None)
+            category = getattr(details, "category", None)
+            explanation = getattr(details, "explanation", None)
+            raise StructuredOutputError(
+                "Claude declined the request (stop_reason 'refusal'), so the output "
+                "may not match the schema"
+                + (f" [category: {category}]" if category else "")
+                + (f": {explanation}" if explanation else "."),
+                context={**context, "refusal_category": category},
+            )
+        # A max_tokens stop means the JSON was cut off mid-object; the partial
+        # value would be missing trailing (often required) fields. Fail loudly
+        # here rather than letting a validator report a misleading "field
+        # required".
         if response.stop_reason == "max_tokens":
             model_max = claude_max_output_tokens(model)
             remedy = (
@@ -268,32 +387,15 @@ class AnthropicAdapter(Adapter):
             )
             raise StructuredOutputError(
                 f"Claude hit the {max_tokens}-token output cap before finishing the "
-                f"'{tool_name}' tool call, so the JSON is truncated. This model's "
+                f"structured output, so the JSON is truncated. This model's "
                 f"maximum is {model_max}{remedy}",
                 context={
-                    "provider": self.spec.name,
-                    "model": model,
-                    "tool_name": tool_name,
+                    **context,
                     "max_tokens": max_tokens,
                     "model_max_tokens": model_max,
-                    "stop_reason": response.stop_reason,
                     "output_tokens": getattr(response.usage, "output_tokens", None),
                 },
             )
-
-        tool_use = next((b for b in response.content if b.type == "tool_use"), None)
-        if tool_use is None:
-            raise StructuredOutputError(
-                "Claude did not return the forced tool call.",
-                context={
-                    "provider": self.spec.name,
-                    "model": model,
-                    "tool_name": tool_name,
-                    "stop_reason": response.stop_reason,
-                },
-            )
-        # The Anthropic SDK parses tool inputs into native dicts already.
-        return tool_use.input
 
     def generate_text(
         self,

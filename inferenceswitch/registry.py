@@ -151,8 +151,23 @@ _LOCAL_CAPS = Capabilities(
     ),
 )
 _ANTHROPIC_CAPS = Capabilities(
-    structured_output=StructuredMode.FORCED_TOOL_USE,
+    # Structured outputs (constrained decoding) on every current Claude model,
+    # including models released after this table was written. Forced tool use is
+    # not an option there: Opus 5.5, Sonnet 5.5, Fable 5.1 and Mythos 5.1 reject
+    # forced tool_choice with a 400.
+    structured_output=StructuredMode.OUTPUT_CONFIG_JSON_SCHEMA,
     schema_dialect=SchemaDialect.ANTHROPIC,
+    # Models that predate structured outputs (and strict tools, which arrived
+    # with them) fall back to a non-strict tool, validated client-side. Matched
+    # by substring, so dated snapshots (claude-opus-4-20250514) resolve too.
+    model_structured_output={
+        "claude-3": StructuredMode.TOOL_USE,
+        "claude-sonnet-4-0": StructuredMode.TOOL_USE,
+        "claude-sonnet-4-2025": StructuredMode.TOOL_USE,
+        "claude-opus-4-0": StructuredMode.TOOL_USE,
+        "claude-opus-4-2025": StructuredMode.TOOL_USE,
+        "claude-opus-4-1": StructuredMode.TOOL_USE,
+    },
     # NOTE: SAMPLING_PARAMS deliberately absent — support is per-MODEL (Opus
     # 4.7/4.8 & Fable reject temperature with a 400; Sonnet 4.6 / Haiku 4.5
     # accept it). Fail-closed at the provider level; a per-model policy can add

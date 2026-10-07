@@ -32,8 +32,19 @@ class StructuredMode(str, Enum):
     #: ``response_format={"type":"json_object"}`` + schema injected into the
     #: prompt. Fallback for local/older servers without per-field enforcement.
     JSON_OBJECT_BEST_EFFORT = "json_object_best_effort"
-    #: Anthropic: schema as a tool ``input_schema`` + forced ``tool_choice``.
-    FORCED_TOOL_USE = "forced_tool_use"
+    #: Anthropic structured outputs: ``output_config={"format": {"type":
+    #: "json_schema", ...}}``. Constrained decoding; needs the Anthropic dialect.
+    OUTPUT_CONFIG_JSON_SCHEMA = "output_config_json_schema"
+    #: Anthropic: schema as a ``strict: true`` tool's ``input_schema``, offered
+    #: with ``tool_choice: auto`` and a prompt instruction to call it. Strict
+    #: tools are constrained like structured outputs.
+    STRICT_TOOL_USE = "strict_tool_use"
+    #: Anthropic, models without structured outputs: the same tool, non-strict,
+    #: so the schema is guidance only and the result is validated client-side.
+    TOOL_USE = "tool_use"
+    #: Deprecated alias of :attr:`TOOL_USE`. The tool is no longer forced:
+    #: forced ``tool_choice`` returns a 400 on the newest Claude models.
+    FORCED_TOOL_USE = "tool_use"
     #: Gemini: ``response_mime_type`` + ``response_schema`` (needs dialect xlate).
     RESPONSE_SCHEMA = "response_schema"
 
@@ -93,6 +104,22 @@ class Capabilities:
     #: ``{"reasoning_effort_levels": ["low", "high"]}``. String-keyed so new
     #: capabilities can attach config without touching this class.
     config: Mapping[str, Any] = field(default_factory=dict)
+    #: Per-model overrides of :attr:`structured_output`, for providers whose
+    #: models differ in mechanism. Keys match a model ID exactly or as a
+    #: substring (longest wins), so dated snapshots and provider-prefixed IDs
+    #: resolve like the bare alias. See :meth:`structured_output_for`.
+    model_structured_output: Mapping[str, StructuredMode] = field(default_factory=dict)
 
     def has(self, capability: Capability) -> bool:
         return capability in self.features
+
+    def structured_output_for(self, model: str) -> StructuredMode:
+        """The structured-output mechanism for ``model`` on this provider."""
+        table = self.model_structured_output
+        exact = table.get(model)
+        if exact is not None:
+            return exact
+        matches = [name for name in table if name in model]
+        if matches:
+            return table[max(matches, key=len)]
+        return self.structured_output
