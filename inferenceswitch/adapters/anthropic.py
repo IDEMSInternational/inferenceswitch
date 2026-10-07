@@ -21,6 +21,7 @@ from ..messages import (
     Response,
     Message,
     StopReason,
+    StructuredResult,
     Text,
     Tool,
     ToolCall,
@@ -180,6 +181,17 @@ def encode_anthropic_tool_choice(
     }[tool_choice]
 
 
+def anthropic_usage(raw) -> Usage:
+    """The response's token counts; ``Usage()`` when it reports none."""
+    usage = Usage()
+    if getattr(raw, "usage", None) is not None:
+        usage.input_tokens = getattr(raw.usage, "input_tokens", None)
+        usage.output_tokens = getattr(raw.usage, "output_tokens", None)
+        usage.cache_read_tokens = getattr(raw.usage, "cache_read_input_tokens", None)
+        usage.cache_write_tokens = getattr(raw.usage, "cache_creation_input_tokens", None)
+    return usage
+
+
 def anthropic_tool_choice_instruction(
     tool_choice: ToolChoice, force_tool: str | None, tools: list[Tool]
 ) -> str | None:
@@ -210,18 +222,11 @@ def decode_anthropic_response(raw) -> Response:
         elif block.type == "tool_use":
             tool_calls.append(ToolCall(id=block.id, name=block.name, input=block.input))
 
-    usage = Usage()
-    if getattr(raw, "usage", None) is not None:
-        usage.input_tokens = getattr(raw.usage, "input_tokens", None)
-        usage.output_tokens = getattr(raw.usage, "output_tokens", None)
-        usage.cache_read_tokens = getattr(raw.usage, "cache_read_input_tokens", None)
-        usage.cache_write_tokens = getattr(raw.usage, "cache_creation_input_tokens", None)
-
     return Response(
         text="".join(text_chunks),
         tool_calls=tool_calls,
         stop_reason=_STOP_REASON.get(raw.stop_reason, StopReason.OTHER),
-        usage=usage,
+        usage=anthropic_usage(raw),
         raw=raw,
     )
 
@@ -261,7 +266,7 @@ class AnthropicAdapter(Adapter):
         with self._client.messages.stream(**create_kwargs) as stream:
             return stream.get_final_message()
 
-    def generate_structured_json(
+    def generate_structured(
         self,
         *,
         model: str,
@@ -271,7 +276,7 @@ class AnthropicAdapter(Adapter):
         tool_name: str = "generate_json",
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> Any:
+    ) -> StructuredResult:
         """Schema-constrained JSON, by the mechanism the capability registry names
         for ``model`` (see :meth:`Capabilities.structured_output_for`):
 
@@ -378,7 +383,7 @@ class AnthropicAdapter(Adapter):
             # is not a schema property and the inner value conforms.
             unwrapped = _unwrap_stray_key(result, schema)
             if unwrapped is not None:
-                return unwrapped
+                result, errors = unwrapped, []
         if errors:
             raise StructuredOutputError(
                 "Claude's structured output does not match the schema: "
@@ -386,7 +391,12 @@ class AnthropicAdapter(Adapter):
                 + (f" (and {len(errors) - 5} more)" if len(errors) > 5 else ""),
                 context={**context, "schema_errors": errors},
             )
-        return result
+        return StructuredResult(
+            value=result,
+            usage=anthropic_usage(response),
+            stop_reason=_STOP_REASON.get(response.stop_reason, StopReason.OTHER),
+            raw=response,
+        )
 
     def _check_structured_stop(self, response, model: str, max_tokens: int, context: dict) -> None:
         """Raise for the stop reasons that leave no trustworthy structured result."""

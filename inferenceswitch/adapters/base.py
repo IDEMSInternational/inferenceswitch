@@ -12,7 +12,15 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from ..errors import MissingDependencyError, UnsupportedCapabilityError
-from ..messages import CacheHandle, Effort, Response, Message, Tool, ToolChoice
+from ..messages import (
+    CacheHandle,
+    Effort,
+    Message,
+    Response,
+    StructuredResult,
+    Tool,
+    ToolChoice,
+)
 from ..registry import ProviderSpec
 
 
@@ -76,7 +84,7 @@ class Adapter(ABC):
     def _build_client(self, api_key: str) -> Any: ...
 
     @abstractmethod
-    def generate_structured_json(
+    def generate_structured(
         self,
         *,
         model: str,
@@ -86,8 +94,13 @@ class Adapter(ABC):
         tool_name: str = "generate_json",
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> Any:
-        """Return schema-constrained JSON as a native Python object."""
+    ) -> StructuredResult:
+        """Return schema-constrained JSON as a native Python object, with the
+        usage and stop reason of the response it came from."""
+
+    def generate_structured_json(self, **kwargs: Any) -> Any:
+        """Just the value of :meth:`generate_structured`."""
+        return self.generate_structured(**kwargs).value
 
     @abstractmethod
     def generate_text(

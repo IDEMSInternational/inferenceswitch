@@ -20,6 +20,7 @@ from ..messages import (
     Response,
     Message,
     StopReason,
+    StructuredResult,
     Text,
     Tool,
     ToolCall,
@@ -114,6 +115,19 @@ def encode_openai_tool_choice(tool_choice: ToolChoice, force_tool: str | None):
     return tool_choice.value  # "auto" | "required" | "none"
 
 
+def openai_usage(raw) -> Usage:
+    """The response's token counts; ``Usage()`` when it reports none (some
+    local servers omit ``usage`` entirely)."""
+    usage = Usage()
+    if getattr(raw, "usage", None) is not None:
+        usage.input_tokens = getattr(raw.usage, "prompt_tokens", None)
+        usage.output_tokens = getattr(raw.usage, "completion_tokens", None)
+        details = getattr(raw.usage, "prompt_tokens_details", None)
+        if details is not None:
+            usage.cache_read_tokens = getattr(details, "cached_tokens", None)
+    return usage
+
+
 def decode_openai_response(raw) -> Response:
     """OpenAI response object -> normalized Response."""
     choice = raw.choices[0]
@@ -126,19 +140,11 @@ def decode_openai_response(raw) -> Response:
             args = {}
         tool_calls.append(ToolCall(id=tc.id, name=tc.function.name, input=args))
 
-    usage = Usage()
-    if getattr(raw, "usage", None) is not None:
-        usage.input_tokens = getattr(raw.usage, "prompt_tokens", None)
-        usage.output_tokens = getattr(raw.usage, "completion_tokens", None)
-        details = getattr(raw.usage, "prompt_tokens_details", None)
-        if details is not None:
-            usage.cache_read_tokens = getattr(details, "cached_tokens", None)
-
     return Response(
         text=message.content or "",
         tool_calls=tool_calls,
         stop_reason=_FINISH_REASON.get(choice.finish_reason, StopReason.OTHER),
-        usage=usage,
+        usage=openai_usage(raw),
         raw=raw,
     )
 
@@ -160,7 +166,7 @@ class OpenAICompatibleAdapter(Adapter):
         messages.append({"role": "user", "content": prompt})
         return messages
 
-    def generate_structured_json(
+    def generate_structured(
         self,
         *,
         model: str,
@@ -170,7 +176,7 @@ class OpenAICompatibleAdapter(Adapter):
         tool_name: str = "generate_json",
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> Any:
+    ) -> StructuredResult:
         mode = self.capabilities.structured_output
         kwargs: dict[str, Any] = {"model": model, "temperature": temperature}
         if max_tokens is not None:
@@ -212,12 +218,22 @@ class OpenAICompatibleAdapter(Adapter):
                 },
             )
         try:
-            return json.loads(content)
+            value = json.loads(content)
         except json.JSONDecodeError as exc:
             raise StructuredOutputError(
                 f"Provider returned non-JSON content: {exc}",
                 context={"provider": self.spec.name, "model": model},
             ) from exc
+        finish_reason = getattr(response.choices[0], "finish_reason", None)
+        return StructuredResult(
+            value=value,
+            usage=openai_usage(response),
+            stop_reason=(
+                None if finish_reason is None
+                else _FINISH_REASON.get(finish_reason, StopReason.OTHER)
+            ),
+            raw=response,
+        )
 
     def generate_text(
         self,

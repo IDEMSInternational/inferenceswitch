@@ -29,6 +29,13 @@ All notable changes to this project are documented here. This project adheres to
 
 ### Added
 
+- `Client.generate_structured`, which returns a `StructuredResult` with the
+  parsed `value`, the call's token `usage`, its `stop_reason` and the `raw`
+  provider response
+  ([#4](https://github.com/IDEMSInternational/inferenceswitch/issues/4)). Each
+  adapter fills `Usage` with the same mapping as its `chat` path; fields a
+  provider doesn't report are `None`. `generate_structured_json` is unchanged and
+  returns `generate_structured(...).value`.
 - `inferenceswitch.schema.to_anthropic_schema`: translates a schema to the
   dialect Anthropic structured outputs accept. It closes every object, rewrites
   maps to key/value arrays (folded back on the way out, as for Gemini), and
