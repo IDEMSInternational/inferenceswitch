@@ -28,6 +28,13 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   original GPT-5 models, and `"low"` on models with neither (GPT-6 Astra,
   6.1 Sol, the o-series, and unknown models). The table is
   `config["reasoning_none"]` on the `openai` registry entry.
+- **`Effort.MAX` on OpenAI asks for the most each model accepts.** It was
+  always clamped to `"high"`. It is now `"max"` on GPT-5.6 and GPT-6
+  (including 6.1), `"xhigh"` on GPT-5.4, and still `"high"` elsewhere (the
+  original GPT-5 line, 5.1, the o-series, unknown models). The table is
+  `config["reasoning_max"]`.
+- **Claude Haiku 5.5's default output cap is 128K**, not the 64K fallback for
+  unknown models: `claude-haiku-5` joins `CLAUDE_MAX_OUTPUT_TOKENS`.
 - **The Gemini catalog uses Google's current ids.** `known_models` was
   `gemini-3-flash` (not an id Google documents; the model is
   `gemini-3-flash-preview`) and `gemini-3.5-flash` (now served by 3.6 Flash).
@@ -69,6 +76,10 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   availability instead of checking it (tests, environments that must not probe).
 
 ### Changed
+
+- The Anthropic catalog (`known_models`) adds the Claude 5.x models: Haiku 5.5,
+  Sonnet 5 and 5.5, Opus 5 and 5.5, Fable 5 and 5.1. They were already
+  routable by prefix; they now appear in `known_models()` and `models_for`.
 
 - **Capabilities are per model where a card says so.** `supports`, `require`
   and `capabilities` given `model=` apply that model's card on top of the
