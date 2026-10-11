@@ -159,6 +159,17 @@ class OpenAICompatibleAdapter(Adapter):
         # base_url None -> the SDK's default (api.openai.com).
         return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
 
+    def _sampling_kwargs(self, temperature: float | None, max_tokens: int | None) -> dict:
+        """``temperature`` (omitted when ``None``: the client passes ``None``
+        for models that reject it) and the output cap under the provider's
+        parameter name (``max_tokens`` unless ``config["max_tokens_param"]``)."""
+        kwargs: dict[str, Any] = {}
+        if temperature is not None:
+            kwargs["temperature"] = temperature
+        if max_tokens is not None:
+            kwargs[self.capabilities.config.get("max_tokens_param", "max_tokens")] = max_tokens
+        return kwargs
+
     def _messages(self, prompt: str, system: str | None) -> list[dict]:
         messages: list[dict] = []
         if system and self.capabilities.has(Capability.SYSTEM_PROMPT):
@@ -174,13 +185,12 @@ class OpenAICompatibleAdapter(Adapter):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         mode = self.capabilities.structured_output
-        kwargs: dict[str, Any] = {"model": model, "temperature": temperature}
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs: dict[str, Any] = {"model": model}
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
 
         if mode is StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA:
             json_schema: dict[str, Any] = {"name": tool_name, "schema": schema}
@@ -241,16 +251,14 @@ class OpenAICompatibleAdapter(Adapter):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         kwargs: dict[str, Any] = {
             "model": model,
-            "temperature": temperature,
             "messages": self._messages(prompt, system),
         }
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
         response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
@@ -265,7 +273,7 @@ class OpenAICompatibleAdapter(Adapter):
         system: str | None = None,
         effort: Effort | None = None,
         cache=None,  # reusable-cache handle: not an OpenAI concept; never non-None here
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> Response:
         _ = cache
@@ -274,13 +282,8 @@ class OpenAICompatibleAdapter(Adapter):
         if system_text:
             encoded.insert(0, {"role": "system", "content": system_text})
 
-        kwargs: dict[str, Any] = {
-            "model": model,
-            "messages": encoded,
-            "temperature": temperature,
-        }
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs: dict[str, Any] = {"model": model, "messages": encoded}
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
         if tools:
             kwargs["tools"] = encode_openai_tools(tools)
             kwargs["tool_choice"] = encode_openai_tool_choice(tool_choice, force_tool)

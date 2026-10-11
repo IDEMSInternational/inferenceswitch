@@ -280,8 +280,13 @@ class Client:
 
     def _caps(self, resolution: Resolution) -> Capabilities:
         card = self.cards.find(resolution.spec.name, resolution.model)
-        caps = resolution.spec.capabilities
+        caps = resolution.spec.capabilities.for_model(resolution.model)
         return caps if card is None else card.capabilities(caps)
+
+    def _temperature(self, resolution: Resolution, temperature: float) -> float | None:
+        """``temperature``, or ``None`` (not sent) for a model that rejects
+        sampling parameters, so the caller's default never causes a 400."""
+        return temperature if self._caps(resolution).has(Capability.SAMPLING_PARAMS) else None
 
     def capabilities(
         self, provider: str | None = None, *, model: str | None = None
@@ -389,7 +394,7 @@ class Client:
             schema=schema,
             system=system,
             tool_name=tool_name,
-            temperature=temperature,
+            temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
         )
 
@@ -440,7 +445,7 @@ class Client:
             model=resolution.model,
             prompt=prompt,
             system=system,
-            temperature=temperature,
+            temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
         )
 
@@ -516,7 +521,7 @@ class Client:
             system=system,
             effort=effort,
             cache=cache,
-            temperature=temperature,
+            temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
         )
 

@@ -24,6 +24,40 @@ from inferenceswitch import (
 from inferenceswitch.cards import Cost
 from inferenceswitch.selection import key_availability
 
+def _hosted(card_id, rung, provider, price, context):
+    return {
+        "id": card_id, "rung": rung, "structured_output": "reliable",
+        "context_window": context,
+        "routes": {provider: {"models": [card_id], "cost": {"input": price[0], "output": price[1]}}},
+    }
+
+
+def _local(card_id, rung, ollama_ids, params, context):
+    return {
+        "id": card_id, "rung": rung, "structured_output": "best_effort",
+        "context_window": context,
+        "routes": {"ollama": {"models": ollama_ids}, "lmstudio": {"models": [card_id]}},
+        "open_weight": {"family": card_id.split("-")[0], "params_b": params},
+    }
+
+
+# A fixed card set, so ranking tests don't move when the shipped data does.
+CARDS = ModelCards.from_dict({
+    "format": 1,
+    "updated": "2026-01-01",
+    "cards": [
+        _hosted("claude-haiku-4-5", "mid", "anthropic", (1.0, 5.0), 200_000),
+        _hosted("claude-sonnet-4-6", "large", "anthropic", (3.0, 15.0), 1_000_000),
+        _hosted("claude-opus-4-8", "frontier", "anthropic", (5.0, 25.0), 1_000_000),
+        _hosted("gemini-2.5-flash", "mid", "gemini", (0.30, 2.50), 1_048_576),
+        _hosted("gemini-3-flash", "mid", "gemini", (0.50, 3.00), 1_048_576),
+        _local("qwen3-4b", "nano", ["qwen3:4b"], 4, 32_768),
+        _local("qwen3-8b", "small", ["qwen3:8b", "qwen3:latest"], 8, 32_768),
+        _local("qwen3-32b", "mid", ["qwen3:32b"], 32, 32_768),
+        _local("llama3.3-70b", "mid", ["llama3.3:70b"], 70, 131_072),
+    ],
+})
+
 EVERYTHING = {
     "anthropic": True,
     "gemini": True,
@@ -33,6 +67,7 @@ EVERYTHING = {
 
 
 def client(availability=EVERYTHING, **kwargs) -> Client:
+    kwargs.setdefault("cards", CARDS)
     return Client(availability=availability, **kwargs)
 
 
@@ -199,7 +234,7 @@ def test_availability_is_cached_until_refresh():
         calls.append(spec.name)
         return ProviderAvailability(spec.name, spec.name == "anthropic", "fake")
 
-    c = Client(availability=check)
+    c = Client(availability=check, cards=CARDS)
     c.select_model("mid")
     first = len(calls)
     c.select_model("large")

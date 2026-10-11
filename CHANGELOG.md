@@ -11,6 +11,18 @@ Adds model cards and selection by rung
 ([#7](https://github.com/IDEMSInternational/inferenceswitch/issues/7)). Callers
 pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
 
+### Fixed
+
+- **OpenAI reasoning models no longer 400 on every call.** The OpenAI-compatible
+  adapter always sent `temperature` (default `0.1`) and the output cap as
+  `max_tokens`. GPT-5 and later, and the o-series, reject both. For the
+  `openai` provider the cap is now sent as `max_completion_tokens`, which every
+  OpenAI chat model accepts. `temperature` is sent only to models that accept
+  sampling parameters: per model, from a new
+  `Capabilities.model_sampling_params` table (on OpenAI, the `gpt-4*` and
+  `gpt-3.5` lines) and any model card. Other OpenAI-compatible servers
+  (Mistral, DeepSeek, Groq, Ollama, LM Studio) are unchanged.
+
 ### Added
 
 - **Model cards**: a versioned data file shipped in the package
@@ -46,6 +58,10 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   card that removes a feature makes `chat` raise `UnsupportedCapabilityError`
   for that model. Provider-level calls (`supports(cap, "anthropic")`,
   `providers_for`, `models_for`) are unchanged.
+- The `openai` provider no longer advertises `SAMPLING_PARAMS` at the provider
+  level (support is per model, as on Anthropic):
+  `supports(Capability.SAMPLING_PARAMS, "openai")` is now `False`, and `True`
+  for `model="openai/gpt-4o-mini"` and the other models that accept it.
 
 ## [0.2.0] — 2026-10-11
 

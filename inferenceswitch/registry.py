@@ -106,11 +106,25 @@ _OPENAI_COMPAT_BASE = frozenset(
 _OPENAI_CAPS = Capabilities(
     structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
     schema_dialect=SchemaDialect.OPENAI,
-    features=_OPENAI_COMPAT_BASE
+    # SAMPLING_PARAMS is per model here, as on Anthropic: the reasoning models
+    # (o-series, GPT-5 and later) reject a non-default temperature with a 400.
+    # Off by default so a new model gets no temperature rather than a 400; the
+    # non-reasoning lines known to accept it are listed below.
+    features=(_OPENAI_COMPAT_BASE - {_C.SAMPLING_PARAMS})
     | {_C.VISION, _C.REASONING_EFFORT, _C.BATCH, _C.IMPLICIT_PROMPT_CACHING},
+    model_sampling_params={
+        "gpt-4": True,     # gpt-4, gpt-4o, gpt-4.1 and their minis
+        "gpt-3.5": True,
+    },
     # reasoning_param names the request field the OpenAI-compat adapter sets for
     # effort; only OpenAI itself exposes one on chat.completions.
-    config={"openai_strict": False, "reasoning_param": "reasoning_effort"},
+    # max_tokens_param: the reasoning models reject max_tokens and take
+    # max_completion_tokens, which every OpenAI chat model accepts.
+    config={
+        "openai_strict": False,
+        "reasoning_param": "reasoning_effort",
+        "max_tokens_param": "max_completion_tokens",
+    },
 )
 _MISTRAL_CAPS = Capabilities(
     structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,

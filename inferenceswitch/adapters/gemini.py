@@ -268,7 +268,7 @@ class GeminiAdapter(Adapter):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",  # unused; Gemini has no tool-name concept
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
@@ -353,7 +353,7 @@ class GeminiAdapter(Adapter):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         types = require_sdk("google.genai", "gemini").types
@@ -440,7 +440,7 @@ class GeminiAdapter(Adapter):
         system: str | None = None,
         effort: Effort | None = None,
         cache: CacheHandle | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> Response:
         types = require_sdk("google.genai", "gemini").types
