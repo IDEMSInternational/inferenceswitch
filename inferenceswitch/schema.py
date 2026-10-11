@@ -221,6 +221,211 @@ def _to_anthropic(node: Any, path: str) -> Any:
     return out
 
 
+# ── OpenAI strict json_schema ────────────────────────────────────────────────
+
+#: String formats OpenAI strict mode accepts. Any other ``format`` is dropped.
+OPENAI_STRICT_STRING_FORMATS = frozenset(
+    {"date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid"}
+)
+
+#: Keywords passed through unchanged in OpenAI strict mode.
+_OPENAI_STRICT_KEEP = (
+    "type", "enum", "const", "description", "title", "pattern",
+    "multipleOf", "maximum", "exclusiveMaximum", "minimum", "exclusiveMinimum",
+    "minItems", "maxItems",
+)
+
+_OPENAI_STRICT_HANDLED = frozenset(
+    {*_OPENAI_STRICT_KEEP, *_ANNOTATIONS, "$defs", "definitions", "anyOf", "oneOf",
+     "allOf", "properties", "required", "additionalProperties", "items", "format"}
+)
+
+
+def to_openai_strict_schema(schema: dict) -> dict:
+    """Translate a JSON schema to the subset OpenAI-style ``strict: true``
+    ``json_schema`` accepts (OpenAI, and Groq on its strict-capable models).
+
+    * Every object is closed and lists **every** property in ``required``. A
+      property the caller left optional becomes nullable instead (a ``"null"``
+      type, or ``anyOf`` with ``{"type": "null"}``); undo it on the way out with
+      :func:`restore_openai_strict`.
+    * Maps become key/value arrays, as for Gemini and Anthropic.
+    * ``oneOf`` becomes ``anyOf``; a single-entry ``allOf`` is inlined.
+    * Keywords strict mode lacks (``minLength``, ``maxLength``,
+      ``patternProperties``, unsupported ``format`` values, ...) are removed and
+      noted in the description; check the result against the *original* schema
+      with :func:`schema_errors`.
+
+    Recursion through local ``$ref`` is allowed (strict mode supports it).
+    Raises :class:`UnsupportedSchemaError` for what strict mode cannot express:
+    a root that is not an object, free-form objects, multi-entry ``allOf``,
+    boolean subschemas and external ``$ref``. Callers can fall back to a
+    non-strict request. The input is not mutated.
+    """
+    if not isinstance(schema, dict):
+        raise UnsupportedSchemaError("A structured-output schema must be a JSON object.")
+    root_types = schema.get("type")
+    root_types = root_types if isinstance(root_types, list) else [root_types]
+    if "object" not in root_types and "properties" not in schema:
+        raise UnsupportedSchemaError("Strict json_schema needs an object at the root.")
+    return _to_openai_strict(schema, "#")
+
+
+def _to_openai_strict(node: Any, path: str) -> Any:
+    if isinstance(node, bool):
+        raise UnsupportedSchemaError(f"Boolean subschema at {path} is not supported in strict mode.")
+    if not isinstance(node, dict):
+        return node
+
+    if "allOf" in node:
+        parts = node["allOf"]
+        if len(parts) != 1:
+            raise UnsupportedSchemaError(f"allOf at {path} is not supported in strict mode.")
+        # Pydantic wraps a described $ref as {"allOf": [{"$ref": ...}], ...}.
+        merged = {k: v for k, v in node.items() if k != "allOf"}
+        inner = parts[0]
+        if isinstance(inner, dict) and "$ref" in inner:
+            return _to_openai_strict(inner, f"{path}/allOf/0")
+        return _to_openai_strict({**inner, **merged}, path)
+
+    out: dict[str, Any] = {}
+    for key in ("$defs", "definitions"):
+        if key in node:
+            out[key] = {
+                name: _to_openai_strict(sub, f"{path}/{key}/{name}")
+                for name, sub in node[key].items()
+            }
+    if "$ref" in node:
+        ref = node["$ref"]
+        if not ref.startswith("#"):
+            raise UnsupportedSchemaError(f"External $ref {ref!r} at {path} is not supported; inline it.")
+        out["$ref"] = ref
+        return out
+
+    for key in _OPENAI_STRICT_KEEP:
+        if key in node:
+            out[key] = node[key]
+    for combinator in ("anyOf", "oneOf"):
+        if combinator in node:
+            out.setdefault("anyOf", []).extend(
+                _to_openai_strict(sub, f"{path}/{combinator}/{i}")
+                for i, sub in enumerate(node[combinator])
+            )
+
+    types = node.get("type")
+    types = types if isinstance(types, list) else [types]
+    if "object" in types or "properties" in node:
+        additional = node.get("additionalProperties")
+        if isinstance(additional, dict):
+            map_node: dict[str, Any] = {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "key": {"type": "string"},
+                        "value": _to_openai_strict(additional, f"{path}/additionalProperties"),
+                    },
+                    "required": ["key", "value"],
+                    "additionalProperties": False,
+                },
+            }
+            if "description" in node:
+                map_node["description"] = node["description"]
+            return map_node
+        if "properties" not in node and additional is not False:
+            raise UnsupportedSchemaError(
+                f"Free-form object at {path} is not supported in strict mode: declare its "
+                "properties, or give additionalProperties a value schema to make it a map."
+            )
+        required = set(node.get("required", ()))
+        properties = {}
+        for name, sub in node.get("properties", {}).items():
+            translated = _to_openai_strict(sub, f"{path}/properties/{name}")
+            properties[name] = translated if name in required else _nullable(translated)
+        out["properties"] = properties
+        out["required"] = list(properties)
+        out["additionalProperties"] = False
+    if "items" in node:
+        out["items"] = _to_openai_strict(node["items"], f"{path}/items")
+    if node.get("format") in OPENAI_STRICT_STRING_FORMATS:
+        out["format"] = node["format"]
+
+    notes = {
+        key: value
+        for key, value in node.items()
+        if key not in _OPENAI_STRICT_HANDLED and out.get(key) != value
+    }
+    if node.get("format") is not None and "format" not in out:
+        notes["format"] = node["format"]
+    if notes:
+        note = "{" + ", ".join(f"{k}: {v}" for k, v in notes.items()) + "}"
+        description = out.get("description")
+        out["description"] = f"{description}\n\n{note}" if description else note
+    return out
+
+
+def _nullable(node: dict) -> dict:
+    """``node`` widened to also accept ``null`` (how strict mode says optional)."""
+    types = node.get("type")
+    if types is not None and "$ref" not in node and "anyOf" not in node:
+        types = types if isinstance(types, list) else [types]
+        widened = dict(node, type=types if "null" in types else [*types, "null"])
+        if "enum" in widened and None not in widened["enum"]:
+            widened["enum"] = [*widened["enum"], None]
+        return widened
+    if node.get("type") == "null":
+        return node
+    return {"anyOf": [node, {"type": "null"}]}
+
+
+def restore_openai_strict(data: Any, original_schema: dict) -> Any:
+    """Undo :func:`to_openai_strict_schema` on a response, in place.
+
+    Drops the ``null`` a model returns for a property the caller's schema left
+    optional (strict mode had to require it), then folds key/value arrays back
+    into maps.
+    """
+    _drop_optional_nulls(data, original_schema, original_schema, frozenset())
+    return restore_gemini_dicts(data, original_schema)
+
+
+def _drop_optional_nulls(data: Any, node: Any, root: dict, seen: frozenset) -> None:
+    if not isinstance(node, dict):
+        return
+    if "$ref" in node:
+        resolved = _resolve_ref(node, root)
+        # A $ref chain that loops without descending into the data stops here.
+        key = (id(resolved), id(data))
+        if resolved is node or key in seen:
+            return
+        _drop_optional_nulls(data, resolved, root, seen | {key})
+        return
+    for combinator in ("anyOf", "oneOf", "allOf"):
+        for branch in node.get(combinator, ()):
+            if not isinstance(data, dict) or _object_branch_fits(data, branch, root):
+                _drop_optional_nulls(data, branch, root, seen)
+    if isinstance(data, dict) and "properties" in node:
+        required = set(node.get("required", ()))
+        for name, sub in node["properties"].items():
+            if name not in data:
+                continue
+            if data[name] is None and name not in required:
+                del data[name]
+            else:
+                _drop_optional_nulls(data[name], sub, root, seen)
+    elif isinstance(data, list) and "items" in node:
+        for item in data:
+            _drop_optional_nulls(item, node["items"], root, seen)
+
+
+def _object_branch_fits(data: dict, branch: Any, root: dict) -> bool:
+    """Whether an object ``branch`` of a union plausibly describes ``data``."""
+    branch = _resolve_ref(branch, root) if isinstance(branch, dict) and "$ref" in branch else branch
+    if not isinstance(branch, dict) or "properties" not in branch:
+        return False
+    return set(data) <= set(branch["properties"])
+
+
 def _reject_recursion(schema: dict) -> None:
     """Raise :class:`UnsupportedSchemaError` if any local ``$ref`` chain loops."""
 
@@ -429,6 +634,8 @@ def _restore(data: Any, dict_fields: set[str]) -> Any:
 def _resolve_ref(node: Any, root: dict) -> Any:
     """Follow a ``{"$ref": "#/$defs/Foo"}`` node to its definition."""
     if isinstance(node, dict) and "$ref" in node:
+        if node["$ref"] == "#":
+            return root
         target: Any = root
         for part in node["$ref"].lstrip("#/").split("/"):
             if not isinstance(target, dict) or part not in target:

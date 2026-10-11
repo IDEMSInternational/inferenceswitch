@@ -54,13 +54,16 @@ model in the abstract:
 
 | Grade | Meaning | Typical case |
 |---|---|---|
-| `reliable` | The provider enforces the schema (constrained decoding or a strict schema) | Anthropic structured outputs, Gemini `response_schema` |
-| `best_effort` | Not enforced: JSON mode plus the schema in the prompt, or a non-strict `json_schema`; validated client-side, occasional retries on long or nested output | Local servers, OpenAI, Mistral, DeepSeek, Groq (all through the OpenAI-compatible adapter, which does not send `strict`) |
+| `reliable` | The provider enforces the schema (constrained decoding or a strict schema) | Anthropic structured outputs, Gemini `response_schema`, OpenAI strict `json_schema` |
+| `best_effort` | Not enforced: JSON mode plus the schema in the prompt, or a non-strict `json_schema`; expect occasional invalid output on long or nested schemas | Local servers, Mistral, DeepSeek, Groq |
 | `none` | No usable structured output | Base models, very small models |
 
-If inferenceswitch starts enforcing schemas on a provider (for example by
-sending `strict: true` to OpenAI), that provider's cards move up a grade in the
-same change. A test fails if a card is graded `reliable` on a provider whose
+OpenAI's `reliable` holds for schemas strict mode can express. inferenceswitch
+translates the schema to the strict subset (every field required, optional ones
+nullable, closed objects), and a schema it cannot express (a free-form object,
+a multi-entry `allOf`) is sent non-strict instead. If inferenceswitch starts
+enforcing schemas on another provider, that provider's cards move up a grade in
+the same change. A test fails if a card is graded `reliable` on a provider whose
 mechanism inferenceswitch does not enforce.
 
 ### Other fields

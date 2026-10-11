@@ -124,8 +124,11 @@ _OPENAI_CAPS = Capabilities(
     # wins). "low" is the default because every OpenAI reasoning model takes
     # it; "none" arrived with GPT-5.1 and is missing on GPT-6 Astra and 6.1 Sol;
     # the original GPT-5 models take "minimal" instead.
+    # openai_strict: every OpenAI chat model takes strict json_schema; the
+    # schema is translated to the strict subset (to_openai_strict_schema), and
+    # one strict mode cannot express is sent non-strict instead.
     config={
-        "openai_strict": False,
+        "openai_strict": True,
         "reasoning_param": "reasoning_effort",
         "max_tokens_param": "max_completion_tokens",
         "reasoning_none": {
@@ -332,6 +335,21 @@ def default_registry() -> Registry:
                 api_key_env="OPENAI_API_KEY",
                 base_url=None,  # SDK default: api.openai.com
                 model_prefixes=("gpt-", "o1", "o3", "o4"),
+                known_models=(
+                    "gpt-6-astra",
+                    "gpt-6.1-sol",
+                    "gpt-6-sol",
+                    "gpt-6-luna",
+                    "gpt-5.6-sol",
+                    "gpt-5.6-terra",
+                    "gpt-5.6-luna",
+                    "gpt-5.4",
+                    "gpt-5.4-mini",
+                    "gpt-5.4-nano",
+                    "gpt-4.1",
+                    "gpt-4.1-mini",
+                    "gpt-4o-mini",
+                ),
             ),
             ProviderSpec(
                 name="mistral",
@@ -340,6 +358,15 @@ def default_registry() -> Registry:
                 api_key_env="MISTRAL_API_KEY",
                 base_url="https://api.mistral.ai/v1",
                 model_prefixes=("mistral", "codestral", "ministral", "magistral"),
+                known_models=(
+                    "mistral-large-4",
+                    "mistral-large-2512",
+                    "mistral-medium-3-5",
+                    "mistral-small-2603",
+                    "ministral-14b-2512",
+                    "ministral-8b-2512",
+                    "ministral-3b-2512",
+                ),
             ),
             ProviderSpec(
                 name="deepseek",
@@ -348,6 +375,7 @@ def default_registry() -> Registry:
                 api_key_env="DEEPSEEK_API_KEY",
                 base_url="https://api.deepseek.com/v1",
                 model_prefixes=("deepseek",),
+                known_models=("deepseek-flash", "deepseek-v4-pro"),
             ),
             ProviderSpec(
                 name="groq",

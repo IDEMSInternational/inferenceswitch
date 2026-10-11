@@ -42,6 +42,18 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   and `gemini-3.8-flash`. Bare `gemini-*` names still route by prefix, so code
   passing the old names is unaffected; only `known_models()` and `models_for`
   list different entries. `gemini-3.8-flash` joins the output-cap table.
+- **OpenAI structured output is enforced** (`strict: true`). The schema was
+  sent as non-strict guidance. It is now translated to the strict subset by the
+  new `inferenceswitch.schema.to_openai_strict_schema`: every object is closed
+  and lists every property as required, optional properties become nullable,
+  maps become key/value arrays, `oneOf` becomes `anyOf`, and keywords strict
+  mode lacks (`minLength`, `maxLength`, ...) move into the description. On the
+  way back, `restore_openai_strict` drops the nulls for optional fields and
+  folds maps back, and the result is checked against your original schema
+  (`StructuredOutputError` on a mismatch). A schema strict mode cannot express
+  (a free-form object, a multi-entry `allOf`, a non-object root) is sent
+  non-strict, as before. OpenAI model cards are graded `reliable` accordingly.
+  Other OpenAI-compatible providers are unchanged.
 - **DeepSeek structured output** now asks for `json_object` with the schema in
   the prompt, validated client-side. DeepSeek documents no `json_schema`
   response format, which is what was sent before. `STRICT_SCHEMA_OUTPUT` is no
@@ -77,6 +89,10 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
 
 ### Changed
 
+- `known_models` for OpenAI (GPT-6, 5.6, 5.4 and 4.x), Mistral (Large 4/3,
+  Medium 3.5, Small 4, Ministral 3) and DeepSeek (Flash, V4 Pro), each with a
+  card. They route by prefix as before; they now appear in `known_models()`
+  and `models_for` as routable ids instead of a bare provider name.
 - The Anthropic catalog (`known_models`) adds the Claude 5.x models: Haiku 5.5,
   Sonnet 5 and 5.5, Opus 5 and 5.5, Fable 5 and 5.1. They were already
   routable by prefix; they now appear in `known_models()` and `models_for`.

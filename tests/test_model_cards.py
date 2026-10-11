@@ -191,15 +191,18 @@ _ENFORCED = {"output_config_json_schema", "strict_tool_use", "response_schema"}
 def test_reliable_grade_only_where_inferenceswitch_enforces_the_schema():
     # The grade describes the path inferenceswitch uses, so a card can only be
     # "reliable" on a provider whose mechanism (as sent) is enforced.
+    from inferenceswitch.adapters.openai_compat import openai_strict_for
+
     registry = default_registry()
     for card in default_cards():
         if card.structured_output is not Reliability.RELIABLE:
             continue
         for route in card.routes:
             caps = registry[route.provider].capabilities
-            mode = caps.structured_output_for(route.models[0]).value
+            model = route.models[0]
+            mode = caps.structured_output_for(model).value
             strict_json_schema = (
-                mode == "response_format_json_schema" and caps.config.get("openai_strict")
+                mode == "response_format_json_schema" and openai_strict_for(caps.config, model)
             )
             assert mode in _ENFORCED or strict_json_schema, (card.id, route.provider)
 

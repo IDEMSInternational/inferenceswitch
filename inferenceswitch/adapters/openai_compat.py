@@ -13,8 +13,9 @@ from typing import Any
 
 from collections.abc import Mapping
 
+from .. import schema as schema_mod
 from ..capabilities import Capability, StructuredMode, _for_model
-from ..errors import StructuredOutputError
+from ..errors import StructuredOutputError, UnsupportedSchemaError
 from ..messages import (
     Effort,
     Response,
@@ -63,11 +64,31 @@ def openai_reasoning_kwargs(
     if not param:
         return {}
     value = _OPENAI_EFFORT[effort]
-    table = config.get(f"reasoning_{effort.value}")
-    if effort in (Effort.NONE, Effort.MAX) and table and model is not None:
-        default = table.get("*", value)
-        value = _for_model({k: v for k, v in table.items() if k != "*"}, model, default)
+    if effort in (Effort.NONE, Effort.MAX) and model is not None:
+        value = _config_for_model(config, f"reasoning_{effort.value}", model, value)
     return {param: value}
+
+
+def openai_strict_for(config: Mapping, model: str) -> bool:
+    """Whether ``model`` gets ``strict: true`` on its ``json_schema``.
+
+    ``config["strict_json_schema"]`` decides per model (substring, longest
+    wins, ``"*"`` default); without it, ``config["openai_strict"]`` decides
+    for every model.
+    """
+    return bool(
+        _config_for_model(config, "strict_json_schema", model, config.get("openai_strict", False))
+    )
+
+
+def _config_for_model(config: Mapping, key: str, model: str, default: Any) -> Any:
+    """``config[key]``'s entry for ``model``: a table matched like the
+    per-model capability tables, with ``"*"`` as its own default."""
+    table = config.get(key)
+    if not table:
+        return default
+    rows = {k: v for k, v in table.items() if k != "*"}
+    return _for_model(rows, model, table.get("*", default))
 
 
 _FINISH_REASON = {
@@ -210,9 +231,18 @@ class OpenAICompatibleAdapter(Adapter):
         kwargs: dict[str, Any] = {"model": model}
         kwargs.update(self._sampling_kwargs(temperature, max_tokens))
 
+        strict = False
         if mode is StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA:
-            json_schema: dict[str, Any] = {"name": tool_name, "schema": schema}
-            if self.capabilities.config.get("openai_strict", False):
+            sent = schema
+            if openai_strict_for(self.capabilities.config, model):
+                try:
+                    sent, strict = schema_mod.to_openai_strict_schema(schema), True
+                except UnsupportedSchemaError:
+                    # Strict mode cannot express this schema (a free-form
+                    # object, a multi-entry allOf, ...): send it as guidance.
+                    sent = schema
+            json_schema: dict[str, Any] = {"name": tool_name, "schema": sent}
+            if strict:
                 json_schema["strict"] = True
             kwargs["response_format"] = {"type": "json_schema", "json_schema": json_schema}
             messages = self._messages(prompt, system)
@@ -253,6 +283,24 @@ class OpenAICompatibleAdapter(Adapter):
                 context={"provider": self.spec.name, "model": model},
             ) from exc
         finish_reason = getattr(response.choices[0], "finish_reason", None)
+        if strict:
+            # Undo the strict rewrite (nulls for optional fields, maps as
+            # key/value arrays), then check what strict mode could not enforce
+            # (dropped keywords such as minLength) against the caller's schema.
+            value = schema_mod.restore_openai_strict(value, schema)
+            errors = schema_mod.schema_errors(value, schema)
+            if errors:
+                raise StructuredOutputError(
+                    "Structured output does not match the schema: "
+                    + "; ".join(errors[:5])
+                    + (f" (and {len(errors) - 5} more)" if len(errors) > 5 else ""),
+                    context={
+                        "provider": self.spec.name,
+                        "model": model,
+                        "finish_reason": finish_reason,
+                        "schema_errors": errors,
+                    },
+                )
         return StructuredResult(
             value=value,
             usage=openai_usage(response),

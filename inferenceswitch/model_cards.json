@@ -196,7 +196,7 @@
       "routes": {
         "openai": {"models": ["gpt-6-astra"], "cost": {"input": 10.0, "output": 50.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "notes": "OpenAI's top tier. Prompts over 272K input tokens cost 2x input and 1.5x output."
     },
@@ -206,7 +206,7 @@
       "routes": {
         "openai": {"models": ["gpt-6.1-sol"], "cost": {"input": 2.0, "output": 10.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "notes": "Chat Completions has no tool calling for this model (Responses API only). Prompts over 272K input tokens cost 2x input and 1.5x output."
@@ -217,7 +217,7 @@
       "routes": {
         "openai": {"models": ["gpt-6-sol"], "cost": {"input": 2.0, "output": 10.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "notes": "Chat Completions allows function calling only at reasoning effort none, which inferenceswitch does not send by default, so tool calling is removed. Prompts over 272K input tokens cost 2x input and 1.5x output."
@@ -228,7 +228,7 @@
       "routes": {
         "openai": {"models": ["gpt-6-luna"], "cost": {"input": 0.1, "output": 0.5}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "notes": "Fastest, cheapest GPT-6 tier. Chat Completions allows function calling only at reasoning effort none, which inferenceswitch does not send by default, so tool calling is removed. Prompts over 272K input tokens cost 2x input and 1.5x output."
@@ -239,7 +239,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.6-sol"], "cost": {"input": 4.0, "output": 20.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "notes": "Alias gpt-5.6 points here. Prompts over 272K input tokens cost 2x input and 1.5x output."
     },
@@ -249,7 +249,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.6-terra"], "cost": {"input": 2.0, "output": 12.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "notes": "The GPT-5.6 'mini' tier. Prompts over 272K input tokens cost 2x input and 1.5x output."
     },
@@ -259,7 +259,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.6-luna"], "cost": {"input": 0.2, "output": 1.2}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "notes": "The GPT-5.6 'nano' tier. Prompts over 272K input tokens cost 2x input and 1.5x output."
     },
@@ -269,7 +269,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.4"], "cost": {"input": 2.5, "output": 15.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1050000,
       "notes": "Prompts over 272K input tokens cost 2x input and 1.5x output."
     },
@@ -279,7 +279,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.4-mini"], "cost": {"input": 0.75, "output": 4.5}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 400000,
       "notes": "272K input tokens of the 400K window."
     },
@@ -289,7 +289,7 @@
       "routes": {
         "openai": {"models": ["gpt-5.4-nano"], "cost": {"input": 0.2, "output": 1.25}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 400000,
       "notes": "272K input tokens of the 400K window. Deprecated: shuts down 2027-04-01 (replacement gpt-6-luna)."
     },
@@ -299,7 +299,7 @@
       "routes": {
         "openai": {"models": ["gpt-4.1"], "cost": {"input": 2.0, "output": 8.0}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1047576,
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "notes": "Legacy. Lower end of mid. Not a reasoning model: accepts temperature, rejects reasoning_effort."
@@ -310,7 +310,7 @@
       "routes": {
         "openai": {"models": ["gpt-4.1-mini"], "cost": {"input": 0.4, "output": 1.6}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 1047576,
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "notes": "Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
@@ -321,7 +321,7 @@
       "routes": {
         "openai": {"models": ["gpt-4o-mini"], "cost": {"input": 0.15, "output": 0.6}}
       },
-      "structured_output": "best_effort",
+      "structured_output": "reliable",
       "context_window": 128000,
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "notes": "Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
@@ -337,7 +337,7 @@
       "structured_output": "best_effort",
       "context_window": 131072,
       "open_weight": {"family": "gpt-oss", "params_b": 120, "active_params_b": 5.1, "quantization": "MXFP4"},
-      "notes": "Lower end of mid. Groq enforces strict json_schema for it, but inferenceswitch sends non-strict, so best_effort. Needs roughly 65 GB of memory locally."
+      "notes": "Lower end of mid. Needs roughly 65 GB of memory locally."
     },
     {
       "id": "gpt-oss-20b",
