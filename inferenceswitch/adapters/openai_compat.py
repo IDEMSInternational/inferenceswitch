@@ -13,8 +13,9 @@ from typing import Any
 
 from collections.abc import Mapping
 
-from ..capabilities import Capability, StructuredMode
-from ..errors import StructuredOutputError
+from .. import schema as schema_mod
+from ..capabilities import Capability, StructuredMode, _for_model
+from ..errors import StructuredOutputError, UnsupportedSchemaError
 from ..messages import (
     Effort,
     Response,
@@ -31,7 +32,9 @@ from ..messages import (
 )
 from .base import Adapter, require_sdk, split_system
 
-# OpenAI reasoning_effort accepts minimal/low/medium/high; MAX clamps to high.
+# OpenAI reasoning_effort levels. NONE and MAX are per model when the provider
+# declares "reasoning_none" / "reasoning_max" tables; without them NONE is
+# "minimal" and MAX clamps to "high", which the oldest reasoning models accept.
 _OPENAI_EFFORT = {
     Effort.NONE: "minimal",
     Effort.LOW: "low",
@@ -41,15 +44,51 @@ _OPENAI_EFFORT = {
 }
 
 
-def openai_reasoning_kwargs(effort: Effort | None, config: Mapping) -> dict:
+def openai_reasoning_kwargs(
+    effort: Effort | None, config: Mapping, model: str | None = None
+) -> dict:
     """Request kwargs for reasoning effort — empty unless the provider declares a
-    ``reasoning_param`` (only OpenAI does; others reason via model choice)."""
+    ``reasoning_param`` (only OpenAI does; others reason via model choice).
+
+    :attr:`Effort.NONE` and :attr:`Effort.MAX` mean the least and the most
+    reasoning the model accepts, which differ by model (``"none"`` /
+    ``"minimal"`` / ``"low"``; ``"max"`` / ``"xhigh"`` / ``"high"``). A
+    ``config["reasoning_none"]`` or ``config["reasoning_max"]`` table, matched
+    by model substring (longest wins, as for the per-model capability tables)
+    with a ``"*"`` default, chooses it; without a table, NONE is ``"minimal"``
+    and MAX is ``"high"``.
+    """
     if effort is None:
         return {}
     param = config.get("reasoning_param")
     if not param:
         return {}
-    return {param: _OPENAI_EFFORT[effort]}
+    value = _OPENAI_EFFORT[effort]
+    if effort in (Effort.NONE, Effort.MAX) and model is not None:
+        value = _config_for_model(config, f"reasoning_{effort.value}", model, value)
+    return {param: value}
+
+
+def openai_strict_for(config: Mapping, model: str) -> bool:
+    """Whether ``model`` gets ``strict: true`` on its ``json_schema``.
+
+    ``config["strict_json_schema"]`` decides per model (substring, longest
+    wins, ``"*"`` default); without it, ``config["openai_strict"]`` decides
+    for every model.
+    """
+    return bool(
+        _config_for_model(config, "strict_json_schema", model, config.get("openai_strict", False))
+    )
+
+
+def _config_for_model(config: Mapping, key: str, model: str, default: Any) -> Any:
+    """``config[key]``'s entry for ``model``: a table matched like the
+    per-model capability tables, with ``"*"`` as its own default."""
+    table = config.get(key)
+    if not table:
+        return default
+    rows = {k: v for k, v in table.items() if k != "*"}
+    return _for_model(rows, model, table.get("*", default))
 
 
 _FINISH_REASON = {
@@ -159,6 +198,17 @@ class OpenAICompatibleAdapter(Adapter):
         # base_url None -> the SDK's default (api.openai.com).
         return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
 
+    def _sampling_kwargs(self, temperature: float | None, max_tokens: int | None) -> dict:
+        """``temperature`` (omitted when ``None``: the client passes ``None``
+        for models that reject it) and the output cap under the provider's
+        parameter name (``max_tokens`` unless ``config["max_tokens_param"]``)."""
+        kwargs: dict[str, Any] = {}
+        if temperature is not None:
+            kwargs["temperature"] = temperature
+        if max_tokens is not None:
+            kwargs[self.capabilities.config.get("max_tokens_param", "max_tokens")] = max_tokens
+        return kwargs
+
     def _messages(self, prompt: str, system: str | None) -> list[dict]:
         messages: list[dict] = []
         if system and self.capabilities.has(Capability.SYSTEM_PROMPT):
@@ -174,17 +224,25 @@ class OpenAICompatibleAdapter(Adapter):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         mode = self.capabilities.structured_output
-        kwargs: dict[str, Any] = {"model": model, "temperature": temperature}
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs: dict[str, Any] = {"model": model}
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
 
+        strict = False
         if mode is StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA:
-            json_schema: dict[str, Any] = {"name": tool_name, "schema": schema}
-            if self.capabilities.config.get("openai_strict", False):
+            sent = schema
+            if openai_strict_for(self.capabilities.config, model):
+                try:
+                    sent, strict = schema_mod.to_openai_strict_schema(schema), True
+                except UnsupportedSchemaError:
+                    # Strict mode cannot express this schema (a free-form
+                    # object, a multi-entry allOf, ...): send it as guidance.
+                    sent = schema
+            json_schema: dict[str, Any] = {"name": tool_name, "schema": sent}
+            if strict:
                 json_schema["strict"] = True
             kwargs["response_format"] = {"type": "json_schema", "json_schema": json_schema}
             messages = self._messages(prompt, system)
@@ -225,6 +283,24 @@ class OpenAICompatibleAdapter(Adapter):
                 context={"provider": self.spec.name, "model": model},
             ) from exc
         finish_reason = getattr(response.choices[0], "finish_reason", None)
+        if strict:
+            # Undo the strict rewrite (nulls for optional fields, maps as
+            # key/value arrays), then check what strict mode could not enforce
+            # (dropped keywords such as minLength) against the caller's schema.
+            value = schema_mod.restore_openai_strict(value, schema)
+            errors = schema_mod.schema_errors(value, schema)
+            if errors:
+                raise StructuredOutputError(
+                    "Structured output does not match the schema: "
+                    + "; ".join(errors[:5])
+                    + (f" (and {len(errors) - 5} more)" if len(errors) > 5 else ""),
+                    context={
+                        "provider": self.spec.name,
+                        "model": model,
+                        "finish_reason": finish_reason,
+                        "schema_errors": errors,
+                    },
+                )
         return StructuredResult(
             value=value,
             usage=openai_usage(response),
@@ -241,16 +317,14 @@ class OpenAICompatibleAdapter(Adapter):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         kwargs: dict[str, Any] = {
             "model": model,
-            "temperature": temperature,
             "messages": self._messages(prompt, system),
         }
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
         response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
@@ -265,7 +339,7 @@ class OpenAICompatibleAdapter(Adapter):
         system: str | None = None,
         effort: Effort | None = None,
         cache=None,  # reusable-cache handle: not an OpenAI concept; never non-None here
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> Response:
         _ = cache
@@ -274,17 +348,12 @@ class OpenAICompatibleAdapter(Adapter):
         if system_text:
             encoded.insert(0, {"role": "system", "content": system_text})
 
-        kwargs: dict[str, Any] = {
-            "model": model,
-            "messages": encoded,
-            "temperature": temperature,
-        }
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+        kwargs: dict[str, Any] = {"model": model, "messages": encoded}
+        kwargs.update(self._sampling_kwargs(temperature, max_tokens))
         if tools:
             kwargs["tools"] = encode_openai_tools(tools)
             kwargs["tool_choice"] = encode_openai_tool_choice(tool_choice, force_tool)
-        kwargs.update(openai_reasoning_kwargs(effort, self.capabilities.config))
+        kwargs.update(openai_reasoning_kwargs(effort, self.capabilities.config, model))
 
         raw = self._client.chat.completions.create(**kwargs)
         return decode_openai_response(raw)

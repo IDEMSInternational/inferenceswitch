@@ -156,3 +156,10 @@ def test_truncation_at_the_model_max_advises_splitting(adapter):
             model="claude-opus-4-8", prompt="p", schema=_SCHEMA
         )
     assert "split the request" in str(excinfo.value)
+
+
+def test_claude_haiku_5_5_gets_its_own_cap():
+    from inferenceswitch import claude_max_output_tokens
+
+    assert claude_max_output_tokens("claude-haiku-5-5") == 128_000
+    assert claude_max_output_tokens("claude-haiku-4-5") == 64_000

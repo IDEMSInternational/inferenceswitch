@@ -5,6 +5,110 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-11
+
+Adds model cards and selection by rung
+([#7](https://github.com/IDEMSInternational/inferenceswitch/issues/7)). Callers
+pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
+
+### Fixed
+
+- **OpenAI reasoning models no longer 400 on every call.** The OpenAI-compatible
+  adapter always sent `temperature` (default `0.1`) and the output cap as
+  `max_tokens`. GPT-5 and later, and the o-series, reject both. For the
+  `openai` provider the cap is now sent as `max_completion_tokens`, which every
+  OpenAI chat model accepts. `temperature` is sent only to models that accept
+  sampling parameters: per model, from a new
+  `Capabilities.model_sampling_params` table (on OpenAI, the `gpt-4*` and
+  `gpt-3.5` lines) and any model card. Other OpenAI-compatible servers
+  (Mistral, DeepSeek, Groq, Ollama, LM Studio) are unchanged.
+- **`Effort.NONE` on OpenAI sends a level each model accepts.** It was always
+  `"minimal"`, which GPT-5.1 and later reject. It is now `"none"` on GPT-5.1
+  and later (including GPT-5.4, 5.6 and GPT-6 Sol / Luna), `"minimal"` on the
+  original GPT-5 models, and `"low"` on models with neither (GPT-6 Astra,
+  6.1 Sol, the o-series, and unknown models). The table is
+  `config["reasoning_none"]` on the `openai` registry entry.
+- **`Effort.MAX` on OpenAI asks for the most each model accepts.** It was
+  always clamped to `"high"`. It is now `"max"` on GPT-5.6 and GPT-6
+  (including 6.1), `"xhigh"` on GPT-5.4, and still `"high"` elsewhere (the
+  original GPT-5 line, 5.1, the o-series, unknown models). The table is
+  `config["reasoning_max"]`.
+- **Claude Haiku 5.5's default output cap is 128K**, not the 64K fallback for
+  unknown models: `claude-haiku-5` joins `CLAUDE_MAX_OUTPUT_TOKENS`.
+- **The Gemini catalog uses Google's current ids.** `known_models` was
+  `gemini-3-flash` (not an id Google documents; the model is
+  `gemini-3-flash-preview`) and `gemini-3.5-flash` (now served by 3.6 Flash).
+  It is now `gemini-2.5-flash`, `gemini-3-flash-preview`, `gemini-3.6-flash`
+  and `gemini-3.8-flash`. Bare `gemini-*` names still route by prefix, so code
+  passing the old names is unaffected; only `known_models()` and `models_for`
+  list different entries. `gemini-3.8-flash` joins the output-cap table.
+- **OpenAI structured output is enforced** (`strict: true`). The schema was
+  sent as non-strict guidance. It is now translated to the strict subset by the
+  new `inferenceswitch.schema.to_openai_strict_schema`: every object is closed
+  and lists every property as required, optional properties become nullable,
+  maps become key/value arrays, `oneOf` becomes `anyOf`, and keywords strict
+  mode lacks (`minLength`, `maxLength`, ...) move into the description. On the
+  way back, `restore_openai_strict` drops the nulls for optional fields and
+  folds maps back, and the result is checked against your original schema
+  (`StructuredOutputError` on a mismatch). A schema strict mode cannot express
+  (a free-form object, a multi-entry `allOf`, a non-object root) is sent
+  non-strict, as before. OpenAI model cards are graded `reliable` accordingly.
+  Other OpenAI-compatible providers are unchanged.
+- **DeepSeek structured output** now asks for `json_object` with the schema in
+  the prompt, validated client-side. DeepSeek documents no `json_schema`
+  response format, which is what was sent before. `STRICT_SCHEMA_OUTPUT` is no
+  longer advertised for `deepseek`.
+
+### Added
+
+- **Model cards**: a versioned data file shipped in the package
+  (`inferenceswitch/model_cards.json`, read with `json`) with one card per
+  model: a vendor-neutral rung (`nano` / `small` / `mid` / `large` /
+  `frontier`, provisional), a structured-output grade (`reliable` /
+  `best_effort` / `none`), context window, list price per provider route,
+  per-model capability overrides, and family, parameter count and quantization
+  for open-weight models. 50 seed cards: Anthropic (Claude 4.x and 5.x),
+  Gemini (2.5 through 3.8), OpenAI (GPT-6, 5.6, 5.4 and the 4.x non-reasoning
+  models), Mistral (Large 4/3, Medium 3.5, Small 4, Ministral 3), DeepSeek
+  (Flash, V4 Pro), Groq (gpt-oss, Qwen3.8 27B), and Qwen3, Llama and gpt-oss
+  on Ollama and LM Studio. Prices are list prices checked on 2026-10-11. `ModelCard`, `ModelCards`, `default_cards()`; consumers
+  add or override cards with `default_cards().merged(...)` and
+  `Client(cards=...)`. Placement rubric in `docs/model-cards.md`.
+- **`Client.select_model(rung, needs=..., structured_output=..., min_context=...,
+  local_only=..., prefer="local" | "cheapest" | "fastest")`** picks an
+  available model: providers with a key, and local servers that answer
+  `GET /models` (only the models they list count). The rung is a floor (this
+  rung or above; `allow_higher=False` for exactly this rung). Returns a
+  `Selection` with the routable `model`, the `reason` it won, every candidate
+  with why it was excluded, and `to_dict()` for run records. Raises
+  `NoModelAvailableError` naming the unavailable providers and the
+  requirements that excluded the rest.
+- `Client.availability()`, `Client.card(model)`, `ProviderAvailability`,
+  `static_availability()` and `Client(availability=...)` to declare
+  availability instead of checking it (tests, environments that must not probe).
+
+### Changed
+
+- `known_models` for OpenAI (GPT-6, 5.6, 5.4 and 4.x), Mistral (Large 4/3,
+  Medium 3.5, Small 4, Ministral 3) and DeepSeek (Flash, V4 Pro), each with a
+  card. They route by prefix as before; they now appear in `known_models()`
+  and `models_for` as routable ids instead of a bare provider name.
+- The Anthropic catalog (`known_models`) adds the Claude 5.x models: Haiku 5.5,
+  Sonnet 5 and 5.5, Opus 5 and 5.5, Fable 5 and 5.1. They were already
+  routable by prefix; they now appear in `known_models()` and `models_for`.
+
+- **Capabilities are per model where a card says so.** `supports`, `require`
+  and `capabilities` given `model=` apply that model's card on top of the
+  provider defaults, and `chat`'s capability gates use them. Today this only
+  adds: `SAMPLING_PARAMS` is reported for Claude Haiku 4.5 and Sonnet 4.6. A
+  card that removes a feature makes `chat` raise `UnsupportedCapabilityError`
+  for that model. Provider-level calls (`supports(cap, "anthropic")`,
+  `providers_for`, `models_for`) are unchanged.
+- The `openai` provider no longer advertises `SAMPLING_PARAMS` at the provider
+  level (support is per model, as on Anthropic):
+  `supports(Capability.SAMPLING_PARAMS, "openai")` is now `False`, and `True`
+  for `model="openai/gpt-4o-mini"` and the other models that accept it.
+
 ## [0.2.0] — 2026-10-11
 
 0.2 rather than 0.1.1: besides the fixes, this adds API and narrows what the

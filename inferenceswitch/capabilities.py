@@ -19,7 +19,7 @@ sets, no change to every ProviderSpec.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any
 
@@ -118,6 +118,11 @@ class Capabilities:
     #: Per-model overrides of :attr:`forced_tool_choice`, matched like
     #: :attr:`model_structured_output`. See :meth:`forced_tool_choice_for`.
     model_forced_tool_choice: Mapping[str, bool] = field(default_factory=dict)
+    #: Per-model overrides of whether sampling parameters (``temperature``)
+    #: are accepted, matched like :attr:`model_structured_output`. Unlisted
+    #: models follow :attr:`features` (``SAMPLING_PARAMS``). See
+    #: :meth:`sampling_params_for`.
+    model_sampling_params: Mapping[str, bool] = field(default_factory=dict)
 
     def has(self, capability: Capability) -> bool:
         return capability in self.features
@@ -129,6 +134,22 @@ class Capabilities:
     def forced_tool_choice_for(self, model: str) -> bool:
         """Whether ``model`` on this provider honors a forced tool choice."""
         return _for_model(self.model_forced_tool_choice, model, self.forced_tool_choice)
+
+    def sampling_params_for(self, model: str) -> bool:
+        """Whether ``model`` on this provider accepts sampling parameters."""
+        return _for_model(
+            self.model_sampling_params, model, self.has(Capability.SAMPLING_PARAMS)
+        )
+
+    def for_model(self, model: str) -> Capabilities:
+        """These capabilities with the per-model tables folded into
+        :attr:`features` (today: ``SAMPLING_PARAMS``)."""
+        features = set(self.features)
+        if self.sampling_params_for(model):
+            features.add(Capability.SAMPLING_PARAMS)
+        else:
+            features.discard(Capability.SAMPLING_PARAMS)
+        return replace(self, features=frozenset(features))
 
 
 def _for_model(table: Mapping[str, Any], model: str, default: Any) -> Any:

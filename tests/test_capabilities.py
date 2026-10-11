@@ -85,7 +85,9 @@ def test_catalog_less_provider_contributes_exactly_one_entry(client):
     choices = client.models_for(Capability.TOOL_CALLING)
     assert [c for c in choices if c.provider == "ollama"] == [ModelChoice("ollama")]
     # Curated providers still contribute one entry per model.
-    assert len([c for c in choices if c.provider == "anthropic"]) == 3
+    anthropic = [c for c in choices if c.provider == "anthropic"]
+    assert len(anthropic) == len(client.registry.get("anthropic").known_models)
+    assert "anthropic/claude-opus-5-5" in anthropic
 
 
 def test_models_for_still_filters_on_capabilities(client):

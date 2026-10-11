@@ -62,6 +62,7 @@ from .base import Adapter, require_sdk, split_system
 #: it — an explicit number is the caller's decision, and an out-of-range one
 #: surfaces Gemini's own 400 rather than being silently rewritten.
 GEMINI_MAX_OUTPUT_TOKENS: dict[str, int] = {
+    "gemini-3.8-flash": 65_536,
     "gemini-3.7-flash": 65_536,
     "gemini-3.6-flash": 65_536,
     "gemini-3.5-flash": 65_536,
@@ -268,7 +269,7 @@ class GeminiAdapter(Adapter):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",  # unused; Gemini has no tool-name concept
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
@@ -353,7 +354,7 @@ class GeminiAdapter(Adapter):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         types = require_sdk("google.genai", "gemini").types
@@ -440,7 +441,7 @@ class GeminiAdapter(Adapter):
         system: str | None = None,
         effort: Effort | None = None,
         cache: CacheHandle | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> Response:
         types = require_sdk("google.genai", "gemini").types

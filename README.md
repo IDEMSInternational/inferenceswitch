@@ -55,7 +55,7 @@ result.usage.output_tokens
 result.stop_reason          # StopReason, and result.raw is the provider response
 
 # Plain text.
-text = client.generate_text(model="gemini-3.5-flash", prompt="Summarize ...")
+text = client.generate_text(model="gemini-3.8-flash", prompt="Summarize ...")
 
 # Key smoke-test (cheapest authenticated call, never raises).
 ok, detail = client.verify_key("anthropic")
@@ -217,7 +217,7 @@ pinned to one.
 from inferenceswitch import GEMINI_MAX_OUTPUT_TOKENS, gemini_max_output_tokens
 
 gemini_max_output_tokens("gemini-3-flash-preview")   # 65536
-GEMINI_MAX_OUTPUT_TOKENS["gemini-3.5-flash"] = 16_000
+GEMINI_MAX_OUTPUT_TOKENS["gemini-3.8-flash"] = 16_000
 ```
 
 When a Gemini response *is* cut at the cap, `generate_structured_json` raises
@@ -265,6 +265,73 @@ raw.messages.create(..., extra_headers={...})       # provider-specific call
 > support is reliable across the provider, so `require()` never green-lights a
 > request that would error. (E.g. Anthropic omits `SAMPLING_PARAMS` because newer
 > models reject `temperature` — support there is per-model, not per-provider.)
+
+## Model cards and choosing a model by rung
+
+Capabilities above describe a *provider*. **Model cards** describe a *model*:
+a vendor-neutral **rung** (`nano` / `small` / `mid` / `large` / `frontier`,
+provisional), how reliably it returns schema-valid JSON (`reliable` /
+`best_effort` / `none`), its context window, list price per million tokens,
+per-model capability overrides, and for open-weight models the family,
+parameter count and quantization. They ship as a versioned data file
+([`inferenceswitch/model_cards.json`](inferenceswitch/model_cards.json)); the
+placement rubric and field reference are in
+[`docs/model-cards.md`](docs/model-cards.md).
+
+Ask for a rung, the hard requirements and a preference, and get back whichever
+*available* model fits, with the reason:
+
+```python
+from inferenceswitch import Client
+
+client = Client()
+choice = client.select_model(
+    "mid",                          # this rung or above (allow_higher=False for exact)
+    needs=["tool_calling"],         # Capability tokens or their string values
+    structured_output="reliable",   # grade floor: reliable > best_effort > none
+    min_context=32_000,
+    prefer="local",                 # "local" | "cheapest" (default) | "fastest"
+)
+choice.model        # e.g. "gemini/gemini-2.5-flash" — pass straight to chat(model=...)
+choice.reason       # why it won, and what came second
+choice.to_dict()    # JSON-able record for a run log: request, candidates, exclusions
+print(choice.explain())
+```
+
+- **Availability.** A hosted provider counts when its key resolves (your
+  `key_provider`; by default its env var is set). A local server (Ollama,
+  LM Studio) counts when it answers `GET /models` within half a second, and
+  then only the models it lists count. Results are cached on the client;
+  `refresh=True` checks again, and `client.availability()` shows them.
+- **Requirements** exclude; **preference** ranks. `local` puts local models
+  first, then the closest rung, then price. `cheapest` ranks by blended price
+  (3 x input + output, / 4; local is free), then closest rung. `fastest`
+  takes the closest rung, then hosted before local (local speed depends on the
+  machine), then the smaller and cheaper model.
+- **Nothing fits** raises `NoModelAvailableError`, whose message names the
+  unavailable providers, the models that would fit if they were available, and
+  the requirements that excluded the rest.
+- **Cards override provider capabilities per model.** `supports`, `require`
+  and `capabilities` given a `model=` apply its card, and `chat` gates on them:
+  `client.supports(Capability.SAMPLING_PARAMS, model="claude-haiku-4-5")` is
+  `True` though the Anthropic provider default is `False`. Models without a
+  card get the provider default.
+
+The cards are a starting guess about equivalence, not evidence. Your own task
+evals decide whether a substitute works, and pinning a model by id always
+bypasses selection.
+
+Add or override cards with a file in the same format, or in code:
+
+```python
+from inferenceswitch import Client, ModelCards, default_cards
+
+cards = default_cards().merged(ModelCards.load("my_cards.json"))  # same id replaces
+client = Client(cards=cards)
+
+# Tests, or environments that must not probe: declare availability instead.
+client = Client(availability={"anthropic": True, "ollama": ["qwen3:8b"]})
+```
 
 ## Prompt caching
 
@@ -354,6 +421,9 @@ example per mechanism.
 - **Adapters** (`adapters/`) — one `OpenAICompatibleAdapter` for all OpenAI-shaped
   providers; native `AnthropicAdapter` and `GeminiAdapter` where the wire format
   genuinely differs. SDKs are imported lazily.
+- **Model cards** (`cards.py`, `model_cards.json`, `selection.py`) — per-model
+  data parsed from a JSON file (no code is loaded), and resolution from (rung,
+  requirements, preference) to an available model.
 - **Client** (`client.py`) — resolution + key resolution + adapter caching +
   the uniform `generate_structured` / `generate_structured_json` /
   `generate_text` calls.

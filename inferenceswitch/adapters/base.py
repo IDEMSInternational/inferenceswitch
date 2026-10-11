@@ -92,7 +92,7 @@ class Adapter(ABC):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         """Return schema-constrained JSON as a native Python object, with the
@@ -109,7 +109,7 @@ class Adapter(ABC):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         """Return a plain text completion."""
@@ -126,7 +126,7 @@ class Adapter(ABC):
         system: str | None = None,
         effort: Effort | None = None,
         cache: CacheHandle | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> Response:
         """A normalized, optionally tool-using turn. Returns an :class:`Response`

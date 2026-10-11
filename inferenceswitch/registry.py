@@ -106,11 +106,49 @@ _OPENAI_COMPAT_BASE = frozenset(
 _OPENAI_CAPS = Capabilities(
     structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
     schema_dialect=SchemaDialect.OPENAI,
-    features=_OPENAI_COMPAT_BASE
+    # SAMPLING_PARAMS is per model here, as on Anthropic: the reasoning models
+    # (o-series, GPT-5 and later) reject a non-default temperature with a 400.
+    # Off by default so a new model gets no temperature rather than a 400; the
+    # non-reasoning lines known to accept it are listed below.
+    features=(_OPENAI_COMPAT_BASE - {_C.SAMPLING_PARAMS})
     | {_C.VISION, _C.REASONING_EFFORT, _C.BATCH, _C.IMPLICIT_PROMPT_CACHING},
+    model_sampling_params={
+        "gpt-4": True,     # gpt-4, gpt-4o, gpt-4.1 and their minis
+        "gpt-3.5": True,
+    },
     # reasoning_param names the request field the OpenAI-compat adapter sets for
     # effort; only OpenAI itself exposes one on chat.completions.
-    config={"openai_strict": False, "reasoning_param": "reasoning_effort"},
+    # max_tokens_param: the reasoning models reject max_tokens and take
+    # max_completion_tokens, which every OpenAI chat model accepts.
+    # reasoning_none: what Effort.NONE sends, per model (substring, longest
+    # wins). "low" is the default because every OpenAI reasoning model takes
+    # it; "none" arrived with GPT-5.1 and is missing on GPT-6 Astra and 6.1 Sol;
+    # the original GPT-5 models take "minimal" instead.
+    # openai_strict: every OpenAI chat model takes strict json_schema; the
+    # schema is translated to the strict subset (to_openai_strict_schema), and
+    # one strict mode cannot express is sent non-strict instead.
+    config={
+        "openai_strict": True,
+        "reasoning_param": "reasoning_effort",
+        "max_tokens_param": "max_completion_tokens",
+        "reasoning_none": {
+            "*": "low",
+            "gpt-5": "minimal",
+            "gpt-5.": "none",
+            "gpt-6": "none",
+            "gpt-6-astra": "low",
+            "gpt-6.1": "low",
+        },
+        # reasoning_max: what Effort.MAX sends. "high" is the default because
+        # every OpenAI reasoning model takes it; GPT-5.4 tops out at "xhigh";
+        # GPT-5.6 and GPT-6 (including 6.1) go to "max".
+        "reasoning_max": {
+            "*": "high",
+            "gpt-5.4": "xhigh",
+            "gpt-5.6": "max",
+            "gpt-6": "max",
+        },
+    },
 )
 _MISTRAL_CAPS = Capabilities(
     structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
@@ -119,13 +157,15 @@ _MISTRAL_CAPS = Capabilities(
     config={"openai_strict": False},
 )
 _DEEPSEEK_CAPS = Capabilities(
-    structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
+    # DeepSeek's JSON output is response_format={"type": "json_object"} only;
+    # it documents no json_schema, so the schema goes in the prompt and the
+    # result is validated client-side. No STRICT_SCHEMA_OUTPUT, accordingly.
+    structured_output=StructuredMode.JSON_OBJECT_BEST_EFFORT,
     schema_dialect=SchemaDialect.OPENAI,
-    # NOTE: DeepSeek reasoning is accessed by selecting the `deepseek-reasoner`
-    # MODEL, not by an effort knob — so no REASONING_EFFORT (which means
-    # "effort control"). No effort param is sent to it.
+    # NOTE: no REASONING_EFFORT (which means "effort control" through the
+    # adapter): DeepSeek's thinking toggle and effort are not sent by it.
     # It DOES do automatic context caching (reported back as cached tokens).
-    features=_OPENAI_COMPAT_BASE | {_C.IMPLICIT_PROMPT_CACHING},
+    features=(_OPENAI_COMPAT_BASE - {_C.STRICT_SCHEMA_OUTPUT}) | {_C.IMPLICIT_PROMPT_CACHING},
     config={"openai_strict": False},
 )
 _GROQ_CAPS = Capabilities(
@@ -263,6 +303,13 @@ def default_registry() -> Registry:
                     "claude-haiku-4-5",
                     "claude-sonnet-4-6",
                     "claude-opus-4-8",
+                    "claude-haiku-5-5",
+                    "claude-sonnet-5",
+                    "claude-sonnet-5-5",
+                    "claude-opus-5",
+                    "claude-opus-5-5",
+                    "claude-fable-5",
+                    "claude-fable-5-1",
                 ),
             ),
             ProviderSpec(
@@ -271,10 +318,13 @@ def default_registry() -> Registry:
                 capabilities=_GEMINI_CAPS,
                 api_key_env="GEMINI_API_KEY",
                 model_prefixes=("gemini",),
+                # Google's own ids. gemini-3.5-flash is now served by 3.6 Flash,
+                # and Gemini 3 Flash only exists as gemini-3-flash-preview.
                 known_models=(
                     "gemini-2.5-flash",
-                    "gemini-3-flash",
-                    "gemini-3.5-flash",
+                    "gemini-3-flash-preview",
+                    "gemini-3.6-flash",
+                    "gemini-3.8-flash",
                 ),
             ),
             # ── OpenAI-compatible (hosted) ──────────────────────────────────
@@ -285,6 +335,21 @@ def default_registry() -> Registry:
                 api_key_env="OPENAI_API_KEY",
                 base_url=None,  # SDK default: api.openai.com
                 model_prefixes=("gpt-", "o1", "o3", "o4"),
+                known_models=(
+                    "gpt-6-astra",
+                    "gpt-6.1-sol",
+                    "gpt-6-sol",
+                    "gpt-6-luna",
+                    "gpt-5.6-sol",
+                    "gpt-5.6-terra",
+                    "gpt-5.6-luna",
+                    "gpt-5.4",
+                    "gpt-5.4-mini",
+                    "gpt-5.4-nano",
+                    "gpt-4.1",
+                    "gpt-4.1-mini",
+                    "gpt-4o-mini",
+                ),
             ),
             ProviderSpec(
                 name="mistral",
@@ -293,6 +358,15 @@ def default_registry() -> Registry:
                 api_key_env="MISTRAL_API_KEY",
                 base_url="https://api.mistral.ai/v1",
                 model_prefixes=("mistral", "codestral", "ministral", "magistral"),
+                known_models=(
+                    "mistral-large-4",
+                    "mistral-large-2512",
+                    "mistral-medium-3-5",
+                    "mistral-small-2603",
+                    "ministral-14b-2512",
+                    "ministral-8b-2512",
+                    "ministral-3b-2512",
+                ),
             ),
             ProviderSpec(
                 name="deepseek",
@@ -301,6 +375,7 @@ def default_registry() -> Registry:
                 api_key_env="DEEPSEEK_API_KEY",
                 base_url="https://api.deepseek.com/v1",
                 model_prefixes=("deepseek",),
+                known_models=("deepseek-flash", "deepseek-v4-pro"),
             ),
             ProviderSpec(
                 name="groq",

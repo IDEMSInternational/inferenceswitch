@@ -83,3 +83,24 @@ class ToolChoiceError(InferenceSwitchError):
         super().__init__(message)
         self.response = response
         self.context = context or {}
+
+
+class ModelCardError(InferenceSwitchError, ValueError):
+    """A model card (or card file) is malformed: an unknown field, a missing
+    one, an unrecognised rung or grade, or an unsupported file format."""
+
+
+class NoModelAvailableError(InferenceSwitchError):
+    """:meth:`Client.select_model` found no available model meeting the request.
+
+    The message names what was missing (which providers were unavailable and
+    why, which requirements excluded the rest). ``selection_request`` is the
+    request as recorded, and ``candidates`` holds every candidate considered
+    with its exclusion reasons, so the caller can log or display them.
+    """
+
+    def __init__(self, message: str, *, request=None, candidates=(), availability=()) -> None:
+        super().__init__(message)
+        self.selection_request = request
+        self.candidates = tuple(candidates)
+        self.availability = tuple(availability)

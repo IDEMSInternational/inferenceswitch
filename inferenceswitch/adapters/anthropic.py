@@ -58,6 +58,7 @@ CLAUDE_MAX_OUTPUT_TOKENS: dict[str, int] = {
     "claude-opus-4-6": 128_000,
     "claude-sonnet-5": 128_000,
     "claude-sonnet-4-6": 128_000,
+    "claude-haiku-5": 128_000,
     "claude-haiku-4-5": 64_000,
 }
 
@@ -317,7 +318,7 @@ class AnthropicAdapter(Adapter):
         schema: dict,
         system: str | None = None,
         tool_name: str = "generate_json",
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON, by the mechanism the capability registry names
@@ -486,7 +487,7 @@ class AnthropicAdapter(Adapter):
         model: str,
         prompt: str,
         system: str | None = None,
-        temperature: float = 0.1,
+        temperature: float | None = 0.1,
         max_tokens: int | None = None,
     ) -> str:
         _ = temperature  # see generate_structured_json — not forwarded on Anthropic
@@ -511,7 +512,7 @@ class AnthropicAdapter(Adapter):
         system: str | None = None,
         effort: Effort | None = None,
         cache: CacheHandle | None = None,
-        temperature: float = 0.1,  # not forwarded — see structured-output note
+        temperature: float | None = 0.1,  # not forwarded — see structured-output note
         max_tokens: int | None = None,
     ) -> Response:
         _ = temperature

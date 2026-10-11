@@ -72,3 +72,54 @@ def test_discovery_lists_effort_capable_models():
     provs = set(client.providers_for(Capability.REASONING_EFFORT))
     assert {"anthropic", "openai", "gemini"} == provs   # exactly these
     assert "deepseek" not in provs                       # reasoning via model choice, not effort
+
+
+@pytest.mark.parametrize(
+    "model, sent",
+    [
+        ("gpt-5", "minimal"),
+        ("gpt-5-mini", "minimal"),
+        ("gpt-5-nano-2025-08-07", "minimal"),
+        ("gpt-5.1", "none"),
+        ("gpt-5.4-mini", "none"),
+        ("gpt-5.6-terra", "none"),
+        ("gpt-6-sol", "none"),
+        ("gpt-6-luna", "none"),
+        ("gpt-6-astra", "low"),
+        ("gpt-6.1-sol", "low"),
+        ("o3", "low"),
+        ("o4-mini", "low"),
+        ("some-future-model", "low"),
+    ],
+)
+def test_openai_effort_none_is_the_least_each_model_accepts(model, sent):
+    from inferenceswitch import default_registry
+
+    config = default_registry().get("openai").capabilities.config
+    assert openai_reasoning_kwargs(Effort.NONE, config, model) == {"reasoning_effort": sent}
+    # Other levels are not per model.
+    assert openai_reasoning_kwargs(Effort.LOW, config, model) == {"reasoning_effort": "low"}
+
+
+@pytest.mark.parametrize(
+    "model, sent",
+    [
+        ("gpt-5", "high"),
+        ("gpt-5-mini", "high"),
+        ("gpt-5.1", "high"),
+        ("gpt-5.4", "xhigh"),
+        ("gpt-5.4-nano", "xhigh"),
+        ("gpt-5.6-luna", "max"),
+        ("gpt-6-astra", "max"),
+        ("gpt-6.1-sol", "max"),
+        ("gpt-6-luna", "max"),
+        ("o3", "high"),
+        ("some-future-model", "high"),
+    ],
+)
+def test_openai_effort_max_is_the_most_each_model_accepts(model, sent):
+    from inferenceswitch import default_registry
+
+    config = default_registry().get("openai").capabilities.config
+    assert openai_reasoning_kwargs(Effort.MAX, config, model) == {"reasoning_effort": sent}
+    assert openai_reasoning_kwargs(Effort.HIGH, config, model) == {"reasoning_effort": "high"}
