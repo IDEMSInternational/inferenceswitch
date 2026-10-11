@@ -133,13 +133,15 @@ _MISTRAL_CAPS = Capabilities(
     config={"openai_strict": False},
 )
 _DEEPSEEK_CAPS = Capabilities(
-    structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
+    # DeepSeek's JSON output is response_format={"type": "json_object"} only;
+    # it documents no json_schema, so the schema goes in the prompt and the
+    # result is validated client-side. No STRICT_SCHEMA_OUTPUT, accordingly.
+    structured_output=StructuredMode.JSON_OBJECT_BEST_EFFORT,
     schema_dialect=SchemaDialect.OPENAI,
-    # NOTE: DeepSeek reasoning is accessed by selecting the `deepseek-reasoner`
-    # MODEL, not by an effort knob — so no REASONING_EFFORT (which means
-    # "effort control"). No effort param is sent to it.
+    # NOTE: no REASONING_EFFORT (which means "effort control" through the
+    # adapter): DeepSeek's thinking toggle and effort are not sent by it.
     # It DOES do automatic context caching (reported back as cached tokens).
-    features=_OPENAI_COMPAT_BASE | {_C.IMPLICIT_PROMPT_CACHING},
+    features=(_OPENAI_COMPAT_BASE - {_C.STRICT_SCHEMA_OUTPUT}) | {_C.IMPLICIT_PROMPT_CACHING},
     config={"openai_strict": False},
 )
 _GROQ_CAPS = Capabilities(

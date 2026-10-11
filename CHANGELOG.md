@@ -22,6 +22,10 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   `Capabilities.model_sampling_params` table (on OpenAI, the `gpt-4*` and
   `gpt-3.5` lines) and any model card. Other OpenAI-compatible servers
   (Mistral, DeepSeek, Groq, Ollama, LM Studio) are unchanged.
+- **DeepSeek structured output** now asks for `json_object` with the schema in
+  the prompt, validated client-side. DeepSeek documents no `json_schema`
+  response format, which is what was sent before. `STRICT_SCHEMA_OUTPUT` is no
+  longer advertised for `deepseek`.
 
 ### Added
 
@@ -31,9 +35,11 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   `frontier`, provisional), a structured-output grade (`reliable` /
   `best_effort` / `none`), context window, list price per provider route,
   per-model capability overrides, and family, parameter count and quantization
-  for open-weight models. Seeded for the Anthropic and Gemini models in the
-  registry and for Qwen3 4B / 8B / 32B, Llama 3.1 8B and Llama 3.3 70B on
-  Ollama and LM Studio. `ModelCard`, `ModelCards`, `default_cards()`; consumers
+  for open-weight models. 50 seed cards: Anthropic (Claude 4.x and 5.x),
+  Gemini (2.5 through 3.8), OpenAI (GPT-6, 5.6, 5.4 and the 4.x non-reasoning
+  models), Mistral (Large 4/3, Medium 3.5, Small 4, Ministral 3), DeepSeek
+  (Flash, V4 Pro), Groq (gpt-oss, Qwen3.8 27B), and Qwen3, Llama and gpt-oss
+  on Ollama and LM Studio. Prices are list prices checked on 2026-10-11. `ModelCard`, `ModelCards`, `default_cards()`; consumers
   add or override cards with `default_cards().merged(...)` and
   `Client(cards=...)`. Placement rubric in `docs/model-cards.md`.
 - **`Client.select_model(rung, needs=..., structured_output=..., min_context=...,

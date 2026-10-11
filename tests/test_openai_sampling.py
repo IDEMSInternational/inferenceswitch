@@ -118,3 +118,12 @@ def test_a_card_can_turn_temperature_off_for_a_model():
     client.generate_text(model="ollama/other:7b", prompt="?")
     assert "temperature" not in fake.requests[0]
     assert fake.requests[1]["temperature"] == 0.1
+
+
+def test_deepseek_gets_json_object_and_the_schema_in_the_prompt():
+    # DeepSeek documents json_object only; json_schema is not sent to it.
+    client, fake = _client("deepseek")
+    client.generate_structured(model="deepseek/deepseek-flash", schema=SCHEMA, prompt="?")
+    request = fake.requests[0]
+    assert request["response_format"] == {"type": "json_object"}
+    assert '"required": ["a"]' in request["messages"][-1]["content"]

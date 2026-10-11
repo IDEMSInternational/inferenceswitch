@@ -20,16 +20,18 @@ instruction following**: not coding, not one benchmark, and not price.
 | Rung | Anchors | Open-weight starting point |
 |---|---|---|
 | `nano` | On-device models | up to ~4B parameters |
-| `small` | Flash-Lite class | ~7–14B |
-| `mid` | Claude Haiku, Gemini Flash | ~30B and up, dense |
-| `large` | Claude Sonnet, Gemini Pro | — |
-| `frontier` | Claude Opus | — |
+| `small` | Gemini Flash-Lite, GPT nano / 5.6 Luna | ~7–14B |
+| `mid` | Claude Haiku, Gemini Flash, GPT mini / 5.6 Terra / 6 Luna | ~30B and up, dense |
+| `large` | Claude Sonnet, Gemini Pro, GPT Sol, Mistral Large | — |
+| `frontier` | Claude Opus and Fable, GPT-6 Astra | — |
 
 How to place a model:
 
 1. **Hosted models from a vendor with a tiered line** go on the rung of their
    tier (Haiku and Flash on `mid`, Sonnet and Pro on `large`, Opus on
-   `frontier`). Move a model off its tier's rung only with evidence, and say
+   `frontier`). Where a vendor's naming shifts between generations, follow
+   its own description of the tier: GPT-6 Luna is priced and described like
+   Haiku, so `mid`, while GPT-5.6 Luna is the old "nano" tier, so `small`. Move a model off its tier's rung only with evidence, and say
    why in `notes`.
 2. **Open-weight models** start from the parameter-count column, then move
    **down** a rung if they are clearly weaker than that rung's anchors (for
@@ -53,11 +55,13 @@ model in the abstract:
 | Grade | Meaning | Typical case |
 |---|---|---|
 | `reliable` | The provider enforces the schema (constrained decoding or a strict schema) | Anthropic structured outputs, Gemini `response_schema` |
-| `best_effort` | JSON mode plus the schema in the prompt, validated client-side; occasional retries on long or nested output | Local servers through the OpenAI-compatible adapter |
+| `best_effort` | Not enforced: JSON mode plus the schema in the prompt, or a non-strict `json_schema`; validated client-side, occasional retries on long or nested output | Local servers, OpenAI, Mistral, DeepSeek, Groq (all through the OpenAI-compatible adapter, which does not send `strict`) |
 | `none` | No usable structured output | Base models, very small models |
 
-If inferenceswitch starts enforcing schemas on a local server, the local cards
-move up a grade in the same change.
+If inferenceswitch starts enforcing schemas on a provider (for example by
+sending `strict: true` to OpenAI), that provider's cards move up a grade in the
+same change. A test fails if a card is graded `reliable` on a provider whose
+mechanism inferenceswitch does not enforce.
 
 ### Other fields
 

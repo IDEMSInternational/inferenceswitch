@@ -181,3 +181,56 @@ def test_removed_feature_fails_closed_in_chat():
     # Raised before any adapter or network is touched.
     with pytest.raises(UnsupportedCapabilityError, match="tiny:1b"):
         client.chat(model="ollama/tiny:1b", messages=[user("hi")], tools=[tool])
+
+
+# ── grades and per-model overrides on the wider card set ─────────────────────
+
+_ENFORCED = {"output_config_json_schema", "strict_tool_use", "response_schema"}
+
+
+def test_reliable_grade_only_where_inferenceswitch_enforces_the_schema():
+    # The grade describes the path inferenceswitch uses, so a card can only be
+    # "reliable" on a provider whose mechanism (as sent) is enforced.
+    registry = default_registry()
+    for card in default_cards():
+        if card.structured_output is not Reliability.RELIABLE:
+            continue
+        for route in card.routes:
+            caps = registry[route.provider].capabilities
+            mode = caps.structured_output_for(route.models[0]).value
+            strict_json_schema = (
+                mode == "response_format_json_schema" and caps.config.get("openai_strict")
+            )
+            assert mode in _ENFORCED or strict_json_schema, (card.id, route.provider)
+
+
+def test_openai_cards_encode_chat_completions_limits():
+    client = Client()
+    # Tool calling: Responses-only on 6.1 Sol; only at effort none on 6 Sol/Luna.
+    for model in ("gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna"):
+        assert not client.supports(Capability.TOOL_CALLING, model=f"openai/{model}")
+    assert client.supports(Capability.TOOL_CALLING, model="openai/gpt-5.6-terra")
+    # Non-reasoning models: temperature yes, reasoning_effort no.
+    assert client.supports(Capability.SAMPLING_PARAMS, model="openai/gpt-4.1")
+    assert not client.supports(Capability.REASONING_EFFORT, model="openai/gpt-4.1")
+    assert client.supports(Capability.REASONING_EFFORT, model="openai/gpt-6-luna")
+
+
+def test_effort_on_a_non_reasoning_openai_model_fails_closed():
+    from inferenceswitch import Effort
+
+    with pytest.raises(UnsupportedCapabilityError, match="reasoning_effort"):
+        Client().chat(model="openai/gpt-4o-mini", messages=[user("hi")], effort=Effort.LOW)
+
+
+def test_one_open_weight_card_spans_hosted_and_local_routes():
+    card = default_cards().get("gpt-oss-120b")
+    assert {r.provider for r in card.routes} == {"groq", "ollama", "lmstudio"}
+    assert card.route("groq").cost is not None
+    assert card.route("ollama").cost is None
+    assert Client().card("groq/openai/gpt-oss-120b") is card
+
+
+def test_registry_ids_that_differ_from_the_vendors_resolve_to_the_same_card():
+    cards = default_cards()
+    assert cards.find("gemini", "gemini-3-flash-preview") is cards.find("gemini", "gemini-3-flash")
