@@ -62,6 +62,7 @@ from .base import Adapter, require_sdk, split_system
 #: it — an explicit number is the caller's decision, and an out-of-range one
 #: surfaces Gemini's own 400 rather than being silently rewritten.
 GEMINI_MAX_OUTPUT_TOKENS: dict[str, int] = {
+    "gemini-3.8-flash": 65_536,
     "gemini-3.7-flash": 65_536,
     "gemini-3.6-flash": 65_536,
     "gemini-3.5-flash": 65_536,

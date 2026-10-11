@@ -115,11 +115,11 @@
       "id": "gemini-3-flash",
       "rung": "mid",
       "routes": {
-        "gemini": {"models": ["gemini-3-flash-preview", "gemini-3-flash"], "cost": {"input": 0.5, "output": 3.0}}
+        "gemini": {"models": ["gemini-3-flash-preview"], "cost": {"input": 0.5, "output": 3.0}}
       },
       "structured_output": "reliable",
       "context_window": 1048576,
-      "notes": "Preview, labelled legacy; Google's id is gemini-3-flash-preview (the registry's bare gemini-3-flash is not documented). Replacement: gemini-3.6-flash."
+      "notes": "Preview, labelled legacy by Google. Replacement: gemini-3.6-flash."
     },
     {
       "id": "gemini-3.5-flash",

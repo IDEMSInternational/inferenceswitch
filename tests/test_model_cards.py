@@ -233,4 +233,7 @@ def test_one_open_weight_card_spans_hosted_and_local_routes():
 
 def test_registry_ids_that_differ_from_the_vendors_resolve_to_the_same_card():
     cards = default_cards()
-    assert cards.find("gemini", "gemini-3-flash-preview") is cards.find("gemini", "gemini-3-flash")
+    # Gemini 3 Flash only exists as a preview id; the registry and card use it.
+    assert cards.find("gemini", "gemini-3-flash-preview").id == "gemini-3-flash"
+    # Google serves gemini-3.5-flash with 3.6 Flash; the card says so.
+    assert "3.6" in cards.get("gemini-3.5-flash").notes

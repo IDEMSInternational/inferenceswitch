@@ -22,6 +22,19 @@ pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
   `Capabilities.model_sampling_params` table (on OpenAI, the `gpt-4*` and
   `gpt-3.5` lines) and any model card. Other OpenAI-compatible servers
   (Mistral, DeepSeek, Groq, Ollama, LM Studio) are unchanged.
+- **`Effort.NONE` on OpenAI sends a level each model accepts.** It was always
+  `"minimal"`, which GPT-5.1 and later reject. It is now `"none"` on GPT-5.1
+  and later (including GPT-5.4, 5.6 and GPT-6 Sol / Luna), `"minimal"` on the
+  original GPT-5 models, and `"low"` on models with neither (GPT-6 Astra,
+  6.1 Sol, the o-series, and unknown models). The table is
+  `config["reasoning_none"]` on the `openai` registry entry.
+- **The Gemini catalog uses Google's current ids.** `known_models` was
+  `gemini-3-flash` (not an id Google documents; the model is
+  `gemini-3-flash-preview`) and `gemini-3.5-flash` (now served by 3.6 Flash).
+  It is now `gemini-2.5-flash`, `gemini-3-flash-preview`, `gemini-3.6-flash`
+  and `gemini-3.8-flash`. Bare `gemini-*` names still route by prefix, so code
+  passing the old names is unaffected; only `known_models()` and `models_for`
+  list different entries. `gemini-3.8-flash` joins the output-cap table.
 - **DeepSeek structured output** now asks for `json_object` with the schema in
   the prompt, validated client-side. DeepSeek documents no `json_schema`
   response format, which is what was sent before. `STRICT_SCHEMA_OUTPUT` is no

@@ -55,7 +55,7 @@ result.usage.output_tokens
 result.stop_reason          # StopReason, and result.raw is the provider response
 
 # Plain text.
-text = client.generate_text(model="gemini-3.5-flash", prompt="Summarize ...")
+text = client.generate_text(model="gemini-3.8-flash", prompt="Summarize ...")
 
 # Key smoke-test (cheapest authenticated call, never raises).
 ok, detail = client.verify_key("anthropic")
@@ -217,7 +217,7 @@ pinned to one.
 from inferenceswitch import GEMINI_MAX_OUTPUT_TOKENS, gemini_max_output_tokens
 
 gemini_max_output_tokens("gemini-3-flash-preview")   # 65536
-GEMINI_MAX_OUTPUT_TOKENS["gemini-3.5-flash"] = 16_000
+GEMINI_MAX_OUTPUT_TOKENS["gemini-3.8-flash"] = 16_000
 ```
 
 When a Gemini response *is* cut at the cap, `generate_structured_json` raises

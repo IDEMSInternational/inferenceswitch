@@ -120,10 +120,22 @@ _OPENAI_CAPS = Capabilities(
     # effort; only OpenAI itself exposes one on chat.completions.
     # max_tokens_param: the reasoning models reject max_tokens and take
     # max_completion_tokens, which every OpenAI chat model accepts.
+    # reasoning_none: what Effort.NONE sends, per model (substring, longest
+    # wins). "low" is the default because every OpenAI reasoning model takes
+    # it; "none" arrived with GPT-5.1 and is missing on GPT-6 Astra and 6.1 Sol;
+    # the original GPT-5 models take "minimal" instead.
     config={
         "openai_strict": False,
         "reasoning_param": "reasoning_effort",
         "max_tokens_param": "max_completion_tokens",
+        "reasoning_none": {
+            "*": "low",
+            "gpt-5": "minimal",
+            "gpt-5.": "none",
+            "gpt-6": "none",
+            "gpt-6-astra": "low",
+            "gpt-6.1": "low",
+        },
     },
 )
 _MISTRAL_CAPS = Capabilities(
@@ -287,10 +299,13 @@ def default_registry() -> Registry:
                 capabilities=_GEMINI_CAPS,
                 api_key_env="GEMINI_API_KEY",
                 model_prefixes=("gemini",),
+                # Google's own ids. gemini-3.5-flash is now served by 3.6 Flash,
+                # and Gemini 3 Flash only exists as gemini-3-flash-preview.
                 known_models=(
                     "gemini-2.5-flash",
-                    "gemini-3-flash",
-                    "gemini-3.5-flash",
+                    "gemini-3-flash-preview",
+                    "gemini-3.6-flash",
+                    "gemini-3.8-flash",
                 ),
             ),
             # ── OpenAI-compatible (hosted) ──────────────────────────────────

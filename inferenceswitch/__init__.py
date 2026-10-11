@@ -4,7 +4,7 @@
 
     client = Client()
     data = client.generate_structured_json(
-        model="claude-opus-4-8",          # or "gemini-3.5-flash", "groq/llama-3.3-70b", ...
+        model="claude-opus-4-8",          # or "gemini-3.8-flash", "groq/llama-3.3-70b", ...
         schema=MyModel.model_json_schema(),
         prompt="...",
         system="...",

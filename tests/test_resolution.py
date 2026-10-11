@@ -58,7 +58,8 @@ def test_unroutable_model_is_a_hard_error(client):
 def test_known_models_are_returned_fully_qualified(client):
     models = client.known_models()
     assert "anthropic/claude-opus-4-8" in models
-    assert "gemini/gemini-3.5-flash" in models
+    assert "gemini/gemini-3.8-flash" in models
+    assert "gemini/gemini-3-flash-preview" in models
     # Every entry must be routable back to its provider.
     for qualified in models:
         assert client.resolve(qualified).spec.name == qualified.split("/", 1)[0]

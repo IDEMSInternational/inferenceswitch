@@ -13,7 +13,7 @@ from typing import Any
 
 from collections.abc import Mapping
 
-from ..capabilities import Capability, StructuredMode
+from ..capabilities import Capability, StructuredMode, _for_model
 from ..errors import StructuredOutputError
 from ..messages import (
     Effort,
@@ -31,7 +31,8 @@ from ..messages import (
 )
 from .base import Adapter, require_sdk, split_system
 
-# OpenAI reasoning_effort accepts minimal/low/medium/high; MAX clamps to high.
+# OpenAI reasoning_effort levels; MAX clamps to high. Effort.NONE is per model
+# when the provider declares a "reasoning_none" table (see below).
 _OPENAI_EFFORT = {
     Effort.NONE: "minimal",
     Effort.LOW: "low",
@@ -41,15 +42,30 @@ _OPENAI_EFFORT = {
 }
 
 
-def openai_reasoning_kwargs(effort: Effort | None, config: Mapping) -> dict:
+def openai_reasoning_kwargs(
+    effort: Effort | None, config: Mapping, model: str | None = None
+) -> dict:
     """Request kwargs for reasoning effort — empty unless the provider declares a
-    ``reasoning_param`` (only OpenAI does; others reason via model choice)."""
+    ``reasoning_param`` (only OpenAI does; others reason via model choice).
+
+    :attr:`Effort.NONE` means the least reasoning the model accepts, which
+    differs by model: ``"none"`` on GPT-5.1 and later, ``"minimal"`` on the
+    original GPT-5 line, and ``"low"`` where neither exists. A
+    ``config["reasoning_none"]`` table, matched by model substring (longest
+    wins, as for the per-model capability tables), with a ``"*"`` default,
+    chooses it; without the table it is ``"minimal"``.
+    """
     if effort is None:
         return {}
     param = config.get("reasoning_param")
     if not param:
         return {}
-    return {param: _OPENAI_EFFORT[effort]}
+    value = _OPENAI_EFFORT[effort]
+    table = config.get("reasoning_none")
+    if effort is Effort.NONE and table and model is not None:
+        default = table.get("*", value)
+        value = _for_model({k: v for k, v in table.items() if k != "*"}, model, default)
+    return {param: value}
 
 
 _FINISH_REASON = {
@@ -287,7 +303,7 @@ class OpenAICompatibleAdapter(Adapter):
         if tools:
             kwargs["tools"] = encode_openai_tools(tools)
             kwargs["tool_choice"] = encode_openai_tool_choice(tool_choice, force_tool)
-        kwargs.update(openai_reasoning_kwargs(effort, self.capabilities.config))
+        kwargs.update(openai_reasoning_kwargs(effort, self.capabilities.config, model))
 
         raw = self._client.chat.completions.create(**kwargs)
         return decode_openai_response(raw)
