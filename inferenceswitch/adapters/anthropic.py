@@ -9,6 +9,7 @@ model. Structured outputs take a stricter schema dialect, translated by
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from .. import schema as schema_mod
@@ -243,6 +244,48 @@ def _unwrap_stray_key(result: Any, schema: dict) -> Any:
     return inner
 
 
+_LEAKED_PARAMETER = re.compile(r'<parameter name="(\w+)">')
+#: Tool-call closing tags a string field may run on into.
+_TOOL_TAGS = ("parameter", "invoke", "function_calls")
+
+
+def _strip_closing_tags(text: str, field: str) -> str:
+    tags = "|".join(re.escape(t) for t in (*_TOOL_TAGS, field))
+    return re.sub(rf"(?:\s*</(?:{tags})>)+\s*$", "", text).strip()
+
+
+def recover_leaked_fields(result: Any) -> Any:
+    """Undo a top-level string field that ran on into tool-call markup.
+
+    A tool call sometimes writes the rest of its arguments *inside* a string:
+    ``caveats`` arrives as ``...</caveats>`` followed by
+    ``<parameter name="next_step">...``, and ``next_step`` is missing. Trailing
+    closing tags (the field's own, ``</parameter>``, ``</invoke>``,
+    ``</function_calls>``) are stripped, and each ``<parameter name="X">value``
+    segment is moved back out as field ``X``, JSON-decoded when it parses. A
+    field already present keeps its own value. Anything else is returned
+    unchanged."""
+    if not isinstance(result, dict):
+        return result
+    out = dict(result)
+    for key, value in result.items():
+        if not isinstance(value, str):
+            continue
+        head, *leaked = _LEAKED_PARAMETER.split(value)
+        stripped = _strip_closing_tags(head, key)
+        if leaked or stripped != head.strip():
+            out[key] = stripped
+        for name, text in zip(leaked[::2], leaked[1::2]):
+            text = _strip_closing_tags(text, name)
+            if name in out:
+                continue
+            try:
+                out[name] = json.loads(text)
+            except json.JSONDecodeError:
+                out[name] = text
+    return out
+
+
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
@@ -373,7 +416,9 @@ class AnthropicAdapter(Adapter):
                     context=context,
                 )
             # The Anthropic SDK parses tool inputs into native dicts already.
-            result = tool_use.input
+            # A strict tool keeps each string well-formed, not free of tool-call
+            # markup, so the leak repair runs on both tool paths.
+            result = recover_leaked_fields(tool_use.input)
 
         result = schema_mod.restore_gemini_dicts(result, schema)
         errors = schema_mod.schema_errors(result, schema)

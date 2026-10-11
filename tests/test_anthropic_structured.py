@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from inferenceswitch import StructuredMode, StructuredOutputError, UnsupportedSchemaError
-from inferenceswitch.adapters.anthropic import AnthropicAdapter
+from inferenceswitch.adapters.anthropic import AnthropicAdapter, recover_leaked_fields
 from inferenceswitch.registry import default_registry
 
 
@@ -111,6 +111,8 @@ GOOD_VERDICT = {
     "model",
     [
         "claude-opus-5-5",
+        "claude-opus-5",
+        "claude-sonnet-5",
         "claude-sonnet-5-5",
         "claude-fable-5-1",
         "claude-mythos-5-1",
@@ -360,3 +362,75 @@ def test_max_tokens_on_the_tool_fallback_raises(adapter):
     fake.stop_reason = "max_tokens"
     with pytest.raises(StructuredOutputError, match="truncated"):
         a.generate_structured_json(model="claude-opus-4-1", prompt="p", schema=VERDICT)
+
+
+# ── tool-call markup leaked into a string field ──────────────────────────────
+
+#: Shaped like terraso-planning's DS script-loop reply.
+NOTE = {
+    "type": "object",
+    "properties": {
+        "headline": {"type": "string"},
+        "interpretation": {"type": "string"},
+        "caveats": {"type": "string"},
+        "next_step": {"type": "string"},
+    },
+    "required": ["headline", "interpretation", "caveats", "next_step"],
+}
+
+#: terraso-planning#369: ``caveats`` ran on into ``next_step``, which is missing.
+LEAKED_NOTE = {
+    "headline": "Yields rose",
+    "interpretation": "Plots with cover crops did better.",
+    "caveats": "Small sample, so wide uncertainty.</caveats>\n"
+    '<parameter name="next_step">Find out how the plots were chosen.',
+}
+
+
+def test_leaked_field_is_moved_back_out():
+    assert recover_leaked_fields(LEAKED_NOTE) == {
+        "headline": "Yields rose",
+        "interpretation": "Plots with cover crops did better.",
+        "caveats": "Small sample, so wide uncertainty.",
+        "next_step": "Find out how the plots were chosen.",
+    }
+
+
+def test_leaked_value_is_json_decoded_and_closing_tags_stripped():
+    reply = {
+        "answer": 'text</answer>\n<parameter name="citations">["cp-1"]</parameter>\n'
+        "</invoke>\n</function_calls>",
+    }
+    assert recover_leaked_fields(reply) == {"answer": "text", "citations": ["cp-1"]}
+
+
+def test_leaked_field_does_not_overwrite_a_present_one():
+    reply = {"a": 'x</parameter><parameter name="b">leaked', "b": "own"}
+    assert recover_leaked_fields(reply) == {"a": "x", "b": "own"}
+
+
+def test_clean_results_are_untouched():
+    clean = {"a": "uses <b>html</b> and a < b", "n": 3, "nested": {"s": "x</parameter>"}}
+    assert recover_leaked_fields(clean) == clean
+    assert recover_leaked_fields(["x</parameter>"]) == ["x</parameter>"]
+
+
+@pytest.mark.parametrize("model", ["claude-opus-4-1", "claude-3-7-sonnet-latest"])
+def test_leaked_markup_is_repaired_on_the_tool_fallback(adapter, model):
+    a, fake = adapter
+    fake.reply_tool(dict(LEAKED_NOTE))
+    result = a.generate_structured_json(model=model, prompt="p", schema=NOTE)
+    assert result["caveats"] == "Small sample, so wide uncertainty."
+    assert result["next_step"] == "Find out how the plots were chosen."
+
+
+def test_leaked_markup_is_repaired_on_the_strict_tool():
+    spec = default_registry().get("anthropic")
+    caps = dataclasses.replace(
+        spec.capabilities,
+        model_structured_output={"claude-opus-5-5": StructuredMode.STRICT_TOOL_USE},
+    )
+    a, fake = _adapter(dataclasses.replace(spec, capabilities=caps))
+    fake.reply_tool(dict(LEAKED_NOTE))
+    result = a.generate_structured_json(model="claude-opus-5-5", prompt="p", schema=NOTE)
+    assert result["next_step"] == "Find out how the plots were chosen."
