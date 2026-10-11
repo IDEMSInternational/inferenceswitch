@@ -5,8 +5,25 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-11
+
+0.2 rather than 0.1.1: besides the fixes, this adds API and narrows what the
+Anthropic adapter accepts (see *Changed*). Callers pinned to `<0.2` need to
+raise the pin.
+
 ### Fixed
 
+- **Tool-call markup leaking into a string field is repaired** on the Anthropic
+  tool paths (`TOOL_USE`, `STRICT_TOOL_USE`). A tool call sometimes ran one
+  string argument on into the next, e.g. a `caveats` value ending
+  `...</caveats>\n<parameter name="next_step">...` with `next_step` missing
+  ([terraso-planning#369](https://github.com/IDEMSInternational/terraso-planning/pull/369),
+  [#332](https://github.com/IDEMSInternational/terraso-planning/issues/332)). Trailing closing tags (the field's own,
+  `</parameter>`, `</invoke>`, `</function_calls>`) are now stripped from
+  top-level string fields, and each `<parameter name="X">value` segment is moved
+  back out as field `X` (JSON-decoded when it parses), never overwriting a field
+  already present. Models on structured outputs, which is every Claude 5.x model
+  including Sonnet 5 and Opus 5, do not go through a tool and are unaffected.
 - **Anthropic structured JSON now uses structured outputs** (`output_config.format`,
   constrained decoding) instead of a forced, non-strict tool
   ([#1](https://github.com/IDEMSInternational/inferenceswitch/issues/1)).
