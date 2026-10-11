@@ -58,6 +58,7 @@ CLAUDE_MAX_OUTPUT_TOKENS: dict[str, int] = {
     "claude-opus-4-6": 128_000,
     "claude-sonnet-5": 128_000,
     "claude-sonnet-4-6": 128_000,
+    "claude-haiku-5": 128_000,
     "claude-haiku-4-5": 64_000,
 }
 

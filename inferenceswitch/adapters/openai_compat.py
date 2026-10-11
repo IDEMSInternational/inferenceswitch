@@ -31,8 +31,9 @@ from ..messages import (
 )
 from .base import Adapter, require_sdk, split_system
 
-# OpenAI reasoning_effort levels; MAX clamps to high. Effort.NONE is per model
-# when the provider declares a "reasoning_none" table (see below).
+# OpenAI reasoning_effort levels. NONE and MAX are per model when the provider
+# declares "reasoning_none" / "reasoning_max" tables; without them NONE is
+# "minimal" and MAX clamps to "high", which the oldest reasoning models accept.
 _OPENAI_EFFORT = {
     Effort.NONE: "minimal",
     Effort.LOW: "low",
@@ -48,12 +49,13 @@ def openai_reasoning_kwargs(
     """Request kwargs for reasoning effort — empty unless the provider declares a
     ``reasoning_param`` (only OpenAI does; others reason via model choice).
 
-    :attr:`Effort.NONE` means the least reasoning the model accepts, which
-    differs by model: ``"none"`` on GPT-5.1 and later, ``"minimal"`` on the
-    original GPT-5 line, and ``"low"`` where neither exists. A
-    ``config["reasoning_none"]`` table, matched by model substring (longest
-    wins, as for the per-model capability tables), with a ``"*"`` default,
-    chooses it; without the table it is ``"minimal"``.
+    :attr:`Effort.NONE` and :attr:`Effort.MAX` mean the least and the most
+    reasoning the model accepts, which differ by model (``"none"`` /
+    ``"minimal"`` / ``"low"``; ``"max"`` / ``"xhigh"`` / ``"high"``). A
+    ``config["reasoning_none"]`` or ``config["reasoning_max"]`` table, matched
+    by model substring (longest wins, as for the per-model capability tables)
+    with a ``"*"`` default, chooses it; without a table, NONE is ``"minimal"``
+    and MAX is ``"high"``.
     """
     if effort is None:
         return {}
@@ -61,8 +63,8 @@ def openai_reasoning_kwargs(
     if not param:
         return {}
     value = _OPENAI_EFFORT[effort]
-    table = config.get("reasoning_none")
-    if effort is Effort.NONE and table and model is not None:
+    table = config.get(f"reasoning_{effort.value}")
+    if effort in (Effort.NONE, Effort.MAX) and table and model is not None:
         default = table.get("*", value)
         value = _for_model({k: v for k, v in table.items() if k != "*"}, model, default)
     return {param: value}

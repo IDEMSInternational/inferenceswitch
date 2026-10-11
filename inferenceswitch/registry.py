@@ -136,6 +136,15 @@ _OPENAI_CAPS = Capabilities(
             "gpt-6-astra": "low",
             "gpt-6.1": "low",
         },
+        # reasoning_max: what Effort.MAX sends. "high" is the default because
+        # every OpenAI reasoning model takes it; GPT-5.4 tops out at "xhigh";
+        # GPT-5.6 and GPT-6 (including 6.1) go to "max".
+        "reasoning_max": {
+            "*": "high",
+            "gpt-5.4": "xhigh",
+            "gpt-5.6": "max",
+            "gpt-6": "max",
+        },
     },
 )
 _MISTRAL_CAPS = Capabilities(
@@ -291,6 +300,13 @@ def default_registry() -> Registry:
                     "claude-haiku-4-5",
                     "claude-sonnet-4-6",
                     "claude-opus-4-8",
+                    "claude-haiku-5-5",
+                    "claude-sonnet-5",
+                    "claude-sonnet-5-5",
+                    "claude-opus-5",
+                    "claude-opus-5-5",
+                    "claude-fable-5",
+                    "claude-fable-5-1",
                 ),
             ),
             ProviderSpec(
