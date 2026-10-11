@@ -1,0 +1,125 @@
+{
+  "format": 1,
+  "updated": "2026-10-11",
+  "cards": [
+    {
+      "id": "claude-haiku-4-5",
+      "rung": "mid",
+      "routes": {
+        "anthropic": {"models": ["claude-haiku-4-5"], "cost": {"input": 1.0, "output": 5.0}}
+      },
+      "structured_output": "reliable",
+      "context_window": 200000,
+      "features": {"add": ["sampling_params"]},
+      "notes": "Reference model for mid. Accepts temperature, unlike the Anthropic provider default."
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "rung": "large",
+      "routes": {
+        "anthropic": {"models": ["claude-sonnet-4-6"], "cost": {"input": 3.0, "output": 15.0}}
+      },
+      "structured_output": "reliable",
+      "context_window": 1000000,
+      "features": {"add": ["sampling_params"]},
+      "notes": "Reference model for large. Accepts temperature, unlike the Anthropic provider default."
+    },
+    {
+      "id": "claude-opus-4-8",
+      "rung": "frontier",
+      "routes": {
+        "anthropic": {"models": ["claude-opus-4-8"], "cost": {"input": 5.0, "output": 25.0}}
+      },
+      "structured_output": "reliable",
+      "context_window": 1000000,
+      "notes": "Reference model for frontier."
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "rung": "mid",
+      "routes": {
+        "gemini": {"models": ["gemini-2.5-flash"], "cost": {"input": 0.30, "output": 2.50}}
+      },
+      "structured_output": "reliable",
+      "context_window": 1048576
+    },
+    {
+      "id": "gemini-3-flash",
+      "rung": "mid",
+      "routes": {
+        "gemini": {"models": ["gemini-3-flash"], "cost": {"input": 0.50, "output": 3.00}}
+      },
+      "structured_output": "reliable",
+      "context_window": 1048576
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "rung": "mid",
+      "routes": {
+        "gemini": {"models": ["gemini-3.5-flash"], "cost": {"input": 1.50, "output": 9.00}}
+      },
+      "structured_output": "reliable",
+      "context_window": 1048576,
+      "notes": "Placed by vendor tier (Flash line = mid). Priced well above earlier Flash models; a candidate for large if evals support it."
+    },
+    {
+      "id": "qwen3-4b",
+      "rung": "nano",
+      "routes": {
+        "ollama": {"models": ["qwen3:4b"], "cost": null},
+        "lmstudio": {"models": ["qwen/qwen3-4b", "qwen3-4b"], "cost": null}
+      },
+      "structured_output": "best_effort",
+      "context_window": 32768,
+      "open_weight": {"family": "qwen3", "params_b": 4, "quantization": "Q4_K_M"}
+    },
+    {
+      "id": "qwen3-8b",
+      "rung": "small",
+      "routes": {
+        "ollama": {"models": ["qwen3:8b", "qwen3:latest", "qwen3"], "cost": null},
+        "lmstudio": {"models": ["qwen/qwen3-8b", "qwen3-8b"], "cost": null}
+      },
+      "structured_output": "best_effort",
+      "context_window": 32768,
+      "open_weight": {"family": "qwen3", "params_b": 8, "quantization": "Q4_K_M"},
+      "notes": "Roughly a rung below Haiku on general reasoning; long structured output is best-effort."
+    },
+    {
+      "id": "qwen3-32b",
+      "rung": "mid",
+      "routes": {
+        "ollama": {"models": ["qwen3:32b"], "cost": null},
+        "lmstudio": {"models": ["qwen/qwen3-32b", "qwen3-32b"], "cost": null}
+      },
+      "structured_output": "best_effort",
+      "context_window": 32768,
+      "open_weight": {"family": "qwen3", "params_b": 32, "quantization": "Q4_K_M"},
+      "notes": "Lower end of mid. Needs roughly 20 GB of memory at Q4_K_M."
+    },
+    {
+      "id": "llama3.1-8b",
+      "rung": "small",
+      "routes": {
+        "ollama": {"models": ["llama3.1:8b", "llama3.1:latest", "llama3.1"], "cost": null},
+        "lmstudio": {"models": ["meta-llama-3.1-8b-instruct", "llama-3.1-8b-instruct"], "cost": null}
+      },
+      "structured_output": "best_effort",
+      "context_window": 131072,
+      "open_weight": {"family": "llama3.1", "params_b": 8, "quantization": "Q4_K_M"},
+      "notes": "Lower end of small."
+    },
+    {
+      "id": "llama3.3-70b",
+      "rung": "mid",
+      "routes": {
+        "ollama": {"models": ["llama3.3:70b", "llama3.3:latest", "llama3.3"], "cost": null},
+        "lmstudio": {"models": ["llama-3.3-70b-instruct", "meta-llama-3.3-70b-instruct"], "cost": null}
+      },
+      "structured_output": "best_effort",
+      "context_window": 131072,
+      "open_weight": {"family": "llama3.3", "params_b": 70, "quantization": "Q4_K_M"},
+      "notes": "Lower end of mid: older than the hosted mid references. Needs roughly 43 GB of memory at Q4_K_M."
+    }
+  ]
+}

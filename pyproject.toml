@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "inferenceswitch"
-version = "0.2.0"
+version = "0.3.0"
 description = "A lightweight, import-only multi-provider LLM dispatch library with first-class structured output."
 readme = "README.md"
 requires-python = ">=3.10"

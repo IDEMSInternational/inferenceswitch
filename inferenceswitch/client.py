@@ -14,11 +14,13 @@ that decrypts on its side.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, Callable
 
 from .adapters import Adapter, build_adapter
 from .capabilities import Capabilities, Capability
+from .cards import ModelCard, ModelCards, Reliability, Rung, default_cards
 from .errors import (
     InferenceSwitchError,
     MissingAPIKeyError,
@@ -38,6 +40,16 @@ from .messages import (
     ToolUse,
 )
 from .registry import LOCAL_PLACEHOLDER_KEY, ProviderSpec, Registry, default_registry
+from .selection import (
+    AvailabilityCheck,
+    Preference,
+    ProviderAvailability,
+    Selection,
+    key_availability,
+    make_request,
+    select,
+    static_availability,
+)
 
 #: A key provider maps a resolved ProviderSpec to its plaintext API key.
 KeyProvider = Callable[[ProviderSpec], str]
@@ -117,9 +129,24 @@ class Client:
         self,
         registry: Registry | None = None,
         key_provider: KeyProvider | None = None,
+        *,
+        cards: ModelCards | None = None,
+        availability: AvailabilityCheck | Mapping[str, bool | Iterable[str]] | None = None,
     ) -> None:
+        """``cards`` replaces the shipped model cards; to add to or override
+        them, pass ``default_cards().merged(...)``. ``availability`` replaces the
+        default check (keys for hosted providers, a probe for local servers)
+        used by :meth:`select_model`: a callable, or a mapping as for
+        :func:`~inferenceswitch.static_availability`."""
         self.registry = registry or default_registry()
         self.key_provider = key_provider or env_key_provider
+        self.cards = default_cards() if cards is None else cards
+        if availability is None:
+            availability = key_availability(self.key_provider)
+        elif isinstance(availability, Mapping):
+            availability = static_availability(availability)
+        self._availability_check: AvailabilityCheck = availability
+        self._availability: dict[str, ProviderAvailability] = {}
         self._adapters: dict[tuple[str, str], Adapter] = {}
 
     # ── resolution ────────────────────────────────────────────────────────────
@@ -170,20 +197,103 @@ class Client:
             f"{', '.join(self.registry.names)}."
         )
 
+    # ── model selection by rung ───────────────────────────────────────────────
+
+    def select_model(
+        self,
+        rung: Rung | str,
+        *,
+        needs: Iterable[Capability | str] = (),
+        structured_output: Reliability | str | None = None,
+        min_context: int | None = None,
+        local_only: bool = False,
+        prefer: Preference | str = Preference.CHEAPEST,
+        allow_higher: bool = True,
+        refresh: bool = False,
+    ) -> Selection:
+        """Pick an available model for a rung, hard requirements and a preference.
+
+        Candidates are the model cards' routes. A route counts when its provider
+        is available (see :meth:`availability`), and the card meets every
+        requirement: rung ``rung`` or above (exactly ``rung`` with
+        ``allow_higher=False``; never below), every capability in ``needs``,
+        a ``structured_output`` grade at least as good as the one given, a
+        context window of at least ``min_context`` tokens, and a local server
+        when ``local_only``. The survivors are ranked by ``prefer``
+        (``"local"``, ``"cheapest"`` or ``"fastest"``; see
+        :class:`~inferenceswitch.Preference`).
+
+        Returns a :class:`~inferenceswitch.Selection` whose ``model`` passes
+        straight to :meth:`chat`, with the reason and every candidate
+        considered (``to_dict()`` for a run record). Raises
+        :class:`~inferenceswitch.NoModelAvailableError` naming what was
+        missing when nothing fits. Strings are accepted for every enum, so a
+        profile file can be passed through as read.
+        """
+        request = make_request(
+            rung,
+            needs=needs,
+            structured_output=structured_output,
+            min_context=min_context,
+            local_only=local_only,
+            prefer=prefer,
+            allow_higher=allow_higher,
+        )
+        if refresh:
+            self._availability.clear()
+        return select(request, self.cards, self.registry, self._provider_availability)
+
+    def availability(
+        self, providers: Iterable[str] | None = None, *, refresh: bool = False
+    ) -> list[ProviderAvailability]:
+        """Whether each provider (default: every registered one) can be used here.
+
+        Results are cached on the client, since a local check is a network
+        probe; ``refresh=True`` checks again.
+        """
+        if refresh:
+            self._availability.clear()
+        names = self.registry.names if providers is None else list(providers)
+        return [self._provider_availability(name) for name in names]
+
+    def _provider_availability(self, provider: str) -> ProviderAvailability:
+        cached = self._availability.get(provider)
+        if cached is None:
+            cached = self._availability_check(self.registry.get(provider))
+            self._availability[provider] = cached
+        return cached
+
     # ── capability introspection ──────────────────────────────────────────────
 
     def _spec(self, provider: str | None, model: str | None) -> ProviderSpec:
+        if model is not None:
+            return self.resolve(model, provider).spec
         if provider is not None:
             return self.registry.get(provider)
-        if model is not None:
-            return self.resolve(model).spec
         raise TypeError("Pass provider= or model=.")
+
+    def card(self, model: str, provider: str | None = None) -> ModelCard | None:
+        """The model card for ``model`` (routed as for :meth:`resolve`), or
+        ``None`` when no card lists it for that provider."""
+        resolution = self.resolve(model, provider)
+        return self.cards.find(resolution.spec.name, resolution.model)
+
+    def _caps(self, resolution: Resolution) -> Capabilities:
+        card = self.cards.find(resolution.spec.name, resolution.model)
+        caps = resolution.spec.capabilities
+        return caps if card is None else card.capabilities(caps)
 
     def capabilities(
         self, provider: str | None = None, *, model: str | None = None
     ) -> Capabilities:
-        """The :class:`Capabilities` for a provider (by name) or a model (routed)."""
-        return self._spec(provider, model).capabilities
+        """The :class:`Capabilities` for a provider (by name), or for a model.
+
+        For a model with a card, the provider's defaults with the card's
+        feature overrides applied; otherwise the provider's defaults.
+        """
+        if model is not None:
+            return self._caps(self.resolve(model, provider))
+        return self._spec(provider, None).capabilities
 
     def supports(
         self,
@@ -198,7 +308,7 @@ class Client:
         doesn't wrap with a first-class method yet, reach it via
         :meth:`raw_client`.
         """
-        return self._spec(provider, model).capabilities.has(capability)
+        return self.capabilities(provider, model=model).has(capability)
 
     def require(
         self,
@@ -214,11 +324,15 @@ class Client:
         request stops here with a clear message instead of degrading silently
         or 400-ing deep in an SDK.
         """
-        spec = self._spec(provider, model)
-        if not spec.capabilities.has(capability):
-            supported = ", ".join(sorted(c.value for c in spec.capabilities.features))
+        caps = self.capabilities(provider, model=model)
+        if not caps.has(capability):
+            spec = self._spec(provider, model)
+            subject = f"Provider {spec.name!r}"
+            if model is not None:
+                subject = f"Model {model!r} on provider {spec.name!r}"
+            supported = ", ".join(sorted(c.value for c in caps.features))
             raise UnsupportedCapabilityError(
-                f"Provider {spec.name!r} does not support {capability.value!r}. "
+                f"{subject} does not support {capability.value!r}. "
                 f"Supported: {supported or '(none)'}."
             )
 
@@ -360,16 +474,24 @@ class Client:
         """
         resolution = self.resolve(model, provider)
         if tools:
-            self.require(Capability.TOOL_CALLING, resolution.spec.name)
+            self.require(
+                Capability.TOOL_CALLING, resolution.spec.name, model=resolution.model
+            )
         if effort is not None:
-            self.require(Capability.REASONING_EFFORT, resolution.spec.name)
+            self.require(
+                Capability.REASONING_EFFORT, resolution.spec.name, model=resolution.model
+            )
         if _has_cache_markers(messages, tools):
             # Derived from the markers themselves — fail closed on a provider
             # whose caching isn't inline (Gemini's is out-of-band; OpenAI's is
             # automatic and unaddressable) rather than dropping the marker.
-            self.require(Capability.EXPLICIT_PROMPT_CACHING, resolution.spec.name)
+            self.require(
+                Capability.EXPLICIT_PROMPT_CACHING, resolution.spec.name, model=resolution.model
+            )
         if cache is not None:
-            self.require(Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name)
+            self.require(
+                Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name, model=resolution.model
+            )
             if cache.provider != resolution.spec.name:
                 raise InferenceSwitchError(
                     f"Cache handle was created for provider {cache.provider!r} but "
@@ -420,7 +542,9 @@ class Client:
         TTL-bound resource the caller owns — reuse (and its cost) is explicit.
         """
         resolution = self.resolve(model, provider)
-        self.require(Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name)
+        self.require(
+            Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name, model=resolution.model
+        )
         adapter = self._adapter(resolution.spec, api_key)
         return adapter.create_cache(
             model=resolution.model,

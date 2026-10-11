@@ -26,6 +26,16 @@ from .adapters.gemini import (
     gemini_max_output_tokens,
 )
 from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMode
+from .cards import (
+    Cost,
+    ModelCard,
+    ModelCards,
+    OpenWeight,
+    Reliability,
+    Route,
+    Rung,
+    default_cards,
+)
 from .client import Client, ModelChoice, Resolution, env_key_provider
 from .messages import (
     CacheHandle,
@@ -50,6 +60,8 @@ from .errors import (
     InferenceSwitchError,
     MissingAPIKeyError,
     MissingDependencyError,
+    ModelCardError,
+    NoModelAvailableError,
     ProviderResolutionError,
     StructuredOutputError,
     ToolChoiceError,
@@ -57,8 +69,17 @@ from .errors import (
     UnsupportedSchemaError,
 )
 from .registry import ProviderSpec, Registry, default_registry
+from .selection import (
+    Candidate,
+    Preference,
+    ProviderAvailability,
+    Selection,
+    SelectionRequest,
+    probe_local_server,
+    static_availability,
+)
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "Client",
@@ -72,10 +93,28 @@ __all__ = [
     "Capability",
     "StructuredMode",
     "SchemaDialect",
+    # model cards and rung-based selection
+    "Rung",
+    "Reliability",
+    "Preference",
+    "ModelCard",
+    "ModelCards",
+    "Route",
+    "Cost",
+    "OpenWeight",
+    "default_cards",
+    "Selection",
+    "SelectionRequest",
+    "Candidate",
+    "ProviderAvailability",
+    "static_availability",
+    "probe_local_server",
     "InferenceSwitchError",
     "ProviderResolutionError",
     "MissingAPIKeyError",
     "MissingDependencyError",
+    "ModelCardError",
+    "NoModelAvailableError",
     "StructuredOutputError",
     "ToolChoiceError",
     "UnsupportedCapabilityError",

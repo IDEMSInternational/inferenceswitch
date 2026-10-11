@@ -5,6 +5,48 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-11
+
+Adds model cards and selection by rung
+([#7](https://github.com/IDEMSInternational/inferenceswitch/issues/7)). Callers
+pinned to `<0.3` need to raise the pin to use them; nothing existing is removed.
+
+### Added
+
+- **Model cards**: a versioned data file shipped in the package
+  (`inferenceswitch/model_cards.json`, read with `json`) with one card per
+  model: a vendor-neutral rung (`nano` / `small` / `mid` / `large` /
+  `frontier`, provisional), a structured-output grade (`reliable` /
+  `best_effort` / `none`), context window, list price per provider route,
+  per-model capability overrides, and family, parameter count and quantization
+  for open-weight models. Seeded for the Anthropic and Gemini models in the
+  registry and for Qwen3 4B / 8B / 32B, Llama 3.1 8B and Llama 3.3 70B on
+  Ollama and LM Studio. `ModelCard`, `ModelCards`, `default_cards()`; consumers
+  add or override cards with `default_cards().merged(...)` and
+  `Client(cards=...)`. Placement rubric in `docs/model-cards.md`.
+- **`Client.select_model(rung, needs=..., structured_output=..., min_context=...,
+  local_only=..., prefer="local" | "cheapest" | "fastest")`** picks an
+  available model: providers with a key, and local servers that answer
+  `GET /models` (only the models they list count). The rung is a floor (this
+  rung or above; `allow_higher=False` for exactly this rung). Returns a
+  `Selection` with the routable `model`, the `reason` it won, every candidate
+  with why it was excluded, and `to_dict()` for run records. Raises
+  `NoModelAvailableError` naming the unavailable providers and the
+  requirements that excluded the rest.
+- `Client.availability()`, `Client.card(model)`, `ProviderAvailability`,
+  `static_availability()` and `Client(availability=...)` to declare
+  availability instead of checking it (tests, environments that must not probe).
+
+### Changed
+
+- **Capabilities are per model where a card says so.** `supports`, `require`
+  and `capabilities` given `model=` apply that model's card on top of the
+  provider defaults, and `chat`'s capability gates use them. Today this only
+  adds: `SAMPLING_PARAMS` is reported for Claude Haiku 4.5 and Sonnet 4.6. A
+  card that removes a feature makes `chat` raise `UnsupportedCapabilityError`
+  for that model. Provider-level calls (`supports(cap, "anthropic")`,
+  `providers_for`, `models_for`) are unchanged.
+
 ## [0.2.0] — 2026-10-11
 
 0.2 rather than 0.1.1: besides the fixes, this adds API and narrows what the
