@@ -288,3 +288,111 @@ def test_strings_and_enums_are_interchangeable():
         Rung.MID, needs=[Capability.TOOL_CALLING], structured_output=Reliability.RELIABLE
     )
     assert a.model == b.model
+
+
+# ── provider allow-list ─────────────────────────────────────────────────────
+
+
+def test_restricted_to_one_provider():
+    # Unrestricted, the cheapest mid model is local (free).
+    assert client().select_model("mid").provider == "ollama"
+    sel = client().select_model("mid", providers=["anthropic"])
+    assert sel.model == "anthropic/claude-haiku-4-5"
+    assert "Candidates were restricted to anthropic." in sel.reason
+    assert "restricted to anthropic" in sel.explain().splitlines()[0]
+    assert all(c.provider == "anthropic" for c in sel.candidates if c.eligible)
+    gemini = next(c for c in sel.candidates if c.qualified == "gemini/gemini-2.5-flash")
+    assert gemini.excluded == ("gemini excluded: restricted to anthropic",)
+    record = sel.to_dict()
+    assert record["request"]["providers"] == ["anthropic"]
+    json.dumps(record)
+
+
+def test_restricted_to_several_providers():
+    sel = client().select_model("mid", providers=["gemini", "anthropic"])
+    assert sel.model == "gemini/gemini-2.5-flash"  # cheapest of the two
+    assert "restricted to anthropic, gemini" in sel.reason
+    assert {c.provider for c in sel.candidates if c.eligible} == {"anthropic", "gemini"}
+    assert sel.to_dict()["request"]["providers"] == ["anthropic", "gemini"]
+
+
+def test_a_single_provider_name_is_accepted_as_a_string():
+    assert client().select_model("mid", providers="anthropic").provider == "anthropic"
+
+
+def test_restricted_providers_are_not_checked_for_availability():
+    asked = []
+
+    def availability(spec):
+        asked.append(spec.name)
+        return ProviderAvailability(spec.name, True, "declared available")
+
+    client(availability).select_model("mid", providers=["anthropic"])
+    assert asked == ["anthropic"]  # no probe of ollama or lmstudio
+
+
+def test_unknown_provider_in_the_allow_list_names_the_registered_ones():
+    with pytest.raises(ValueError, match="openai-ish") as exc:
+        client().select_model("mid", providers=["anthropic", "openai-ish"])
+    message = str(exc.value)
+    assert "Registered providers:" in message
+    assert all(name in message for name in default_registry().names)
+
+
+def test_empty_allow_list_is_an_error():
+    with pytest.raises(ValueError, match="empty"):
+        client().select_model("mid", providers=[])
+
+
+def test_nothing_fits_under_a_restriction_names_it():
+    # Gemini has a key, but the run is restricted to Anthropic, which has none.
+    with pytest.raises(NoModelAvailableError) as exc:
+        client({"gemini": True}).select_model(
+            "mid", structured_output="reliable", providers=["anthropic"]
+        )
+    message = str(exc.value)
+    assert message.startswith(
+        "No available anthropic model fits rung mid or above; "
+        "structured output reliable or better; prefer cheapest."
+    )
+    assert "anthropic (declared unavailable)" in message
+    assert "Candidates were restricted to anthropic;" in message
+    assert "gemini" in message  # named as not considered
+    assert exc.value.selection_request.providers == frozenset({"anthropic"})
+
+    # A requirement, not availability, can be the reason too.
+    with pytest.raises(NoModelAvailableError) as exc:
+        client().select_model("mid", structured_output="reliable", providers=["ollama"])
+    assert str(exc.value).startswith("No available ollama model fits")
+    assert "structured output is best_effort, reliable required" in str(exc.value)
+
+
+def test_restriction_with_local_only():
+    sel = client().select_model("mid", local_only=True, providers=["ollama", "anthropic"])
+    assert sel.provider == "ollama"
+    with pytest.raises(NoModelAvailableError) as exc:
+        client().select_model("mid", local_only=True, providers=["anthropic"])
+    message = str(exc.value)
+    assert message.startswith("No available anthropic model fits")
+    assert "local only" in message
+    assert "hosted, and local only was requested" in message
+
+
+def test_restriction_with_allow_higher():
+    # Anthropic has nothing on small; the nearest above is Haiku on mid.
+    sel = client().select_model("small", providers=["anthropic"])
+    assert sel.model == "anthropic/claude-haiku-4-5"
+    assert "nearest available at or above small" in sel.reason
+    with pytest.raises(NoModelAvailableError) as exc:
+        client().select_model("small", allow_higher=False, providers=["anthropic"])
+    message = str(exc.value)
+    assert message.startswith("No available anthropic model fits rung small exactly")
+    assert "exact rung requested" in message
+
+
+def test_without_a_restriction_nothing_changes():
+    sel = client().select_model("mid")
+    assert sel.request.providers is None
+    assert sel.to_dict()["request"]["providers"] is None
+    assert "restricted" not in sel.reason
+    assert "restricted" not in sel.explain()

@@ -209,6 +209,7 @@ class Client:
         local_only: bool = False,
         prefer: Preference | str = Preference.CHEAPEST,
         allow_higher: bool = True,
+        providers: Iterable[str] | None = None,
         refresh: bool = False,
     ) -> Selection:
         """Pick an available model for a rung, hard requirements and a preference.
@@ -222,6 +223,13 @@ class Client:
         when ``local_only``. The survivors are ranked by ``prefer``
         (``"local"``, ``"cheapest"`` or ``"fastest"``; see
         :class:`~inferenceswitch.Preference`).
+
+        ``providers`` is an allow-list of registry provider names, applied to
+        the routes before anything else: routes on other providers are
+        excluded (and their availability is not checked), the explanation says
+        the candidates were restricted, and ``to_dict()`` records the list.
+        An unregistered name, or an empty list, raises :class:`ValueError`. ``None`` (the
+        default) allows every provider.
 
         Returns a :class:`~inferenceswitch.Selection` whose ``model`` passes
         straight to :meth:`chat`, with the reason and every candidate
@@ -238,6 +246,7 @@ class Client:
             local_only=local_only,
             prefer=prefer,
             allow_higher=allow_higher,
+            providers=providers,
         )
         if refresh:
             self._availability.clear()
