@@ -135,6 +135,23 @@ class Usage:
     cache_write_tokens: int | None = None
     reasoning_tokens: int | None = None
 
+    def __add__(self, other: Usage) -> Usage:
+        """Field-wise sum. A field stays ``None`` only if neither side reported
+        it, so a total over several calls never claims a count no call gave."""
+        if not isinstance(other, Usage):
+            return NotImplemented
+
+        def add(a: int | None, b: int | None) -> int | None:
+            return None if a is None and b is None else (a or 0) + (b or 0)
+
+        return Usage(
+            input_tokens=add(self.input_tokens, other.input_tokens),
+            output_tokens=add(self.output_tokens, other.output_tokens),
+            cache_read_tokens=add(self.cache_read_tokens, other.cache_read_tokens),
+            cache_write_tokens=add(self.cache_write_tokens, other.cache_write_tokens),
+            reasoning_tokens=add(self.reasoning_tokens, other.reasoning_tokens),
+        )
+
 
 @dataclass(frozen=True)
 class CacheHandle:
@@ -193,6 +210,29 @@ class StructuredResult:
     stop_reason: StopReason | None = None
     #: The untouched provider SDK response, for anything not normalized here.
     raw: Any = None
+
+
+@dataclass
+class ToolRun:
+    """What :meth:`Client.run_tools` returns with ``return_run=True``: the final
+    response plus what a host needs to continue the conversation and cost it."""
+
+    #: The last model response: the one without tool calls, or, when a stop
+    #: condition ended the loop, the one carrying the call that ended it.
+    response: Response
+    #: The input ``messages`` followed by every turn the loop added: each
+    #: assistant turn and the user turn of tool results answering it, and the
+    #: final assistant text when the model finished with some. Append a user
+    #: turn and pass it back as ``messages`` to continue the conversation. A
+    #: cache's prefix is not included; it stays with the handle.
+    messages: list[Message]
+    #: Token counts summed over every model call in the loop.
+    usage: Usage
+    #: How many model calls the loop made.
+    turns: int
+    #: The tool call that met ``terminal_tools`` or ``stop_when``, or ``None``
+    #: when the model stopped calling tools itself.
+    stopped_by: ToolCall | None = None
 
 
 # ── ergonomic constructors ────────────────────────────────────────────────────

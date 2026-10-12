@@ -5,6 +5,31 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-10-12
+
+Lets a host steer and observe `run_tools`
+([#13](https://github.com/IDEMSInternational/inferenceswitch/issues/13)).
+Callers pinned to `<0.5` need to raise the pin to use it; nothing existing is
+removed, and `run_tools` behaves as before when the new arguments are omitted.
+
+### Added
+
+- **Stop conditions for `run_tools`.** `terminal_tools={"decide"}` ends the
+  loop once a call to one of those tools succeeds; `stop_when(call, output)`
+  does the same for any condition on the handler's return value. The rest of
+  that round's calls still run, so the history stays valid to continue from,
+  and a call that errors never stops the loop, so the model can retry it.
+- **Hooks for `run_tools`.** `on_response(response, seconds)` after each model
+  call and `on_tool_call(call, result, seconds)` after each tool call, so a
+  host can trace the loop as it runs.
+- **History and usage out of `run_tools`.** `return_run=True` returns a
+  `ToolRun`: the final response, the full message history (ready to continue
+  from), usage summed over every model call, the number of calls, and the
+  call that stopped the loop. `Usage` now supports `+`.
+- **`run_tools(cache=...)`** forwards a `CacheHandle` to every round, with the
+  same rules as `chat(cache=)`. `tools` may be omitted when the cache's prefix
+  holds them.
+
 ## [0.4.1] — 2026-10-12
 
 ### Fixed

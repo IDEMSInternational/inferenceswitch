@@ -136,6 +136,27 @@ final = client.run_tools(
 print(final.text)
 ```
 
+To end the loop on a "decision" tool, trace each call, and get the history
+and total usage back:
+
+```python
+run = client.run_tools(
+    model=chosen,
+    messages=history,
+    tools=[weather, decide],
+    handlers={"get_weather": get_weather, "decide": record_decision},
+    terminal_tools={"decide"},          # or stop_when=lambda call, output: ...
+    on_tool_call=lambda call, result, seconds: trace.append((call.name, seconds)),
+    return_run=True,
+)
+run.stopped_by      # the `decide` call, or None if the model finished itself
+run.messages        # full history; append a user turn to continue
+run.usage           # summed over every model call
+```
+
+`cache=` takes a handle from `create_cache` (its prefix then supplies the
+system prompt and tools) and is forwarded to every round.
+
 Passing `tools` to a provider without `Capability.TOOL_CALLING` raises
 `UnsupportedCapabilityError` — it fails loudly instead of silently dropping tools.
 

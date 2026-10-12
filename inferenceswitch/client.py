@@ -14,9 +14,10 @@ that decrypts on its side.
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable, Mapping
+import time
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Literal, overload
 
 from .adapters import Adapter, build_adapter
 from .capabilities import Capabilities, Capability
@@ -35,9 +36,12 @@ from .messages import (
     StructuredResult,
     Text,
     Tool,
+    ToolCall,
     ToolChoice,
     ToolResult,
+    ToolRun,
     ToolUse,
+    Usage,
 )
 from .registry import LOCAL_PLACEHOLDER_KEY, ProviderSpec, Registry, default_registry
 from .selection import (
@@ -577,21 +581,73 @@ class Client:
         spec = self.registry.get(handle.provider)
         self._adapter(spec, api_key).delete_cache(handle)
 
+    @overload
     def run_tools(
         self,
         *,
         model: str,
         messages: list[Message],
-        tools: list[Tool],
+        tools: list[Tool] | None = None,
         handlers: dict[str, Callable[[dict], Any]],
         provider: str | None = None,
         api_key: str | None = None,
         system: str | None = None,
         effort: Effort | None = None,
+        cache: CacheHandle | None = None,
         max_turns: int = 10,
         temperature: float = 0.1,
         max_tokens: int | None = None,
-    ) -> Response:
+        terminal_tools: Collection[str] | None = None,
+        stop_when: Callable[[ToolCall, Any], bool] | None = None,
+        on_response: Callable[[Response, float], None] | None = None,
+        on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        return_run: Literal[False] = False,
+    ) -> Response: ...
+
+    @overload
+    def run_tools(
+        self,
+        *,
+        model: str,
+        messages: list[Message],
+        tools: list[Tool] | None = None,
+        handlers: dict[str, Callable[[dict], Any]],
+        provider: str | None = None,
+        api_key: str | None = None,
+        system: str | None = None,
+        effort: Effort | None = None,
+        cache: CacheHandle | None = None,
+        max_turns: int = 10,
+        temperature: float = 0.1,
+        max_tokens: int | None = None,
+        terminal_tools: Collection[str] | None = None,
+        stop_when: Callable[[ToolCall, Any], bool] | None = None,
+        on_response: Callable[[Response, float], None] | None = None,
+        on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        return_run: Literal[True],
+    ) -> ToolRun: ...
+
+    def run_tools(
+        self,
+        *,
+        model: str,
+        messages: list[Message],
+        tools: list[Tool] | None = None,
+        handlers: dict[str, Callable[[dict], Any]],
+        provider: str | None = None,
+        api_key: str | None = None,
+        system: str | None = None,
+        effort: Effort | None = None,
+        cache: CacheHandle | None = None,
+        max_turns: int = 10,
+        temperature: float = 0.1,
+        max_tokens: int | None = None,
+        terminal_tools: Collection[str] | None = None,
+        stop_when: Callable[[ToolCall, Any], bool] | None = None,
+        on_response: Callable[[Response, float], None] | None = None,
+        on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        return_run: bool = False,
+    ) -> Response | ToolRun:
         """Drive the full tool-use loop: call the model, run the requested tools
         via ``handlers`` (``{tool_name: fn(input) -> result}``), feed results
         back, and repeat until the model stops calling tools.
@@ -600,22 +656,58 @@ class Client:
         an unmapped tool, is returned to the model as an error tool result rather
         than raised — so the model can recover. Raises :class:`InferenceSwitchError`
         only if ``max_turns`` is exceeded.
+
+        Optional, and without effect when omitted:
+
+        * ``terminal_tools`` / ``stop_when`` end the loop early. After the
+          model's tool calls in a round have all run, the loop stops if any of
+          them succeeded and either named a tool in ``terminal_tools`` or made
+          ``stop_when(call, output)`` true (``output`` is the handler's return
+          value, before it is turned into a string). Calls that error, or have
+          no handler, never stop the loop, so the model can retry them. The
+          rest of the round still runs, so every call has a result and the
+          history stays valid to continue from. The returned response is the
+          one that made the stopping call.
+        * ``on_response(response, seconds)`` is called after each model call,
+          and ``on_tool_call(call, result, seconds)`` after each tool call
+          (``seconds`` is 0.0 for a call with no handler), so a host can trace
+          the loop as it runs. An exception from a hook propagates.
+        * ``cache`` is forwarded to every :meth:`chat` call, under the same
+          rules: the provider needs REUSABLE_PROMPT_CACHE, and the cache's
+          prefix supplies the system prompt and tools, so pass neither
+          ``system`` nor ``tools`` with it.
+        * ``return_run=True`` returns a :class:`ToolRun` instead: the final
+          response, the full message history, usage summed over every model
+          call, the number of calls, and the call that stopped the loop.
         """
+        if tools is None and cache is None:
+            raise ValueError("run_tools needs tools=, or a cache= whose prefix holds them.")
+        terminal = frozenset(terminal_tools or ())
         history = list(messages)
-        for _ in range(max_turns):
+        usage = Usage()
+        for turn in range(1, max_turns + 1):
+            started = time.perf_counter()
             response = self.chat(
                 model=model,
                 messages=history,
                 tools=tools,
                 system=system,
                 effort=effort,
+                cache=cache,
                 provider=provider,
                 api_key=api_key,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
+            if on_response is not None:
+                on_response(response, time.perf_counter() - started)
+            usage = usage + response.usage
             if not response.tool_calls:
-                return response
+                if not return_run:
+                    return response
+                if response.text:
+                    history.append(Message(role="assistant", content=response.text))
+                return ToolRun(response, history, usage, turn)
 
             # Record the assistant's turn (text + the tool calls it made)...
             assistant_parts: list = [ToolUse(c.id, c.name, c.input) for c in response.tool_calls]
@@ -625,22 +717,39 @@ class Client:
 
             # ...then run each tool and return the results in one user turn.
             results: list = []
+            stopped_by: ToolCall | None = None
             for call in response.tool_calls:
                 handler = handlers.get(call.name)
                 if handler is None:
-                    results.append(
-                        ToolResult(call.id, f"No handler for tool {call.name!r}.",
-                                   is_error=True, name=call.name)
-                    )
+                    result = ToolResult(call.id, f"No handler for tool {call.name!r}.",
+                                        is_error=True, name=call.name)
+                    results.append(result)
+                    if on_tool_call is not None:
+                        on_tool_call(call, result, 0.0)
                     continue
+                started = time.perf_counter()
                 try:
                     output = handler(call.input)
-                    results.append(ToolResult(call.id, str(output), name=call.name))
+                    result = ToolResult(call.id, str(output), name=call.name)
                 except Exception as exc:  # noqa: BLE001 - report back to the model
-                    results.append(
-                        ToolResult(call.id, f"Tool error: {exc}", is_error=True, name=call.name)
-                    )
+                    result = ToolResult(call.id, f"Tool error: {exc}", is_error=True, name=call.name)
+                elapsed = time.perf_counter() - started
+                results.append(result)
+                if on_tool_call is not None:
+                    on_tool_call(call, result, elapsed)
+                if result.is_error:
+                    continue
+                stops = call.name in terminal
+                if stop_when is not None:
+                    stops = stop_when(call, output) or stops
+                if stops and stopped_by is None:
+                    stopped_by = call
             history.append(Message(role="user", content=results))
+
+            if stopped_by is not None:
+                if not return_run:
+                    return response
+                return ToolRun(response, history, usage, turn, stopped_by)
 
         raise InferenceSwitchError(f"run_tools exceeded max_turns={max_turns} without finishing.")
 
