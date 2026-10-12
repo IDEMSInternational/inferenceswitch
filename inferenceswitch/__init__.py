@@ -49,6 +49,7 @@ from .messages import (
     ToolCall,
     ToolChoice,
     ToolResult,
+    ToolRun,
     ToolUse,
     Usage,
     assistant,
@@ -79,7 +80,7 @@ from .selection import (
     static_availability,
 )
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 
 __all__ = [
     "Client",
@@ -126,6 +127,7 @@ __all__ = [
     "ToolChoice",
     "ToolUse",
     "ToolResult",
+    "ToolRun",
     "Text",
     "CacheHandle",
     "Effort",
