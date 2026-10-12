@@ -129,6 +129,11 @@ in code; a card with the same `id` replaces the shipped one.
   A test enforces this.
 - Review prices and placements when a vendor releases or reprices a model, and
   at least before each release. Bump `updated` when you do.
+- When a provider shuts a model down or closes it to new users, delete its
+  card and add it to `RETIRED_MODELS` in `tests/test_model_cards.py`. A card
+  is an offer `select_model` makes to every caller, so a model only some
+  accounts can still call does not get one. Callers who still have access can
+  merge the card back in themselves.
 - Cards do not warn when they are old. Every `Selection` records
   `cards_updated`, so a consumer's run log shows which card data chose the
   model, and the consumer can decide what is too old for them.

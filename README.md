@@ -292,7 +292,7 @@ choice = client.select_model(
     min_context=32_000,
     prefer="local",                 # "local" | "cheapest" (default) | "fastest"
 )
-choice.model        # e.g. "gemini/gemini-2.5-flash" — pass straight to chat(model=...)
+choice.model        # e.g. "gemini/gemini-3.6-flash" — pass straight to chat(model=...)
 choice.reason       # why it won, and what came second
 choice.to_dict()    # JSON-able record for a run log: request, candidates, exclusions
 print(choice.explain())
@@ -385,7 +385,7 @@ def answer(model, questions):                 # model picked from a dropdown / .
         client.delete_cache(handle)            # frees the Gemini resource; no-op for a replay handle
 
 answer("claude-opus-4-8", qs)     # ✓
-answer("gemini-2.5-flash", qs)    # ✓ — identical code
+answer("gemini-3.6-flash", qs)    # ✓ — identical code
 ```
 
 `create_cache`/`chat(cache=)` on a provider without `REUSABLE_PROMPT_CACHE`

@@ -319,9 +319,9 @@ def default_registry() -> Registry:
                 api_key_env="GEMINI_API_KEY",
                 model_prefixes=("gemini",),
                 # Google's own ids. gemini-3.5-flash is now served by 3.6 Flash,
-                # and Gemini 3 Flash only exists as gemini-3-flash-preview.
+                # and Gemini 3 Flash only exists as gemini-3-flash-preview. The
+                # 2.5 line is closed to new users, so it is not listed.
                 known_models=(
-                    "gemini-2.5-flash",
                     "gemini-3-flash-preview",
                     "gemini-3.6-flash",
                     "gemini-3.8-flash",
