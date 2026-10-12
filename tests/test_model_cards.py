@@ -45,6 +45,29 @@ def test_every_curated_model_has_a_card():
             assert cards.find(spec.name, model) is not None, f"{spec.name}/{model}"
 
 
+#: Models a provider has shut down or closed to new users, with what it said.
+#: select_model must never offer one: the caller gets a 404 on the first call.
+#: Add to this list when a provider retires a model, and drop its card.
+RETIRED_MODELS = {
+    # 404 "no longer available to new users" (2026-10-12); the whole 2.5 line
+    # is limited to previously active users.
+    ("gemini", "gemini-2.5-pro"),
+    ("gemini", "gemini-2.5-flash"),
+    ("gemini", "gemini-2.5-flash-lite"),
+}
+
+
+@pytest.mark.parametrize("provider,model", sorted(RETIRED_MODELS))
+def test_no_card_routes_to_a_retired_model(provider, model):
+    assert default_cards().find(provider, model) is None
+
+
+def test_no_retired_model_is_curated():
+    registry = default_registry()
+    for provider, model in RETIRED_MODELS:
+        assert model not in registry[provider].known_models, f"{provider}/{model}"
+
+
 def test_local_routes_have_no_cost_and_hosted_ones_do():
     registry = default_registry()
     for card in default_cards():

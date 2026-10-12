@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "updated": "2026-10-11",
+  "updated": "2026-10-12",
   "cards": [
     {
       "id": "claude-haiku-4-5",
@@ -101,15 +101,6 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "notes": "Anthropic's most capable widely released model. Above Opus; frontier is the top rung, so it ranks after Opus on price. Rejects forced tool choice and temperature."
-    },
-    {
-      "id": "gemini-2.5-flash",
-      "rung": "mid",
-      "routes": {
-        "gemini": {"models": ["gemini-2.5-flash"], "cost": {"input": 0.3, "output": 2.5}}
-      },
-      "structured_output": "reliable",
-      "context_window": 1048576
     },
     {
       "id": "gemini-3-flash",
@@ -404,16 +395,6 @@
       "context_window": 1048576
     },
     {
-      "id": "gemini-2.5-flash-lite",
-      "rung": "small",
-      "routes": {
-        "gemini": {"models": ["gemini-2.5-flash-lite"], "cost": {"input": 0.1, "output": 0.4}}
-      },
-      "structured_output": "reliable",
-      "context_window": 1048576,
-      "notes": "Limited to existing users; Google recommends 3.5 Flash-Lite for new projects."
-    },
-    {
       "id": "gemini-3.1-pro-preview",
       "rung": "large",
       "routes": {
@@ -422,16 +403,6 @@
       "structured_output": "reliable",
       "context_window": 1048576,
       "notes": "Preview. Prompts over 200K tokens cost more ($4 / $18)."
-    },
-    {
-      "id": "gemini-2.5-pro",
-      "rung": "large",
-      "routes": {
-        "gemini": {"models": ["gemini-2.5-pro"], "cost": {"input": 1.25, "output": 10.0}}
-      },
-      "structured_output": "reliable",
-      "context_window": 1048576,
-      "notes": "Limited to existing users. Prompts over 200K tokens cost more ($2.50 / $15)."
     },
     {
       "id": "mistral-large-4",

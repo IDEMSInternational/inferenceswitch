@@ -5,6 +5,27 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-10-12
+
+### Fixed
+
+- **`select_model` no longer offers Gemini 2.5 models.** Google now answers
+  `gemini-2.5-pro` and `gemini-2.5-flash-lite` with 404 "no longer available
+  to new users", and limits the whole 2.5 line to accounts that used it before.
+  With both a Gemini and an Anthropic key, `select_model("large",
+  structured_output="reliable")` picked `gemini/gemini-2.5-pro` (the cheapest
+  `large` card), so the first call failed. The `gemini-2.5-pro`,
+  `gemini-2.5-flash` and `gemini-2.5-flash-lite` cards are removed, and
+  `gemini-2.5-flash` leaves the Gemini `known_models`. Passing these ids to
+  `chat()` still works for accounts that have access, and those accounts can
+  merge the cards back in with `default_cards().merged(...)`. The remaining
+  Gemini cards were checked against the live API on 2026-10-12.
+  `gemini-3.1-pro-preview` is still the Gemini `large` card. Google offers it
+  only on paid tiers, so a free-tier key gets a 429 on it.
+- A test now fails if any card routes to a model listed as retired
+  (`RETIRED_MODELS` in `tests/test_model_cards.py`). `docs/model-cards.md`
+  says when to add to that list.
+
 ## [0.3.0] — 2026-10-11
 
 Adds model cards and selection by rung
