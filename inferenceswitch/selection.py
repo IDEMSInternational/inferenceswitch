@@ -7,6 +7,8 @@ Three stages, each recorded so the caller can show why:
    server is available when it answers ``GET {base_url}/models``; the models it
    lists are then the only ones of its routes that count. Tests and
    environments that must not probe pass their own availability.
+   With a provider allow-list, routes on other providers are excluded first
+   and their availability is not checked.
 2. **Requirements.** Rung (this rung or above, unless ``allow_higher=False``),
    capability tokens, structured-output grade, context window, locality.
 3. **Preference.** The eligible candidates are ranked by ``prefer``; see
@@ -27,12 +29,15 @@ from enum import Enum
 from typing import Any
 
 from .capabilities import Capability
-from .cards import ModelCard, ModelCards, Reliability, Rung
+from .cards import ModelCard, ModelCards, Reliability, Route, Rung
 from .errors import NoModelAvailableError
 from .registry import ProviderSpec, Registry
 
 #: Seconds to wait for a local server's model list before calling it unreachable.
 LOCAL_PROBE_TIMEOUT = 0.5
+
+#: Marks the exclusion reason given to routes outside a provider allow-list.
+_RESTRICTED = " excluded: restricted to "
 
 
 class Preference(str, Enum):
@@ -157,6 +162,15 @@ class SelectionRequest:
     local_only: bool = False
     prefer: Preference = Preference.CHEAPEST
     allow_higher: bool = True
+    #: Allow-list of provider names; ``None`` means every registered provider.
+    providers: frozenset[str] | None = None
+
+    @property
+    def restriction(self) -> str | None:
+        """``"restricted to anthropic, gemini"``, or ``None`` without an allow-list."""
+        if self.providers is None:
+            return None
+        return "restricted to " + ", ".join(sorted(self.providers))
 
     def describe(self) -> str:
         parts = [f"rung {self.rung.value}{' or above' if self.allow_higher else ' exactly'}"]
@@ -168,6 +182,8 @@ class SelectionRequest:
             parts.append(f"context >= {self.min_context:,}")
         if self.local_only:
             parts.append("local only")
+        if self.restriction:
+            parts.append(self.restriction)
         return "; ".join(parts) + f"; prefer {self.prefer.value}"
 
     def to_dict(self) -> dict[str, Any]:
@@ -180,6 +196,7 @@ class SelectionRequest:
             "local_only": self.local_only,
             "prefer": self.prefer.value,
             "allow_higher": self.allow_higher,
+            "providers": None if self.providers is None else sorted(self.providers),
         }
 
 
@@ -277,10 +294,13 @@ def make_request(
     local_only: bool = False,
     prefer: Preference | str = Preference.CHEAPEST,
     allow_higher: bool = True,
+    providers: Iterable[str] | None = None,
 ) -> SelectionRequest:
     """Normalise caller input (strings from a profile file are fine)."""
     if isinstance(needs, (str, Capability)):
         needs = (needs,)
+    if isinstance(providers, str):
+        providers = (providers,)
     return SelectionRequest(
         rung=Rung(rung),
         needs=frozenset(Capability(n) for n in needs),
@@ -289,6 +309,7 @@ def make_request(
         local_only=local_only,
         prefer=Preference(prefer),
         allow_higher=allow_higher,
+        providers=None if providers is None else frozenset(providers),
     )
 
 
@@ -299,7 +320,21 @@ def select(
     availability: Callable[[str], ProviderAvailability],
 ) -> Selection:
     """Run the three stages. ``availability`` maps a provider name to its
-    (possibly cached) :class:`ProviderAvailability`."""
+    (possibly cached) :class:`ProviderAvailability`.
+
+    Raises :class:`ValueError` if the request's provider allow-list is empty
+    or names a provider that is not registered."""
+    if request.providers is not None:
+        if not request.providers:
+            raise ValueError(
+                "The provider allow-list is empty; pass None to allow every provider."
+            )
+        unknown = sorted(request.providers - set(registry.names))
+        if unknown:
+            raise ValueError(
+                f"Unknown provider(s) in the allow-list: {', '.join(unknown)}. "
+                f"Registered providers: {', '.join(registry.names)}."
+            )
     checked: dict[str, ProviderAvailability] = {}
     eligible: list[tuple[tuple, Candidate, ModelCard]] = []
     excluded: list[Candidate] = []
@@ -313,6 +348,14 @@ def select(
                 ))
                 continue
             spec = registry[route.provider]
+            if request.providers is not None and route.provider not in request.providers:
+                # Before availability, so a restriction never probes a local server.
+                excluded.append(Candidate(
+                    card.id, route.provider, route.models[0], card.rung, spec.is_local,
+                    _blended_cost(spec, route),
+                    (f"{route.provider}{_RESTRICTED}{', '.join(sorted(request.providers))}",),
+                ))
+                continue
             if route.provider not in checked:
                 checked[route.provider] = availability(route.provider)
             avail = checked[route.provider]
@@ -332,12 +375,9 @@ def select(
                     )
             reasons.extend(_requirement_failures(request, card, spec))
 
-            if spec.is_local:
-                cost: float | None = 0.0
-            else:
-                cost = None if route.cost is None else round(route.cost.blended, 6)
             candidate = Candidate(
-                card.id, route.provider, model, card.rung, spec.is_local, cost, tuple(reasons)
+                card.id, route.provider, model, card.rung, spec.is_local,
+                _blended_cost(spec, route), tuple(reasons),
             )
             if reasons:
                 excluded.append(candidate)
@@ -369,6 +409,12 @@ def select(
         availability=avail_list,
         cards_updated=cards.updated,
     )
+
+
+def _blended_cost(spec: ProviderSpec, route: Route) -> float | None:
+    if spec.is_local:
+        return 0.0
+    return None if route.cost is None else round(route.cost.blended, 6)
 
 
 def _requirement_failures(
@@ -442,6 +488,8 @@ def _reason(request: SelectionRequest, winner: Candidate, runner_up: Candidate |
         text += f" Next best: {_describe(runner_up)}."
     else:
         text += " It was the only eligible candidate."
+    if request.restriction:
+        text += f" Candidates were {request.restriction}."
     return text
 
 
@@ -451,6 +499,8 @@ def _nothing_fits_message(
     availability: tuple[ProviderAvailability, ...],
 ) -> str:
     unavailable = [a for a in availability if not a.available]
+    restricted = [c for c in excluded if _RESTRICTED in c.excluded[0]]
+    excluded = [c for c in excluded if _RESTRICTED not in c.excluded[0]]
     reasons: dict[str, int] = {}
     for c in excluded:
         for r in c.excluded:
@@ -458,7 +508,15 @@ def _nothing_fits_message(
                 continue  # summarised per provider below
             key = r.split(" (looked for ")[0]
             reasons[key] = reasons.get(key, 0) + 1
-    lines = [f"No available model fits {request.describe()}."]
+    if request.providers is None:
+        lines = [f"No available model fits {request.describe()}."]
+    else:
+        # Lead with the restriction: it is usually why nothing fits.
+        unrestricted = replace(request, providers=None)
+        lines = [
+            f"No available {' or '.join(sorted(request.providers))} model fits "
+            f"{unrestricted.describe()}."
+        ]
     fit_if_available = [
         c.qualified for c in excluded
         if all(" unavailable: " in r or " does not serve it " in r for r in c.excluded)
@@ -480,6 +538,15 @@ def _nothing_fits_message(
             + "; ".join(f"{r} (x{n})" for r, n in sorted(reasons.items(), key=lambda kv: -kv[1]))
             + "."
         )
+    if restricted:
+        lines.append(
+            f"Candidates were {request.restriction}; {len(restricted)} route(s) on "
+            f"{', '.join(sorted({c.provider for c in restricted}))} were not considered."
+        )
     if not excluded:
-        lines.append("There are no model cards to choose from.")
+        lines.append(
+            "There are no model cards to choose from." if not restricted
+            else "No model card has a route on "
+            f"{' or '.join(sorted(request.providers or ()))}."
+        )
     return " ".join(lines)

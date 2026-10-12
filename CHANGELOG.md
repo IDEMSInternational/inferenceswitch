@@ -5,7 +5,7 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
-## [0.3.1] — 2026-10-12
+## [0.4.1] — 2026-10-12
 
 ### Fixed
 
@@ -21,10 +21,33 @@ All notable changes to this project are documented here. This project adheres to
   merge the cards back in with `default_cards().merged(...)`. The remaining
   Gemini cards were checked against the live API on 2026-10-12.
   `gemini-3.1-pro-preview` is still the Gemini `large` card. Google offers it
-  only on paid tiers, so a free-tier key gets a 429 on it.
+  only on paid tiers, so a free-tier key gets a 429 on it
+  ([#12](https://github.com/IDEMSInternational/inferenceswitch/issues/12)).
 - A test now fails if any card routes to a model listed as retired
   (`RETIRED_MODELS` in `tests/test_model_cards.py`). `docs/model-cards.md`
   says when to add to that list.
+
+## [0.4.0] — 2026-10-12
+
+Adds a provider allow-list to model selection
+([#9](https://github.com/IDEMSInternational/inferenceswitch/issues/9)).
+Callers pinned to `<0.4` need to raise the pin to use it; nothing existing is
+removed.
+
+### Added
+
+- **Provider allow-list for `select_model`**
+  ([#9](https://github.com/IDEMSInternational/inferenceswitch/issues/9)).
+  `providers=["anthropic", ...]` restricts selection to those registry
+  providers, for reasons the ranking can't see (credits, contracts, data
+  agreements). The filter applies before ranking, so the explanation still
+  covers the choice. Routes on other providers are listed as excluded by the
+  restriction and their availability is not checked. The reason says the
+  candidates were restricted, `to_dict()` records the list under
+  `request.providers` (`None` when unrestricted), and `NoModelAvailableError`
+  leads with the restriction. Unregistered names, or an empty list, raise
+  `ValueError`. Callers that don't pass `providers` see no change, except the
+  new `providers` key in the request record.
 
 ## [0.3.0] — 2026-10-11
 

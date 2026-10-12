@@ -311,6 +311,16 @@ print(choice.explain())
 - **Nothing fits** raises `NoModelAvailableError`, whose message names the
   unavailable providers, the models that would fit if they were available, and
   the requirements that excluded the rest.
+- **Restrict providers** with an allow-list when a reason the ranking can't
+  see decides it: credits to use up, a contract, a data agreement.
+  `providers=["anthropic"]` keeps only routes on those registry providers.
+  They are filtered before ranking, so the reason and candidates still explain
+  the choice among them. The other routes appear among the candidates as
+  `excluded: restricted to anthropic`, and their providers are not checked for
+  availability. `to_dict()` records the list under `request.providers`. When
+  nothing fits, the message leads with the restriction ("No available anthropic
+  model fits rung mid or above; …"). A name not in the registry raises
+  `ValueError`. Without `providers`, every provider is considered, as before.
 - **Cards override provider capabilities per model.** `supports`, `require`
   and `capabilities` given a `model=` apply its card, and `chat` gates on them:
   `client.supports(Capability.SAMPLING_PARAMS, model="claude-haiku-4-5")` is
