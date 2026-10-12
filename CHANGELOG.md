@@ -5,6 +5,13 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-12
+
+Adds a provider allow-list to model selection
+([#9](https://github.com/IDEMSInternational/inferenceswitch/issues/9)).
+Callers pinned to `<0.4` need to raise the pin to use it; nothing existing is
+removed.
+
 ### Added
 
 - **Provider allow-list for `select_model`**
