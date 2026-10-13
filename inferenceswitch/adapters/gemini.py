@@ -271,12 +271,19 @@ class GeminiAdapter(Adapter):
         tool_name: str = "generate_json",  # unused; Gemini has no tool-name concept
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
         gemini_schema = schema_mod.to_gemini_schema(schema)
+        contents: Any = prompt
+        if cache_prefix:
+            # No inline breakpoint on Gemini: putting the static text first, as
+            # its own part, is what lets implicit caching match the prefix.
+            parts = [{"text": cache_prefix}] + ([{"text": prompt}] if prompt else [])
+            contents = [{"role": "user", "parts": parts}]
         response = self._client.models.generate_content(
             model=model,
-            contents=prompt,
+            contents=contents,
             config=self._config(
                 system=system,
                 response_schema=gemini_schema,

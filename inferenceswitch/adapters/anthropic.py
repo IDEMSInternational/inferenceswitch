@@ -194,6 +194,22 @@ def anthropic_usage(raw) -> Usage:
     return usage
 
 
+def structured_user_content(prompt: str, cache_prefix: str | None) -> str | list[dict]:
+    """The user turn of a structured request: ``prompt`` alone, or a
+    ``cache_control``-marked ``cache_prefix`` block followed by ``prompt``.
+
+    An empty ``prompt`` is left out, since Anthropic rejects empty text blocks.
+    """
+    if not cache_prefix:
+        return prompt
+    blocks: list[dict] = [
+        {"type": "text", "text": cache_prefix, "cache_control": {"type": "ephemeral"}}
+    ]
+    if prompt:
+        blocks.append({"type": "text", "text": prompt})
+    return blocks
+
+
 def anthropic_tool_choice_instruction(
     tool_choice: ToolChoice, force_tool: str | None, tools: list[Tool]
 ) -> str | None:
@@ -320,6 +336,7 @@ class AnthropicAdapter(Adapter):
         tool_name: str = "generate_json",
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON, by the mechanism the capability registry names
         for ``model`` (see :meth:`Capabilities.structured_output_for`):
@@ -335,6 +352,10 @@ class AnthropicAdapter(Adapter):
         Whatever the mechanism, the result is checked against the caller's
         original schema, including the constraints the Anthropic dialect drops,
         and a mismatch raises :class:`StructuredOutputError`.
+
+        ``cache_prefix`` is sent as its own text block ahead of ``prompt``, with
+        a ``cache_control`` breakpoint. The breakpoint caches everything above
+        it too: the tool (and so the schema) and the system prompt.
         """
         max_tokens = resolve_max_tokens(model, max_tokens)
         # NOTE: temperature/top_p/top_k are deliberately NOT forwarded. Newer
@@ -353,7 +374,9 @@ class AnthropicAdapter(Adapter):
         create_kwargs: dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "user", "content": structured_user_content(prompt, cache_prefix)}
+            ],
         }
         if system:
             create_kwargs["system"] = system

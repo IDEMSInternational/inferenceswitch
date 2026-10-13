@@ -391,6 +391,7 @@ class Client:
         tool_name: str = "generate_json",
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON from whichever provider ``model`` routes to,
         with the call's token usage, stop reason and raw provider response.
@@ -398,6 +399,18 @@ class Client:
         Same request as :meth:`generate_structured_json`; use this one when you
         need per-call tokens or cost. ``usage`` fields the provider doesn't
         report are ``None``.
+
+        ``cache_prefix`` is static text sent before ``prompt``, in the same
+        user turn: a reference document or run context that repeats across
+        calls while ``prompt`` varies. Where the provider takes inline cache
+        breakpoints (EXPLICIT_PROMPT_CACHING, Anthropic) it is marked for
+        caching, which also caches the system prompt and schema above it;
+        ``usage.cache_write_tokens`` / ``usage.cache_read_tokens`` show the
+        write and the later hits. Elsewhere it is sent first so implicit
+        prefix caching can match it. It is a hint, not a requirement: the
+        model sees the same text either way, so it never raises. Providers
+        cache only prefixes above a minimum size (about 1024 tokens on most
+        Claude models), and smaller ones are sent uncached.
         """
         resolution = self.resolve(model, provider)
         adapter = self._adapter(resolution.spec, api_key)
@@ -409,6 +422,7 @@ class Client:
             tool_name=tool_name,
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
+            cache_prefix=cache_prefix,
         )
 
     def generate_structured_json(
@@ -423,11 +437,13 @@ class Client:
         tool_name: str = "generate_json",
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> Any:
         """Return schema-constrained JSON from whichever provider ``model`` routes
         to, handling the per-provider mechanism and schema dialect internally.
 
-        The ``value`` of :meth:`generate_structured`, without the usage."""
+        The ``value`` of :meth:`generate_structured`, without the usage.
+        ``cache_prefix`` works as it does there."""
         return self.generate_structured(
             model=model,
             schema=schema,
@@ -438,6 +454,7 @@ class Client:
             tool_name=tool_name,
             temperature=temperature,
             max_tokens=max_tokens,
+            cache_prefix=cache_prefix,
         ).value
 
     def generate_text(

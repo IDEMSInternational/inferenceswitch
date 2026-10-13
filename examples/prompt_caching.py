@@ -7,6 +7,7 @@ supports that capability. Pick the model; the library picks the mechanism.
     python -m examples.prompt_caching reusable  gemini-2.5-flash
     python -m examples.prompt_caching explicit  claude-opus-4-8
     python -m examples.prompt_caching implicit  openai/gpt-4o
+    python -m examples.prompt_caching structured claude-opus-4-8
 
 Needs the matching provider key + extra for whichever model you choose
 (ANTHROPIC_API_KEY / GEMINI_API_KEY / OPENAI_API_KEY).
@@ -99,7 +100,48 @@ def implicit(model: str) -> None:
         )
 
 
-_EXAMPLES = {"reusable": reusable, "explicit": explicit, "implicit": implicit}
+ANSWER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "answer": {"type": "string"},
+        "clause_quoted": {"type": "boolean"},
+    },
+    "required": ["answer", "clause_quoted"],
+    "additionalProperties": False,
+}
+
+
+def structured(model: str) -> None:
+    """``cache_prefix`` on ``generate_structured`` — any model.
+
+    The static prefix goes in ``cache_prefix`` and the varying part in
+    ``prompt``. Where the provider takes inline breakpoints (Anthropic) the
+    prefix is marked for caching, along with the system prompt and schema above
+    it; elsewhere it is sent first so implicit caching can match it. The first
+    call writes the cache; the rest read it.
+    """
+    client = Client()
+    for q in QUESTIONS:
+        result = client.generate_structured(
+            model=model,
+            schema=ANSWER_SCHEMA,
+            system="Answer only from the handbook.",
+            cache_prefix=REFERENCE_DOC,
+            prompt=q,
+        )
+        print(
+            f"Q: {q}\n  {result.value['answer'][:80]}\n"
+            f"  cache_write={result.usage.cache_write_tokens} "
+            f"cache_read={result.usage.cache_read_tokens}\n"
+        )
+
+
+_EXAMPLES = {
+    "reusable": reusable,
+    "explicit": explicit,
+    "implicit": implicit,
+    "structured": structured,
+}
 
 if __name__ == "__main__":
     if len(sys.argv) != 3 or sys.argv[1] not in _EXAMPLES:

@@ -438,6 +438,22 @@ rather than silently dropping the breakpoint.
 > silently skipped below; Gemini ~32k, which *raises*) and **TTL granularity**
 > (exact seconds on Gemini; 5-min ephemeral on Anthropic today).
 
+**Structured calls** take a `cache_prefix`: static text sent before `prompt`,
+in the same user turn. On Anthropic it gets a `cache_control` breakpoint, which
+also caches the system prompt and the schema above it. On other providers it is
+sent first, so implicit caching (Gemini, OpenAI, DeepSeek) can match it. Unlike
+a `cache=True` marker it is a hint and never raises, because the model sees the
+same text either way:
+
+```python
+result = client.generate_structured(
+    model=model, schema=schema, system=system,
+    cache_prefix=book_scope + run_context,   # the same on every call
+    prompt=change_request,                   # what varies
+)
+result.usage.cache_write_tokens, result.usage.cache_read_tokens
+```
+
 See [`examples/prompt_caching.py`](examples/prompt_caching.py) for one runnable
 example per mechanism.
 

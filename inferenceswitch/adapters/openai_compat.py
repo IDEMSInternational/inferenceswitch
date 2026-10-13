@@ -226,8 +226,13 @@ class OpenAICompatibleAdapter(Adapter):
         tool_name: str = "generate_json",
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> StructuredResult:
         mode = self.capabilities.structured_output
+        if cache_prefix:
+            # One string, prefix first: some compatible servers take only string
+            # content, and a stable leading prefix is what implicit caching keys on.
+            prompt = f"{cache_prefix}\n\n{prompt}" if prompt else cache_prefix
         kwargs: dict[str, Any] = {"model": model}
         kwargs.update(self._sampling_kwargs(temperature, max_tokens))
 
