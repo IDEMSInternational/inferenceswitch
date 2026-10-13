@@ -5,6 +5,26 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-10-13
+
+Lets structured calls cache a static prefix
+([#15](https://github.com/IDEMSInternational/inferenceswitch/issues/15)).
+Callers pinned to `<0.6` need to raise the pin to use it; nothing existing is
+removed, and requests without the new argument are unchanged.
+
+### Added
+
+- **`cache_prefix` on `generate_structured` and `generate_structured_json`.**
+  Static text sent before `prompt`, in the same user turn. On Anthropic it is
+  its own content block with a `cache_control` breakpoint, which also caches
+  the system prompt and the schema (or `generate_json` tool) above it. This
+  works with all three Anthropic mechanisms: `output_config`, strict tool and
+  tool. On Gemini and OpenAI-compatible providers it is sent first so their
+  implicit prefix caching can match it. It is a hint and never raises.
+  `usage.cache_write_tokens` and `usage.cache_read_tokens` show the cache
+  write and later hits.
+- `examples/prompt_caching.py structured <model>`.
+
 ## [0.5.0] — 2026-10-12
 
 Lets a host steer and observe `run_tools`

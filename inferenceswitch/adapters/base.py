@@ -94,9 +94,15 @@ class Adapter(ABC):
         tool_name: str = "generate_json",
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        cache_prefix: str | None = None,
     ) -> StructuredResult:
         """Return schema-constrained JSON as a native Python object, with the
-        usage and stop reason of the response it came from."""
+        usage and stop reason of the response it came from.
+
+        ``cache_prefix`` is static text sent before ``prompt`` in the same user
+        turn. Adapters with inline breakpoints mark it for caching; the rest
+        send it first so the provider's implicit prefix caching can match it.
+        It never changes what the model is asked, so no adapter rejects it."""
 
     def generate_structured_json(self, **kwargs: Any) -> Any:
         """Just the value of :meth:`generate_structured`."""
