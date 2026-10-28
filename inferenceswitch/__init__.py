@@ -43,6 +43,8 @@ from .messages import (
     Response,
     Message,
     StopReason,
+    StreamCallback,
+    StreamDelta,
     StructuredResult,
     Text,
     Tool,
@@ -133,6 +135,8 @@ __all__ = [
     "Effort",
     "Response",
     "StopReason",
+    "StreamCallback",
+    "StreamDelta",
     "StructuredResult",
     "Usage",
     # Per-provider output caps (default = the model's own maximum). Editing a

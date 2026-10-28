@@ -17,6 +17,7 @@ from ..messages import (
     Effort,
     Message,
     Response,
+    StreamCallback,
     StructuredResult,
     Tool,
     ToolChoice,
@@ -95,6 +96,7 @@ class Adapter(ABC):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Return schema-constrained JSON as a native Python object, with the
         usage and stop reason of the response it came from.
@@ -102,7 +104,12 @@ class Adapter(ABC):
         ``cache_prefix`` is static text sent before ``prompt`` in the same user
         turn. Adapters with inline breakpoints mark it for caching; the rest
         send it first so the provider's implicit prefix caching can match it.
-        It never changes what the model is asked, so no adapter rejects it."""
+        It never changes what the model is asked, so no adapter rejects it.
+
+        ``on_stream``, on this and the other calls, receives each
+        :class:`~inferenceswitch.StreamDelta` while the reply streams. It never
+        changes what the call returns; a provider that shows no thinking simply
+        sends none."""
 
     def generate_structured_json(self, **kwargs: Any) -> Any:
         """Just the value of :meth:`generate_structured`."""
@@ -117,6 +124,7 @@ class Adapter(ABC):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> str:
         """Return a plain text completion."""
 
@@ -134,6 +142,7 @@ class Adapter(ABC):
         cache: CacheHandle | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         """A normalized, optionally tool-using turn. Returns an :class:`Response`
         with any tool calls the model requested, unified across providers.

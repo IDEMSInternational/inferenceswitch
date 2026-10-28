@@ -189,6 +189,46 @@ without `Capability.REASONING_EFFORT` (Groq, Mistral, DeepSeek, locals) raises
 > doesn't take it). The capability is modeled at the provider level; a request
 > with `effort` on a model that lacks it surfaces that provider's own 400.
 
+## Streaming thinking while a call runs
+
+Thinking normally arrives with the finished reply. To show it as it is
+produced, pass `on_stream`. It is called with a `StreamDelta` for each piece
+of thinking (`kind="thinking"`) or answer text (`kind="text"`) while the
+reply streams:
+
+```python
+from inferenceswitch import Client, Effort, user
+
+so_far = []
+
+def on_stream(delta):
+    if delta.kind == "thinking":
+        so_far.append(delta.text)
+        show("".join(so_far))         # your UI
+
+resp = client.chat(model="claude-opus-4-8", messages=[user("Prove ...")],
+                   effort=Effort.HIGH, on_stream=on_stream)
+```
+
+It works the same on `generate_text`, `generate_structured` /
+`generate_structured_json` (where the text is the JSON as it is written) and
+`run_tools`, which passes it to every model call. In `run_tools`, each call's
+deltas arrive before its `on_response`, so start "thinking so far" afresh
+after each `on_response`. The call returns exactly what it would without
+the callback. An exception from the callback propagates and ends the call.
+
+| Provider | Thinking streamed | How |
+|---|---|---|
+| `anthropic` | yes, when thinking is on (`effort`) | `thinking_delta` events; with `on_stream`, inferenceswitch asks for `display: "summarized"`, since some models omit thinking by default |
+| `gemini` | yes | `include_thoughts` thought summaries |
+| `deepseek` | yes, on `deepseek-reasoner` | `delta.reasoning_content` |
+| `groq`, `ollama`, `lmstudio` | where the server and model report it | `delta.reasoning` or `delta.reasoning_content` |
+| `openai`, `mistral` | no, text only | Chat Completions streams no reasoning |
+
+`Capability.STREAMED_THINKING` marks the providers that stream thinking. A
+provider or model that shows no thinking sends no thinking deltas. That is
+never an error. Tool-call arguments are not streamed.
+
 ## Output caps (Anthropic and Gemini)
 
 Anthropic requires `max_tokens` on every request, so inferenceswitch has to choose one

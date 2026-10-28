@@ -165,7 +165,9 @@ _DEEPSEEK_CAPS = Capabilities(
     # NOTE: no REASONING_EFFORT (which means "effort control" through the
     # adapter): DeepSeek's thinking toggle and effort are not sent by it.
     # It DOES do automatic context caching (reported back as cached tokens).
-    features=(_OPENAI_COMPAT_BASE - {_C.STRICT_SCHEMA_OUTPUT}) | {_C.IMPLICIT_PROMPT_CACHING},
+    # deepseek-reasoner streams its thinking as delta.reasoning_content.
+    features=(_OPENAI_COMPAT_BASE - {_C.STRICT_SCHEMA_OUTPUT})
+    | {_C.IMPLICIT_PROMPT_CACHING, _C.STREAMED_THINKING},
     config={"openai_strict": False},
 )
 _GROQ_CAPS = Capabilities(
@@ -244,6 +246,7 @@ _ANTHROPIC_CAPS = Capabilities(
             _C.VISION,
             _C.PDF_INPUT,
             _C.REASONING_EFFORT,
+            _C.STREAMED_THINKING,  # thinking_delta events, when thinking is on
             _C.EXPLICIT_PROMPT_CACHING,  # low-level: inline cache_control breakpoints
             # Unified create-once/reference-many surface, backed here by replaying
             # the prefix with a cache_control breakpoint (no server resource).
@@ -269,6 +272,7 @@ _GEMINI_CAPS = Capabilities(
             _C.PDF_INPUT,
             _C.AUDIO_INPUT,
             _C.REASONING_EFFORT,
+            _C.STREAMED_THINKING,  # thought summaries (include_thoughts)
             # Gemini's caller-controlled caching is out-of-band CachedContent (a
             # separate create-call + handle + TTL), NOT inline breakpoints, so it
             # does NOT carry EXPLICIT_PROMPT_CACHING (which means inline). Its

@@ -21,6 +21,8 @@ from ..messages import (
     Response,
     Message,
     StopReason,
+    StreamCallback,
+    StreamDelta,
     StructuredResult,
     Text,
     Tool,
@@ -188,6 +190,30 @@ def decode_openai_response(raw) -> Response:
     )
 
 
+#: Where OpenAI-compatible servers put streamed reasoning, by the name each
+#: uses: ``reasoning_content`` (DeepSeek, LM Studio, vLLM, xAI) and
+#: ``reasoning`` (Groq with ``reasoning_format: "parsed"``, Ollama,
+#: OpenRouter). OpenAI's own Chat Completions streams no reasoning.
+_REASONING_FIELDS = ("reasoning_content", "reasoning")
+
+
+def openai_stream_deltas(chunk) -> list[StreamDelta]:
+    """The thinking and text a ``ChatCompletionChunk`` adds to the first choice."""
+    out: list[StreamDelta] = []
+    for choice in getattr(chunk, "choices", None) or []:
+        if getattr(choice, "index", 0) != 0:
+            continue
+        delta = choice.delta
+        for name in _REASONING_FIELDS:
+            reasoning = getattr(delta, name, None)
+            if isinstance(reasoning, str) and reasoning:
+                out.append(StreamDelta("thinking", reasoning))
+                break
+        if delta.content:
+            out.append(StreamDelta("text", delta.content))
+    return out
+
+
 def _join_text(message: Message) -> str:
     return "".join(p.text for p in message.parts() if isinstance(p, Text))
 
@@ -197,6 +223,26 @@ class OpenAICompatibleAdapter(Adapter):
         openai = require_sdk("openai", "openai")
         # base_url None -> the SDK's default (api.openai.com).
         return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
+
+    def _create(self, on_stream: StreamCallback | None, **kwargs: Any) -> Any:
+        """One ``chat.completions.create`` call. With ``on_stream`` it streams
+        instead, hands each chunk's thinking and text to ``on_stream``, and
+        returns the chunks accumulated into one ``ChatCompletion`` by the SDK's
+        own ``ChatCompletionStreamState``, so the caller reads it as before.
+
+        Usage is asked for with ``stream_options.include_usage``; a provider
+        that rejects it sets ``config["stream_include_usage"] = False``."""
+        if on_stream is None:
+            return self._client.chat.completions.create(**kwargs)
+        streaming = require_sdk("openai.lib.streaming.chat", "openai")
+        state = streaming.ChatCompletionStreamState()
+        if self.capabilities.config.get("stream_include_usage", True):
+            kwargs["stream_options"] = {"include_usage": True}
+        for chunk in self._client.chat.completions.create(**kwargs, stream=True):
+            state.handle_chunk(chunk)
+            for delta in openai_stream_deltas(chunk):
+                on_stream(delta)
+        return state.get_final_completion()
 
     def _sampling_kwargs(self, temperature: float | None, max_tokens: int | None) -> dict:
         """``temperature`` (omitted when ``None``: the client passes ``None``
@@ -227,6 +273,7 @@ class OpenAICompatibleAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         mode = self.capabilities.structured_output
         if cache_prefix:
@@ -269,7 +316,7 @@ class OpenAICompatibleAdapter(Adapter):
             )
 
         kwargs["messages"] = messages
-        response = self._client.chat.completions.create(**kwargs)
+        response = self._create(on_stream, **kwargs)
         content = response.choices[0].message.content
         if not content:
             raise StructuredOutputError(
@@ -324,13 +371,14 @@ class OpenAICompatibleAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> str:
         kwargs: dict[str, Any] = {
             "model": model,
             "messages": self._messages(prompt, system),
         }
         kwargs.update(self._sampling_kwargs(temperature, max_tokens))
-        response = self._client.chat.completions.create(**kwargs)
+        response = self._create(on_stream, **kwargs)
         return response.choices[0].message.content or ""
 
     def chat(
@@ -346,6 +394,7 @@ class OpenAICompatibleAdapter(Adapter):
         cache=None,  # reusable-cache handle: not an OpenAI concept; never non-None here
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         _ = cache
         system_text, rest = split_system(messages, system)
@@ -360,7 +409,7 @@ class OpenAICompatibleAdapter(Adapter):
             kwargs["tool_choice"] = encode_openai_tool_choice(tool_choice, force_tool)
         kwargs.update(openai_reasoning_kwargs(effort, self.capabilities.config, model))
 
-        raw = self._client.chat.completions.create(**kwargs)
+        raw = self._create(on_stream, **kwargs)
         return decode_openai_response(raw)
 
     def verify_key(self) -> tuple[bool, str]:

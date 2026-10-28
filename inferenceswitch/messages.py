@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 # ── content parts ─────────────────────────────────────────────────────────────
 
@@ -196,6 +196,25 @@ class Response:
     @property
     def wants_tools(self) -> bool:
         return bool(self.tool_calls)
+
+
+@dataclass(frozen=True)
+class StreamDelta:
+    """One piece of a reply as the provider streams it, passed to ``on_stream``.
+
+    ``kind`` is ``"thinking"`` for reasoning the provider shows (Anthropic
+    thinking, Gemini thought summaries, ``reasoning_content`` / ``reasoning``
+    on OpenAI-compatible servers) or ``"text"`` for the answer's text, which on
+    a structured call is the JSON as it is written. ``text`` is only the new
+    piece: join a call's deltas of one kind to get everything so far. Tool-call
+    arguments are not streamed."""
+
+    kind: str  # "thinking" | "text"
+    text: str
+
+
+#: The ``on_stream`` callback: called with each :class:`StreamDelta` mid-call.
+StreamCallback = Callable[[StreamDelta], None]
 
 
 @dataclass

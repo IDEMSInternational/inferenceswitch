@@ -85,6 +85,7 @@ class Capability(str, Enum):
 
     # ── advanced / cost levers ────────────────────────────────────────────
     REASONING_EFFORT = "reasoning_effort"        # thinking / reasoning-effort control
+    STREAMED_THINKING = "streamed_thinking"      # thinking reaches on_stream mid-call
     # Two distinct caching contracts — different mechanisms, different providers:
     EXPLICIT_PROMPT_CACHING = "explicit_prompt_caching"  # inline caller-placed breakpoints (Anthropic cache_control)
     IMPLICIT_PROMPT_CACHING = "implicit_prompt_caching"  # automatic prefix caching, no caller control (OpenAI/DeepSeek/Gemini)
