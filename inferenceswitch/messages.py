@@ -129,6 +129,11 @@ class StopReason(str, Enum):
 
 @dataclass
 class Usage:
+    """A call's token counts. The prompt is ``input_tokens`` (not cached) plus
+    ``cache_read_tokens`` plus ``cache_write_tokens``: on every provider
+    ``input_tokens`` leaves the cached tokens out, so each count is billed at
+    one price (:meth:`Cost.usd <inferenceswitch.cards.Cost.usd>`)."""
+
     input_tokens: int | None = None
     output_tokens: int | None = None
     cache_read_tokens: int | None = None

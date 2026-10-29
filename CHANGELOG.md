@@ -5,6 +5,32 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-10-29
+
+Prices cached prompt tokens, so a call's cost no longer reads low when the
+prompt was cached
+([anastom#629](https://github.com/IDEMSInternational/anastom/issues/629)).
+
+### Added
+
+- **`Cost.cache_read` and `Cost.cache_write`**, optional per-million prices in
+  the model cards, set on every Anthropic card (writes at 1.25x input, the
+  5-minute cache; reads from Anthropic's price list: 0.1x input, but $0.20 on
+  Opus 5.5 and Sonnet 5.5 and $0.25 on Fable 5.1). Other providers' cards
+  leave them out until their cache prices are checked.
+- **`Cost.usd(usage)`**: a call's cost at list price, and which cache counts
+  (`"cache_read"`, `"cache_write"`) the card had no price for and so left out.
+
+### Changed
+
+- **`Usage.input_tokens` is now the uncached part of the prompt on every
+  provider**, as it already was on Anthropic. OpenAI-compatible providers and
+  Gemini count cached tokens inside their prompt total; inferenceswitch now
+  subtracts `cache_read_tokens` from it, so the prompt is always
+  `input_tokens + cache_read_tokens + cache_write_tokens`. Code that read
+  `input_tokens` as the whole prompt on those providers should add
+  `cache_read_tokens` back.
+
 ## [0.7.0] — 2026-10-28
 
 Hands over thinking and text while a call runs

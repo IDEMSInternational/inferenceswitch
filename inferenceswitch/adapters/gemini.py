@@ -179,6 +179,10 @@ def gemini_usage(raw) -> Usage:
         usage.output_tokens = getattr(meta, "candidates_token_count", None)
         usage.cache_read_tokens = getattr(meta, "cached_content_token_count", None)
         usage.reasoning_tokens = getattr(meta, "thoughts_token_count", None)
+        # ``prompt_token_count`` counts the cached tokens too; ``input_tokens``
+        # is the uncached rest, as on Anthropic, so each count has one price.
+        if usage.input_tokens is not None and usage.cache_read_tokens:
+            usage.input_tokens -= usage.cache_read_tokens
     return usage
 
 

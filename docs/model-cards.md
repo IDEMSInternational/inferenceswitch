@@ -72,8 +72,14 @@ mechanism inferenceswitch does not enforce.
   the model's native window, which the server may be configured below (Ollama's
   default context is much smaller than most models' maximum).
 - **`cost`**: list price in USD per million input and output tokens, standard
-  tier, no caching or batch discount. `null` for local servers (free per token)
+  tier, no batch discount. `null` for local servers (free per token)
   and when unknown; unknown hosted prices rank last under `cheapest`.
+  Optionally `cache_read` and `cache_write`: the price of prompt tokens read
+  from and written to the provider's cache (Anthropic: the 5-minute write,
+  1.25x input). Leave them out when the vendor's price is not known;
+  `Cost.usd(usage)` then leaves those tokens out of a call's cost and names
+  them, rather than pricing them as zero. `Usage.input_tokens` is the uncached
+  part of the prompt on every provider, so each count has one price.
 - **`features`**: `add` and `remove` lists of `Capability` values, applied to
   the provider's defaults. Use them only where the model really differs from
   its provider (Haiku 4.5 accepts `temperature`; the Anthropic default does

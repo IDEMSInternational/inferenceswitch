@@ -174,7 +174,7 @@ class _FakeGemini:
                 )
             ],
             usage_metadata=NS(
-                prompt_token_count=1,
+                prompt_token_count=6,  # counts the cached tokens too
                 candidates_token_count=1,
                 cached_content_token_count=5,  # the cache hit
                 thoughts_token_count=0,
@@ -211,6 +211,7 @@ def test_gemini_create_cache_then_reference_it():
     assert gen_cfg.system_instruction is None  # lives in the cache, not resent
     assert resp.text == "hi"
     assert resp.usage.cache_read_tokens == 5
+    assert resp.usage.input_tokens == 1  # the uncached rest
 
     # delete_cache frees the server resource by name.
     adapter.delete_cache(handle)
