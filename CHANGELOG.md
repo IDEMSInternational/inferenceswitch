@@ -5,6 +5,23 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-10-29
+
+Says which provider SDK each provider needs, so an application that freezes
+inferenceswitch can install and bundle exactly those
+([anastom#628](https://github.com/IDEMSInternational/anastom/issues/628)).
+
+### Added
+
+- **`ProviderSpec.sdk`**, an `SDK(extra, modules)`: the `inferenceswitch`
+  extra that installs the provider's SDK, and the packages its adapter imports
+  when first used. Every OpenAI-compatible provider (OpenAI, Mistral, DeepSeek,
+  Groq, Ollama, LM Studio) needs the `openai` extra; Anthropic `anthropic`;
+  Gemini `gemini` (`google.genai`). A PyInstaller build cannot follow those
+  lazy imports, so it collects `modules` itself. The table is
+  `inferenceswitch.registry.SDK_BY_KIND`, and a test keeps the adapters'
+  imports and the extras in `pyproject.toml` in step with it.
+
 ## [0.8.0] — 2026-10-29
 
 Prices cached prompt tokens, so a call's cost no longer reads low when the
