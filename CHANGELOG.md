@@ -5,6 +5,13 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-28
+
+Hands over thinking and text while a call runs
+([#18](https://github.com/IDEMSInternational/inferenceswitch/issues/18)).
+Callers pinned to `<0.7` need to raise the pin to use it; nothing existing is
+removed, and requests without the new argument are unchanged.
+
 ### Added
 
 - **`on_stream` on `chat`, `run_tools`, `generate_text`, `generate_structured`
