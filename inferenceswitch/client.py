@@ -33,6 +33,7 @@ from .messages import (
     Effort,
     Response,
     Message,
+    StreamCallback,
     StructuredResult,
     Text,
     Tool,
@@ -71,6 +72,12 @@ def env_key_provider(spec: ProviderSpec) -> str:
             "or pass api_key=/key_provider."
         )
     return key
+
+
+def _streaming(on_stream: StreamCallback | None) -> dict[str, Any]:
+    """``on_stream`` as adapter kwargs, empty when there is none, so an adapter
+    written before streaming (a caller's own, or a test fake) still works."""
+    return {} if on_stream is None else {"on_stream": on_stream}
 
 
 def _has_cache_markers(messages: list[Message], tools: list[Tool] | None) -> bool:
@@ -392,6 +399,7 @@ class Client:
         temperature: float = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON from whichever provider ``model`` routes to,
         with the call's token usage, stop reason and raw provider response.
@@ -411,6 +419,9 @@ class Client:
         model sees the same text either way, so it never raises. Providers
         cache only prefixes above a minimum size (about 1024 tokens on most
         Claude models), and smaller ones are sent uncached.
+
+        ``on_stream`` receives each :class:`~inferenceswitch.StreamDelta` of
+        thinking and text while the reply streams; see :meth:`chat`.
         """
         resolution = self.resolve(model, provider)
         adapter = self._adapter(resolution.spec, api_key)
@@ -423,6 +434,7 @@ class Client:
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
             cache_prefix=cache_prefix,
+            **_streaming(on_stream),
         )
 
     def generate_structured_json(
@@ -438,12 +450,13 @@ class Client:
         temperature: float = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Any:
         """Return schema-constrained JSON from whichever provider ``model`` routes
         to, handling the per-provider mechanism and schema dialect internally.
 
         The ``value`` of :meth:`generate_structured`, without the usage.
-        ``cache_prefix`` works as it does there."""
+        ``cache_prefix`` and ``on_stream`` work as they do there."""
         return self.generate_structured(
             model=model,
             schema=schema,
@@ -455,6 +468,7 @@ class Client:
             temperature=temperature,
             max_tokens=max_tokens,
             cache_prefix=cache_prefix,
+            on_stream=on_stream,
         ).value
 
     def generate_text(
@@ -467,8 +481,9 @@ class Client:
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> str:
-        """Return a plain text completion."""
+        """Return a plain text completion. ``on_stream`` works as on :meth:`chat`."""
         resolution = self.resolve(model, provider)
         adapter = self._adapter(resolution.spec, api_key)
         return adapter.generate_text(
@@ -477,6 +492,7 @@ class Client:
             system=system,
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
+            **_streaming(on_stream),
         )
 
     def chat(
@@ -494,6 +510,7 @@ class Client:
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         """A normalized, optionally tool-using turn.
 
@@ -506,6 +523,17 @@ class Client:
         ``cache`` reuses a handle from :meth:`create_cache`: the cached prefix
         (system + messages + tools it was built from) is not resent, so pass only
         the dynamic tail in ``messages``.
+
+        ``on_stream(delta)`` is called with each
+        :class:`~inferenceswitch.StreamDelta` while the reply streams: its
+        thinking (``kind="thinking"``) where the provider shows it
+        (:attr:`Capability.STREAMED_THINKING`), and its text
+        (``kind="text"``). The response returned is the same as without it. A
+        provider or model that shows no thinking sends none; that is never an
+        error. On Anthropic, a call with ``effort`` and ``on_stream`` asks for
+        summarized thinking, since some models omit it by default; on Gemini
+        it asks for thought summaries. An exception from the callback
+        propagates and ends the call.
         """
         resolution = self.resolve(model, provider)
         if tools:
@@ -553,6 +581,7 @@ class Client:
             cache=cache,
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
+            **_streaming(on_stream),
         )
 
     def create_cache(
@@ -618,6 +647,7 @@ class Client:
         stop_when: Callable[[ToolCall, Any], bool] | None = None,
         on_response: Callable[[Response, float], None] | None = None,
         on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        on_stream: StreamCallback | None = None,
         return_run: Literal[False] = False,
     ) -> Response: ...
 
@@ -641,6 +671,7 @@ class Client:
         stop_when: Callable[[ToolCall, Any], bool] | None = None,
         on_response: Callable[[Response, float], None] | None = None,
         on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        on_stream: StreamCallback | None = None,
         return_run: Literal[True],
     ) -> ToolRun: ...
 
@@ -663,6 +694,7 @@ class Client:
         stop_when: Callable[[ToolCall, Any], bool] | None = None,
         on_response: Callable[[Response, float], None] | None = None,
         on_tool_call: Callable[[ToolCall, ToolResult, float], None] | None = None,
+        on_stream: StreamCallback | None = None,
         return_run: bool = False,
     ) -> Response | ToolRun:
         """Drive the full tool-use loop: call the model, run the requested tools
@@ -689,6 +721,9 @@ class Client:
           and ``on_tool_call(call, result, seconds)`` after each tool call
           (``seconds`` is 0.0 for a call with no handler), so a host can trace
           the loop as it runs. An exception from a hook propagates.
+        * ``on_stream`` is passed to every model call, as on :meth:`chat`. Each
+          call's deltas come before its ``on_response``, so a host showing
+          "thinking so far" starts afresh after each ``on_response``.
         * ``cache`` is forwarded to every :meth:`chat` call, under the same
           rules: the provider needs REUSABLE_PROMPT_CACHE, and the cache's
           prefix supplies the system prompt and tools, so pass neither
@@ -715,6 +750,7 @@ class Client:
                 api_key=api_key,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                **_streaming(on_stream),
             )
             if on_response is not None:
                 on_response(response, time.perf_counter() - started)

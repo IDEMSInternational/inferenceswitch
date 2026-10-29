@@ -13,13 +13,15 @@ import json
 from typing import Any
 
 from .. import schema as schema_mod
-from ..errors import StructuredOutputError
+from ..errors import InferenceSwitchError, StructuredOutputError
 from ..messages import (
     CacheHandle,
     Effort,
     Response,
     Message,
     StopReason,
+    StreamCallback,
+    StreamDelta,
     StructuredResult,
     Text,
     Tool,
@@ -222,7 +224,9 @@ def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) ->
     text_chunks: list[str] = []
     tool_calls: list[ToolCall] = []
     for index, part in enumerate(candidate.content.parts or []):
-        if getattr(part, "text", None):
+        # Thought parts (include_thoughts, asked for when streaming) are the
+        # model's reasoning, not its answer.
+        if getattr(part, "text", None) and not getattr(part, "thought", None):
             text_chunks.append(part.text)
         fc = getattr(part, "function_call", None)
         if fc is not None:
@@ -246,10 +250,73 @@ def decode_gemini_response(raw, tools_by_name: dict[str, Tool] | None = None) ->
     )
 
 
+def merge_gemini_chunks(chunks: list) -> Any:
+    """One ``GenerateContentResponse`` from the chunks of a streamed one.
+
+    The last chunk carries the finish reason and the running usage totals; the
+    parts are those of every chunk, in order. Thought parts are kept, as a
+    non-streamed reply with ``include_thoughts`` keeps them. A stream with no
+    candidate at all (a prompt blocked before generation) returns its last
+    chunk, whose ``prompt_feedback`` says why."""
+    last = chunks[-1]
+    parts: list = []
+    candidate = None
+    for chunk in chunks:
+        for first in (getattr(chunk, "candidates", None) or [])[:1]:
+            candidate = first
+            content = getattr(first, "content", None)
+            parts.extend(getattr(content, "parts", None) or [])
+    if candidate is None:
+        return last
+    usage = next(
+        (c.usage_metadata for c in reversed(chunks) if getattr(c, "usage_metadata", None)),
+        None,
+    )
+    content = candidate.content.model_copy(update={"parts": parts}) if candidate.content else None
+    if content is None:
+        types = require_sdk("google.genai", "gemini").types
+        content = types.Content(role="model", parts=parts)
+    return last.model_copy(
+        update={
+            "candidates": [candidate.model_copy(update={"content": content})],
+            "usage_metadata": usage,
+        }
+    )
+
+
 class GeminiAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         genai = require_sdk("google.genai", "gemini")
         return genai.Client(api_key=api_key)
+
+    def _generate(self, on_stream: StreamCallback | None, *, model, contents, config) -> Any:
+        """One ``generate_content`` call. With ``on_stream`` it streams instead,
+        asking for thought summaries (``include_thoughts``), hands each thought
+        and text part to ``on_stream`` as it arrives, and returns the chunks
+        merged into one response (:func:`merge_gemini_chunks`)."""
+        if on_stream is None:
+            return self._client.models.generate_content(
+                model=model, contents=contents, config=config
+            )
+        types = require_sdk("google.genai", "gemini").types
+        thinking = config.thinking_config or types.ThinkingConfig()
+        config = config.model_copy(
+            update={"thinking_config": thinking.model_copy(update={"include_thoughts": True})}
+        )
+        chunks: list = []
+        for chunk in self._client.models.generate_content_stream(
+            model=model, contents=contents, config=config
+        ):
+            chunks.append(chunk)
+            for candidate in (getattr(chunk, "candidates", None) or [])[:1]:
+                content = getattr(candidate, "content", None)
+                for part in getattr(content, "parts", None) or []:
+                    if getattr(part, "text", None):
+                        kind = "thinking" if getattr(part, "thought", None) else "text"
+                        on_stream(StreamDelta(kind, part.text))
+        if not chunks:
+            raise InferenceSwitchError("Gemini's stream ended without a response.")
+        return merge_gemini_chunks(chunks)
 
     def _config(self, *, system, response_schema, temperature, max_tokens):
         types = require_sdk("google.genai", "gemini").types
@@ -272,6 +339,7 @@ class GeminiAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
         gemini_schema = schema_mod.to_gemini_schema(schema)
@@ -281,7 +349,8 @@ class GeminiAdapter(Adapter):
             # its own part, is what lets implicit caching match the prefix.
             parts = [{"text": cache_prefix}] + ([{"text": prompt}] if prompt else [])
             contents = [{"role": "user", "parts": parts}]
-        response = self._client.models.generate_content(
+        response = self._generate(
+            on_stream,
             model=model,
             contents=contents,
             config=self._config(
@@ -363,9 +432,11 @@ class GeminiAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> str:
         types = require_sdk("google.genai", "gemini").types
-        response = self._client.models.generate_content(
+        response = self._generate(
+            on_stream,
             model=model,
             contents=prompt,
             config=types.GenerateContentConfig(
@@ -450,6 +521,7 @@ class GeminiAdapter(Adapter):
         cache: CacheHandle | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         types = require_sdk("google.genai", "gemini").types
         system_text, rest = split_system(messages, system)
@@ -478,7 +550,8 @@ class GeminiAdapter(Adapter):
                     )
                 )
 
-        raw = self._client.models.generate_content(
+        raw = self._generate(
+            on_stream,
             model=model,
             contents=encode_gemini_contents(rest),
             config=types.GenerateContentConfig(**config_kwargs),

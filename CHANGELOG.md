@@ -5,6 +5,29 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-28
+
+Hands over thinking and text while a call runs
+([#18](https://github.com/IDEMSInternational/inferenceswitch/issues/18)).
+Callers pinned to `<0.7` need to raise the pin to use it; nothing existing is
+removed, and requests without the new argument are unchanged.
+
+### Added
+
+- **`on_stream` on `chat`, `run_tools`, `generate_text`, `generate_structured`
+  and `generate_structured_json`.** Called with a `StreamDelta(kind, text)`
+  for each piece of thinking (`"thinking"`) or answer text (`"text"`) while
+  the reply streams, so a host can show what a model is thinking before the
+  call finishes. What each call returns is unchanged. Anthropic reads the
+  thinking and text deltas off the stream it already used, and asks for
+  `display: "summarized"` when thinking is on and a callback is given. Gemini
+  streams with `include_thoughts`. OpenAI-compatible providers stream and
+  read `reasoning_content` or `reasoning` deltas; the chunks are accumulated
+  by the OpenAI SDK's own `ChatCompletionStreamState`. Requests without
+  `on_stream` are unchanged.
+- `Capability.STREAMED_THINKING`, on Anthropic, Gemini and DeepSeek.
+- `StreamDelta` and `StreamCallback` exports.
+
 ## [0.6.0] — 2026-10-13
 
 Lets structured calls cache a static prefix

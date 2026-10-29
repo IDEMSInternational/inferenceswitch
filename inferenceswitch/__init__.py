@@ -43,6 +43,8 @@ from .messages import (
     Response,
     Message,
     StopReason,
+    StreamCallback,
+    StreamDelta,
     StructuredResult,
     Text,
     Tool,
@@ -80,7 +82,7 @@ from .selection import (
     static_availability,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "Client",
@@ -133,6 +135,8 @@ __all__ = [
     "Effort",
     "Response",
     "StopReason",
+    "StreamCallback",
+    "StreamDelta",
     "StructuredResult",
     "Usage",
     # Per-provider output caps (default = the model's own maximum). Editing a

@@ -22,6 +22,8 @@ from ..messages import (
     Response,
     Message,
     StopReason,
+    StreamCallback,
+    StreamDelta,
     StructuredResult,
     Text,
     Tool,
@@ -99,17 +101,24 @@ _ANTHROPIC_EFFORT = {
 }
 
 
-def anthropic_reasoning_kwargs(effort: Effort | None) -> dict:
+def anthropic_reasoning_kwargs(effort: Effort | None, *, show_thinking: bool = False) -> dict:
     """Reasoning via adaptive thinking + ``output_config.effort`` on current
     Anthropic models. ``NONE`` disables thinking. (Effort support is per-model —
     e.g. Haiku 4.5 doesn't take it — so a request with effort on a model that
-    lacks it will surface the provider's own 400.)"""
+    lacks it will surface the provider's own 400.)
+
+    ``show_thinking`` asks for ``display: "summarized"``: whether thinking is
+    shown by default depends on the model, and an omitted one streams nothing
+    to ``on_stream``."""
     if effort is None:
         return {}
     if effort is Effort.NONE:
         return {"thinking": {"type": "disabled"}}
+    thinking: dict[str, Any] = {"type": "adaptive"}
+    if show_thinking:
+        thinking["display"] = "summarized"
     return {
-        "thinking": {"type": "adaptive"},
+        "thinking": thinking,
         "output_config": {"effort": _ANTHROPIC_EFFORT[effort]},
     }
 
@@ -308,7 +317,7 @@ class AnthropicAdapter(Adapter):
         anthropic = require_sdk("anthropic", "anthropic")
         return anthropic.Anthropic(api_key=api_key)
 
-    def _send(self, **create_kwargs: Any) -> Any:
+    def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:
         """Issue one Messages request over a stream, returning the accumulated
         final message.
 
@@ -322,8 +331,19 @@ class AnthropicAdapter(Adapter):
 
         `get_final_message()` returns the same `Message` object a non-streaming
         call would, so every caller and `decode_anthropic_response` are unchanged.
+        With ``on_stream``, the stream's thinking and text deltas are handed to
+        it on the way; the final message is the same either way.
         """
         with self._client.messages.stream(**create_kwargs) as stream:
+            if on_stream is not None:
+                for event in stream:
+                    if event.type != "content_block_delta":
+                        continue
+                    delta = event.delta
+                    if delta.type == "thinking_delta" and delta.thinking:
+                        on_stream(StreamDelta("thinking", delta.thinking))
+                    elif delta.type == "text_delta" and delta.text:
+                        on_stream(StreamDelta("text", delta.text))
             return stream.get_final_message()
 
     def generate_structured(
@@ -337,6 +357,7 @@ class AnthropicAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON, by the mechanism the capability registry names
         for ``model`` (see :meth:`Capabilities.structured_output_for`):
@@ -410,7 +431,7 @@ class AnthropicAdapter(Adapter):
                 context=context,
             )
 
-        response = self._send(**create_kwargs)
+        response = self._send(on_stream, **create_kwargs)
         context["stop_reason"] = response.stop_reason
         self._check_structured_stop(response, model, max_tokens, context)
 
@@ -512,6 +533,7 @@ class AnthropicAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> str:
         _ = temperature  # see generate_structured_json — not forwarded on Anthropic
         create_kwargs: dict[str, Any] = {
@@ -521,7 +543,7 @@ class AnthropicAdapter(Adapter):
         }
         if system:
             create_kwargs["system"] = system
-        response = self._send(**create_kwargs)
+        response = self._send(on_stream, **create_kwargs)
         return "".join(b.text for b in response.content if b.type == "text")
 
     def chat(
@@ -537,11 +559,17 @@ class AnthropicAdapter(Adapter):
         cache: CacheHandle | None = None,
         temperature: float | None = 0.1,  # not forwarded — see structured-output note
         max_tokens: int | None = None,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         _ = temperature
         if cache is not None:
             return self._chat_cached(
-                model=model, cache=cache, tail=messages, effort=effort, max_tokens=max_tokens
+                model=model,
+                cache=cache,
+                tail=messages,
+                effort=effort,
+                max_tokens=max_tokens,
+                on_stream=on_stream,
             )
         system_text, rest = split_system(messages, system)
         create_kwargs: dict[str, Any] = {
@@ -564,8 +592,10 @@ class AnthropicAdapter(Adapter):
                     system_text = f"{system_text}\n\n{instruction}" if system_text else instruction
         if system_text:
             create_kwargs["system"] = system_text
-        create_kwargs.update(anthropic_reasoning_kwargs(effort))
-        raw = self._send(**create_kwargs)
+        create_kwargs.update(
+            anthropic_reasoning_kwargs(effort, show_thinking=on_stream is not None)
+        )
+        raw = self._send(on_stream, **create_kwargs)
         response = decode_anthropic_response(raw)
         if instruction and not _tool_choice_met(response, tool_choice, force_tool):
             wanted = (
@@ -613,7 +643,14 @@ class AnthropicAdapter(Adapter):
         )
 
     def _chat_cached(
-        self, *, model: str, cache: CacheHandle, tail: list[Message], effort, max_tokens
+        self,
+        *,
+        model: str,
+        cache: CacheHandle,
+        tail: list[Message],
+        effort,
+        max_tokens,
+        on_stream: StreamCallback | None = None,
     ) -> Response:
         """Replay the cached prefix (system + messages + tools) with a single
         ``cache_control`` breakpoint at its deepest segment — which caches the
@@ -656,8 +693,10 @@ class AnthropicAdapter(Adapter):
                 encoded_tools[-1]["cache_control"] = {"type": "ephemeral"}
             create_kwargs["tools"] = encoded_tools
 
-        create_kwargs.update(anthropic_reasoning_kwargs(effort))
-        raw = self._send(**create_kwargs)
+        create_kwargs.update(
+            anthropic_reasoning_kwargs(effort, show_thinking=on_stream is not None)
+        )
+        raw = self._send(on_stream, **create_kwargs)
         return decode_anthropic_response(raw)
 
     def verify_key(self) -> tuple[bool, str]:
