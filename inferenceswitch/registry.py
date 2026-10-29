@@ -6,7 +6,8 @@ That static surface is most of what keeps this library's security profile small.
 
 A :class:`ProviderSpec` says: which adapter kind drives it, where its key comes
 from, (for OpenAI-compatible providers) which ``base_url`` to hit, what it can do
-(:class:`Capabilities`), and how bare model names route to it.
+(:class:`Capabilities`), and how bare model names route to it. Its :attr:`~ProviderSpec.sdk`
+says which provider SDK that adapter kind imports, and which extra installs it.
 """
 from __future__ import annotations
 
@@ -22,6 +23,30 @@ KIND_GEMINI = "gemini"        # native
 #: Placeholder key for local servers that require *some* key string but don't
 #: authenticate (Ollama, LM Studio). Never a real secret.
 LOCAL_PLACEHOLDER_KEY = "inferenceswitch-local"
+
+
+@dataclass(frozen=True)
+class SDK:
+    """The provider SDK an adapter kind imports, lazily, when first used.
+
+    Installing ``inferenceswitch[<extra>]`` installs it. A build that freezes an
+    application (PyInstaller and the like) cannot follow those lazy imports, so it
+    collects ``modules`` itself: the packages the adapter imports, with their
+    submodules.
+    """
+
+    #: The ``inferenceswitch`` extra that installs the SDK.
+    extra: str
+    #: The importable packages the adapter needs.
+    modules: tuple[str, ...]
+
+
+#: Which SDK each adapter kind imports. The adapters' ``require_sdk`` calls match it.
+SDK_BY_KIND: dict[str, SDK] = {
+    KIND_OPENAI: SDK(extra="openai", modules=("openai",)),
+    KIND_ANTHROPIC: SDK(extra="anthropic", modules=("anthropic",)),
+    KIND_GEMINI: SDK(extra="gemini", modules=("google.genai",)),
+}
 
 
 @dataclass(frozen=True)
@@ -43,6 +68,11 @@ class ProviderSpec:
     known_models: tuple[str, ...] = ()
     #: True for local servers with no authentication.
     is_local: bool = False
+
+    @property
+    def sdk(self) -> SDK:
+        """The SDK this provider's adapter imports, and the extra that installs it."""
+        return SDK_BY_KIND[self.kind]
 
 
 class Registry:
