@@ -125,7 +125,8 @@ def test_gemini_reports_usage():
     result = _call(adapter, "gemini-3.5-flash")
     assert result.value == VALUE
     assert result.usage == Usage(
-        input_tokens=200, output_tokens=40, cache_read_tokens=150, reasoning_tokens=12
+        # prompt_token_count counts the cached tokens; input_tokens is the rest
+        input_tokens=50, output_tokens=40, cache_read_tokens=150, reasoning_tokens=12
     )
     assert result.stop_reason is StopReason.END_TURN
     assert result.raw is raw
@@ -137,7 +138,8 @@ def test_openai_reports_usage():
     )
     result = _call(adapter, "gpt-5")
     assert result.value == VALUE
-    assert result.usage == Usage(input_tokens=50, output_tokens=8, cache_read_tokens=32)
+    # prompt_tokens counts the cached tokens; input_tokens is the rest
+    assert result.usage == Usage(input_tokens=18, output_tokens=8, cache_read_tokens=32)
     assert result.stop_reason is StopReason.END_TURN
     assert result.raw is raw
 

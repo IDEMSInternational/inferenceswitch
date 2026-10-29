@@ -112,7 +112,8 @@ def test_decode_openai():
     assert resp.wants_tools
     assert resp.tool_calls[0].name == "get_weather"
     assert resp.tool_calls[0].input == {"city": "Paris"}
-    assert resp.usage.input_tokens == 10
+    # prompt_tokens counts the cached tokens; input_tokens is the uncached rest
+    assert resp.usage.input_tokens == 8
     assert resp.usage.cache_read_tokens == 2
 
 

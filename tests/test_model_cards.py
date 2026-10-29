@@ -8,6 +8,7 @@ import pytest
 from inferenceswitch import (
     Capability,
     Client,
+    Cost,
     ModelCard,
     ModelCardError,
     ModelCards,
@@ -16,6 +17,7 @@ from inferenceswitch import (
     Rung,
     Tool,
     UnsupportedCapabilityError,
+    Usage,
     default_cards,
     default_registry,
     user,
@@ -78,6 +80,43 @@ def test_local_routes_have_no_cost_and_hosted_ones_do():
                 assert route.cost is not None, card.id
 
 
+def test_anthropic_cards_price_cache_reads_and_writes():
+    # Writes at 1.25x input (the 5-minute cache inferenceswitch asks for);
+    # reads from Anthropic's price list, not always 0.1x (Opus 5.5, Fable 5.1).
+    for card in default_cards():
+        route = card.route("anthropic")
+        if route is None:
+            continue
+        assert route.cost.cache_read is not None, card.id
+        assert route.cost.cache_write == pytest.approx(route.cost.input * 1.25), card.id
+    assert default_cards().get("claude-opus-5-5").route("anthropic").cost.cache_read == 0.2
+
+
+def test_cost_prices_each_count_and_names_the_unpriced_ones():
+    usage = Usage(input_tokens=1_000, output_tokens=100, cache_read_tokens=10_000,
+                  cache_write_tokens=2_000)
+    priced = Cost(4.0, 20.0, cache_read=0.2, cache_write=5.0)
+    usd, unpriced = priced.usd(usage)
+    assert usd == pytest.approx((1_000 * 4 + 100 * 20 + 10_000 * 0.2 + 2_000 * 5) / 1e6)
+    assert unpriced == ()
+    # No cache price: those tokens are left out and named, not priced as zero quietly.
+    usd, unpriced = Cost(4.0, 20.0).usd(usage)
+    assert usd == pytest.approx((1_000 * 4 + 100 * 20) / 1e6)
+    assert unpriced == ("cache_read", "cache_write")
+    # A count of zero, or one not reported, needs no price.
+    assert Cost(4.0, 20.0).usd(Usage(input_tokens=1, cache_read_tokens=0)) == (4e-6, ())
+
+
+def test_cache_prices_round_trip_and_stay_optional():
+    card = _card_dict(routes={"groq": {"models": ["x"], "cost": {
+        "input": 1, "output": 2, "cache_read": 0.5}}})
+    cards = ModelCards.from_dict(_file(card))
+    cost = cards.get("x").route("groq").cost
+    assert (cost.cache_read, cost.cache_write) == (0.5, None)
+    assert cards.to_dict()["cards"][0]["routes"]["groq"]["cost"] == {
+        "input": 1.0, "output": 2.0, "cache_read": 0.5}
+
+
 def test_open_weight_cards_carry_family_size_and_quantization():
     card = default_cards().get("qwen3-8b")
     assert card.open_weight.family == "qwen3"
@@ -119,6 +158,7 @@ def _file(*cards, fmt=1):
         _card_dict(routes={}),                   # no routes
         _card_dict(routes={"ollama": {"models": "x:1b"}}),  # string, not list
         _card_dict(context_window="8k"),
+        _card_dict(routes={"groq": {"models": ["x"], "cost": {"input": 1, "output": 2, "cached": 1}}}),
         _card_dict(features={"add": ["telepathy"]}),
         {"id": "x", "rung": "small"},            # missing fields
     ],

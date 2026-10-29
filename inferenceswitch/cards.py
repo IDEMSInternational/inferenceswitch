@@ -28,6 +28,7 @@ from typing import Any
 
 from .capabilities import Capabilities, Capability
 from .errors import ModelCardError
+from .messages import Usage
 
 #: The card data format this version of inferenceswitch reads. A file with any
 #: other ``format`` is rejected rather than half-understood.
@@ -77,6 +78,12 @@ class Cost:
 
     input: float
     output: float
+    #: Prompt tokens read from the provider's cache, and written to it (the
+    #: default cache lifetime: Anthropic's 5-minute write). ``None`` where the
+    #: card gives no cache price; :meth:`usd` then leaves those tokens out and
+    #: says so.
+    cache_read: float | None = None
+    cache_write: float | None = None
 
     #: Input:output weighting for :attr:`blended`, the common 3:1 convention
     #: for prompt-heavy work.
@@ -87,6 +94,25 @@ class Cost:
         """One number to rank by: (3 x input + output) / 4."""
         w = self.BLEND_INPUT_WEIGHT
         return (w * self.input + self.output) / (w + 1)
+
+    def usd(self, usage: Usage) -> tuple[float, tuple[str, ...]]:
+        """What ``usage`` cost at these prices, and the cache counts it could not
+        price (``"cache_read"``, ``"cache_write"``): tokens the call reported
+        that this card has no price for, left out of the figure rather than
+        priced as zero without saying so. A count not reported adds nothing."""
+        total = (usage.input_tokens or 0) * self.input + (usage.output_tokens or 0) * self.output
+        unpriced: list[str] = []
+        for name, count, price in (
+            ("cache_read", usage.cache_read_tokens, self.cache_read),
+            ("cache_write", usage.cache_write_tokens, self.cache_write),
+        ):
+            if not count:
+                continue
+            if price is None:
+                unpriced.append(name)
+            else:
+                total += count * price
+        return total / 1e6, tuple(unpriced)
 
 
 @dataclass(frozen=True)
@@ -183,8 +209,7 @@ class ModelCard:
             "routes": {
                 r.provider: {
                     "models": list(r.models),
-                    "cost": None if r.cost is None
-                    else {"input": r.cost.input, "output": r.cost.output},
+                    "cost": None if r.cost is None else _cost_dict(r.cost),
                 }
                 for r in self.routes
             },
@@ -236,6 +261,19 @@ def _context_window(value: Any, where: str) -> int | None:
     return value
 
 
+def _price(value: Any) -> float | None:
+    return None if value is None else float(value)
+
+
+def _cost_dict(cost: Cost) -> dict[str, float]:
+    out = {"input": cost.input, "output": cost.output}
+    if cost.cache_read is not None:
+        out["cache_read"] = cost.cache_read
+    if cost.cache_write is not None:
+        out["cache_write"] = cost.cache_write
+    return out
+
+
 def _route_from(provider: str, data: Any, where: str) -> Route:
     _check_keys(data, {"models", "cost"}, f"{where} route {provider!r}")
     models = data.get("models")
@@ -243,8 +281,16 @@ def _route_from(provider: str, data: Any, where: str) -> Route:
         raise ModelCardError(f"{where} route {provider!r}: 'models' must be a non-empty list")
     cost = data.get("cost")
     if cost is not None:
-        _check_keys(cost, {"input", "output"}, f"{where} route {provider!r} cost")
-        cost = Cost(float(cost["input"]), float(cost["output"]))
+        _check_keys(
+            cost, {"input", "output", "cache_read", "cache_write"},
+            f"{where} route {provider!r} cost",
+        )
+        cost = Cost(
+            float(cost["input"]),
+            float(cost["output"]),
+            _price(cost.get("cache_read")),
+            _price(cost.get("cache_write")),
+        )
     return Route(provider, tuple(_str(m, f"{where} model id") for m in models), cost)
 
 

@@ -166,6 +166,10 @@ def openai_usage(raw) -> Usage:
         details = getattr(raw.usage, "prompt_tokens_details", None)
         if details is not None:
             usage.cache_read_tokens = getattr(details, "cached_tokens", None)
+        # ``prompt_tokens`` counts the cached tokens too; ``input_tokens`` is the
+        # uncached rest, as on Anthropic, so each count has one price.
+        if usage.input_tokens is not None and usage.cache_read_tokens:
+            usage.input_tokens -= usage.cache_read_tokens
     return usage
 
 
