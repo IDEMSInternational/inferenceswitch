@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import Collection, Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, overload
 
@@ -31,6 +31,7 @@ from .errors import (
 from .messages import (
     CacheHandle,
     Effort,
+    Image,
     Response,
     Message,
     StreamCallback,
@@ -78,6 +79,28 @@ def _streaming(on_stream: StreamCallback | None) -> dict[str, Any]:
     """``on_stream`` as adapter kwargs, empty when there is none, so an adapter
     written before streaming (a caller's own, or a test fake) still works."""
     return {} if on_stream is None else {"on_stream": on_stream}
+
+
+def _images(images: Sequence[Image]) -> dict[str, Any]:
+    """``images`` as adapter kwargs, empty when there are none, as for
+    :func:`_streaming`."""
+    return {"images": list(images)} if images else {}
+
+
+def _has_images(messages: list[Message]) -> bool:
+    """True if any message carries an :class:`Image`. Only a user turn may:
+    no provider takes an image from the assistant or in a system prompt, so
+    one there raises rather than being dropped."""
+    found = False
+    for message in messages:
+        for part in message.parts():
+            if isinstance(part, Image):
+                if message.role != "user":
+                    raise InferenceSwitchError(
+                        f"An image can only be in a user message, not a {message.role!r} one."
+                    )
+                found = True
+    return found
 
 
 def _has_cache_markers(messages: list[Message], tools: list[Tool] | None) -> bool:
@@ -399,6 +422,7 @@ class Client:
         temperature: float = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON from whichever provider ``model`` routes to,
@@ -420,10 +444,16 @@ class Client:
         cache only prefixes above a minimum size (about 1024 tokens on most
         Claude models), and smaller ones are sent uncached.
 
+        ``images`` (:class:`~inferenceswitch.Image`) go in the same user turn,
+        after ``cache_prefix`` and before ``prompt``. They need VISION: a model
+        without it raises :class:`UnsupportedCapabilityError` before any request.
+
         ``on_stream`` receives each :class:`~inferenceswitch.StreamDelta` of
         thinking and text while the reply streams; see :meth:`chat`.
         """
         resolution = self.resolve(model, provider)
+        if images:
+            self.require(Capability.VISION, resolution.spec.name, model=resolution.model)
         adapter = self._adapter(resolution.spec, api_key)
         return adapter.generate_structured(
             model=resolution.model,
@@ -434,6 +464,7 @@ class Client:
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
             cache_prefix=cache_prefix,
+            **_images(images),
             **_streaming(on_stream),
         )
 
@@ -450,13 +481,14 @@ class Client:
         temperature: float = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> Any:
         """Return schema-constrained JSON from whichever provider ``model`` routes
         to, handling the per-provider mechanism and schema dialect internally.
 
         The ``value`` of :meth:`generate_structured`, without the usage.
-        ``cache_prefix`` and ``on_stream`` work as they do there."""
+        ``cache_prefix``, ``images`` and ``on_stream`` work as they do there."""
         return self.generate_structured(
             model=model,
             schema=schema,
@@ -468,6 +500,7 @@ class Client:
             temperature=temperature,
             max_tokens=max_tokens,
             cache_prefix=cache_prefix,
+            images=images,
             on_stream=on_stream,
         ).value
 
@@ -481,10 +514,14 @@ class Client:
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> str:
-        """Return a plain text completion. ``on_stream`` works as on :meth:`chat`."""
+        """Return a plain text completion. ``images`` work as on
+        :meth:`generate_structured`, ``on_stream`` as on :meth:`chat`."""
         resolution = self.resolve(model, provider)
+        if images:
+            self.require(Capability.VISION, resolution.spec.name, model=resolution.model)
         adapter = self._adapter(resolution.spec, api_key)
         return adapter.generate_text(
             model=resolution.model,
@@ -492,6 +529,7 @@ class Client:
             system=system,
             temperature=self._temperature(resolution, temperature),
             max_tokens=max_tokens,
+            **_images(images),
             **_streaming(on_stream),
         )
 
@@ -519,6 +557,8 @@ class Client:
         normalizes the reply (text, tool calls, stop reason, usage). Passing
         ``tools`` (or ``effort``) to a provider without the matching capability
         raises :class:`UnsupportedCapabilityError` rather than degrading silently.
+        So does an :class:`~inferenceswitch.Image` in a user message, on a model
+        without VISION.
 
         ``cache`` reuses a handle from :meth:`create_cache`: the cached prefix
         (system + messages + tools it was built from) is not resent, so pass only
@@ -544,6 +584,8 @@ class Client:
             self.require(
                 Capability.REASONING_EFFORT, resolution.spec.name, model=resolution.model
             )
+        if _has_images(messages):
+            self.require(Capability.VISION, resolution.spec.name, model=resolution.model)
         if _has_cache_markers(messages, tools):
             # Derived from the markers themselves — fail closed on a provider
             # whose caching isn't inline (Gemini's is out-of-band; OpenAI's is
@@ -609,6 +651,8 @@ class Client:
         self.require(
             Capability.REUSABLE_PROMPT_CACHE, resolution.spec.name, model=resolution.model
         )
+        if _has_images(messages):
+            self.require(Capability.VISION, resolution.spec.name, model=resolution.model)
         adapter = self._adapter(resolution.spec, api_key)
         return adapter.create_cache(
             model=resolution.model,

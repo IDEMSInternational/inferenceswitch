@@ -40,6 +40,8 @@ from .client import Client, ModelChoice, Resolution, env_key_provider
 from .messages import (
     CacheHandle,
     Effort,
+    IMAGE_MEDIA_TYPES,
+    Image,
     Response,
     Message,
     StopReason,
@@ -132,6 +134,8 @@ __all__ = [
     "ToolResult",
     "ToolRun",
     "Text",
+    "Image",
+    "IMAGE_MEDIA_TYPES",
     "CacheHandle",
     "Effort",
     "Response",

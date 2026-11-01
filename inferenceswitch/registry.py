@@ -200,6 +200,30 @@ _DEEPSEEK_CAPS = Capabilities(
     | {_C.IMPLICIT_PROMPT_CACHING, _C.STREAMED_THINKING},
     config={"openai_strict": False},
 )
+_XAI_CAPS = Capabilities(
+    structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
+    schema_dialect=SchemaDialect.OPENAI,
+    # SAMPLING_PARAMS left out, fail-closed as on OpenAI: Grok's reasoning
+    # models do not take every sampling parameter, so none is sent. xAI caches
+    # prompt prefixes automatically and streams reasoning as
+    # delta.reasoning_content. Grok 4.6 reads PNG and JPEG images.
+    features=(_OPENAI_COMPAT_BASE - {_C.SAMPLING_PARAMS})
+    | {
+        _C.VISION,
+        _C.REASONING_EFFORT,
+        _C.STREAMED_THINKING,
+        _C.IMPLICIT_PROMPT_CACHING,
+    },
+    # reasoning_effort takes low, medium, high and xhigh on Grok 4.6, so
+    # Effort.NONE sends "low" and Effort.MAX "xhigh". A non-reasoning model
+    # (grok-4.20-0309-non-reasoning) takes none: call it without effort.
+    config={
+        "openai_strict": False,
+        "reasoning_param": "reasoning_effort",
+        "reasoning_none": {"*": "low"},
+        "reasoning_max": {"*": "xhigh"},
+    },
+)
 _GROQ_CAPS = Capabilities(
     structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
     schema_dialect=SchemaDialect.OPENAI,
@@ -322,7 +346,7 @@ def default_registry() -> Registry:
     """The built-in provider set.
 
     Native adapters: Anthropic, Gemini. OpenAI-compatible base adapter: OpenAI,
-    Mistral, DeepSeek, Groq, plus local Ollama and LM Studio servers.
+    Mistral, DeepSeek, xAI, Groq, plus local Ollama and LM Studio servers.
     """
     return Registry(
         [
@@ -410,6 +434,15 @@ def default_registry() -> Registry:
                 base_url="https://api.deepseek.com/v1",
                 model_prefixes=("deepseek",),
                 known_models=("deepseek-flash", "deepseek-v4-pro"),
+            ),
+            ProviderSpec(
+                name="xai",
+                kind=KIND_OPENAI,
+                capabilities=_XAI_CAPS,
+                api_key_env="XAI_API_KEY",
+                base_url="https://api.x.ai/v1",
+                model_prefixes=("grok",),
+                known_models=("grok-4.6", "grok-4.20-0309-non-reasoning"),
             ),
             ProviderSpec(
                 name="groq",

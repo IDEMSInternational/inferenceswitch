@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from typing import Any
 
 from .. import schema as schema_mod
@@ -19,6 +20,7 @@ from ..schema import to_anthropic_schema
 from ..messages import (
     CacheHandle,
     Effort,
+    Image,
     Response,
     Message,
     StopReason,
@@ -131,6 +133,14 @@ _STOP_REASON = {
 }
 
 
+def anthropic_image_block(image: Image) -> dict:
+    """An ``image`` content block with a ``base64`` source."""
+    return {
+        "type": "image",
+        "source": {"type": "base64", "media_type": image.media_type, "data": image.to_base64()},
+    }
+
+
 def encode_anthropic_messages(messages: list[Message]) -> list[dict]:
     """Normalized messages -> Anthropic content-block messages."""
     out: list[dict] = []
@@ -143,6 +153,8 @@ def encode_anthropic_messages(messages: list[Message]) -> list[dict]:
                     if part.cache:
                         block["cache_control"] = {"type": "ephemeral"}
                     blocks.append(block)
+            elif isinstance(part, Image):
+                blocks.append(anthropic_image_block(part))
             elif isinstance(part, ToolUse):
                 blocks.append(
                     {"type": "tool_use", "id": part.id, "name": part.name, "input": part.input}
@@ -203,17 +215,24 @@ def anthropic_usage(raw) -> Usage:
     return usage
 
 
-def structured_user_content(prompt: str, cache_prefix: str | None) -> str | list[dict]:
+def structured_user_content(
+    prompt: str, cache_prefix: str | None, images: Sequence[Image] = ()
+) -> str | list[dict]:
     """The user turn of a structured request: ``prompt`` alone, or a
-    ``cache_control``-marked ``cache_prefix`` block followed by ``prompt``.
+    ``cache_control``-marked ``cache_prefix`` block, then ``images``, then
+    ``prompt``. The images come after the breakpoint, so a prefix cached for
+    one image is read back for the next.
 
     An empty ``prompt`` is left out, since Anthropic rejects empty text blocks.
     """
-    if not cache_prefix:
+    if not cache_prefix and not images:
         return prompt
-    blocks: list[dict] = [
-        {"type": "text", "text": cache_prefix, "cache_control": {"type": "ephemeral"}}
-    ]
+    blocks: list[dict] = []
+    if cache_prefix:
+        blocks.append(
+            {"type": "text", "text": cache_prefix, "cache_control": {"type": "ephemeral"}}
+        )
+    blocks.extend(anthropic_image_block(image) for image in images)
     if prompt:
         blocks.append({"type": "text", "text": prompt})
     return blocks
@@ -357,6 +376,7 @@ class AnthropicAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Schema-constrained JSON, by the mechanism the capability registry names
@@ -377,6 +397,9 @@ class AnthropicAdapter(Adapter):
         ``cache_prefix`` is sent as its own text block ahead of ``prompt``, with
         a ``cache_control`` breakpoint. The breakpoint caches everything above
         it too: the tool (and so the schema) and the system prompt.
+
+        ``images`` go in the same user turn as ``image`` blocks, after
+        ``cache_prefix`` and before ``prompt``.
         """
         max_tokens = resolve_max_tokens(model, max_tokens)
         # NOTE: temperature/top_p/top_k are deliberately NOT forwarded. Newer
@@ -396,7 +419,10 @@ class AnthropicAdapter(Adapter):
             "model": model,
             "max_tokens": max_tokens,
             "messages": [
-                {"role": "user", "content": structured_user_content(prompt, cache_prefix)}
+                {
+                    "role": "user",
+                    "content": structured_user_content(prompt, cache_prefix, images),
+                }
             ],
         }
         if system:
@@ -533,13 +559,16 @@ class AnthropicAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> str:
         _ = temperature  # see generate_structured_json — not forwarded on Anthropic
         create_kwargs: dict[str, Any] = {
             "model": model,
             "max_tokens": resolve_max_tokens(model, max_tokens),
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "user", "content": structured_user_content(prompt, None, images)}
+            ],
         }
         if system:
             create_kwargs["system"] = system

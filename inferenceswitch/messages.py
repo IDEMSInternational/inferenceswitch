@@ -13,8 +13,13 @@ by hand.
 """
 from __future__ import annotations
 
+import base64
+import binascii
+import mimetypes
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Union
 
 # ── content parts ─────────────────────────────────────────────────────────────
@@ -54,7 +59,69 @@ class ToolResult:
     name: str | None = None
 
 
-ContentPart = Union[Text, ToolUse, ToolResult]
+#: The image types :class:`Image` accepts. PNG and JPEG are read by every
+#: provider with VISION; xAI takes no others, and Gemini no GIF, so a WebP or
+#: GIF sent there surfaces the provider's 400.
+IMAGE_MEDIA_TYPES = frozenset({"image/png", "image/jpeg", "image/gif", "image/webp"})
+
+
+@dataclass(frozen=True)
+class Image:
+    """An image for the model to read (appears in a user message).
+
+    ``data`` is the raw bytes, or a base64 string of them; ``media_type`` is
+    one of :data:`IMAGE_MEDIA_TYPES`. Sending one needs the
+    :class:`~inferenceswitch.Capability` VISION: the client raises
+    :class:`~inferenceswitch.UnsupportedCapabilityError` for a model without
+    it, before any request. Size limits are the provider's own (5 MB per image
+    on Anthropic), so a too-large image surfaces the provider's 400.
+    """
+
+    data: bytes | str
+    media_type: str
+
+    def __post_init__(self) -> None:
+        if self.media_type not in IMAGE_MEDIA_TYPES:
+            raise ValueError(
+                f"Unsupported image media type {self.media_type!r}; "
+                f"use one of {', '.join(sorted(IMAGE_MEDIA_TYPES))}."
+            )
+        if isinstance(self.data, str):
+            try:
+                base64.b64decode(self.data, validate=True)
+            except binascii.Error as exc:
+                raise ValueError(f"Image data is a string but not valid base64: {exc}") from exc
+        elif not isinstance(self.data, (bytes, bytearray)):
+            raise TypeError("Image data must be bytes or a base64 string.")
+
+    @classmethod
+    def from_file(cls, path: str | Path, media_type: str | None = None) -> Image:
+        """The image at ``path``, its type guessed from the extension unless
+        given."""
+        path = Path(path)
+        media_type = media_type or mimetypes.guess_type(path.name)[0]
+        if media_type is None:
+            raise ValueError(f"Cannot tell the image type of {path.name!r}; pass media_type=.")
+        return cls(path.read_bytes(), media_type)
+
+    def to_bytes(self) -> bytes:
+        """The raw image bytes, as Gemini takes them."""
+        if isinstance(self.data, str):
+            return base64.b64decode(self.data)
+        return bytes(self.data)
+
+    def to_base64(self) -> str:
+        """The image as a base64 string, as Anthropic takes it."""
+        if isinstance(self.data, str):
+            return self.data
+        return base64.b64encode(self.data).decode("ascii")
+
+    def data_url(self) -> str:
+        """The image as a ``data:`` URL, as OpenAI-compatible servers take it."""
+        return f"data:{self.media_type};base64,{self.to_base64()}"
+
+
+ContentPart = Union[Text, Image, ToolUse, ToolResult]
 
 
 @dataclass
@@ -262,8 +329,12 @@ class ToolRun:
 # ── ergonomic constructors ────────────────────────────────────────────────────
 
 
-def user(text: str) -> Message:
-    return Message(role="user", content=text)
+def user(text: str, *, images: Sequence[Image] = ()) -> Message:
+    """A user message: ``text`` alone, or ``images`` followed by ``text``
+    (images first, as Anthropic recommends)."""
+    if not images:
+        return Message(role="user", content=text)
+    return Message(role="user", content=[*images, Text(text)])
 
 
 def assistant(text: str) -> Message:

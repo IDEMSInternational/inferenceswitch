@@ -10,6 +10,7 @@ them back on the way out.
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import Any
 
 from .. import schema as schema_mod
@@ -17,6 +18,7 @@ from ..errors import InferenceSwitchError, StructuredOutputError
 from ..messages import (
     CacheHandle,
     Effort,
+    Image,
     Response,
     Message,
     StopReason,
@@ -186,6 +188,29 @@ def gemini_usage(raw) -> Usage:
     return usage
 
 
+def gemini_image_part(image: Image) -> dict:
+    """An ``inline_data`` part carrying the image's raw bytes."""
+    return {"inline_data": {"mime_type": image.media_type, "data": image.to_bytes()}}
+
+
+def gemini_user_contents(
+    prompt: str, cache_prefix: str | None = None, images: Sequence[Image] = ()
+) -> Any:
+    """The ``contents`` of a one-turn request: ``prompt`` as a bare string, or
+    one user turn of ``cache_prefix``, then ``images``, then ``prompt``, as
+    parts. The prefix goes first, as its own part: with no inline breakpoint on
+    Gemini, a stable leading part is what lets implicit caching match it."""
+    if not cache_prefix and not images:
+        return prompt
+    parts: list[dict] = []
+    if cache_prefix:
+        parts.append({"text": cache_prefix})
+    parts.extend(gemini_image_part(image) for image in images)
+    if prompt:
+        parts.append({"text": prompt})
+    return [{"role": "user", "parts": parts}]
+
+
 def encode_gemini_contents(messages: list[Message]) -> list[dict]:
     """Normalized messages -> Gemini ``contents`` (role user/model + typed parts).
 
@@ -201,6 +226,8 @@ def encode_gemini_contents(messages: list[Message]) -> list[dict]:
             if isinstance(part, Text):
                 if part.text:
                     parts.append({"text": part.text})
+            elif isinstance(part, Image):
+                parts.append(gemini_image_part(part))
             elif isinstance(part, ToolUse):
                 parts.append({"function_call": {"name": part.name, "args": part.input}})
             elif isinstance(part, ToolResult):
@@ -343,16 +370,12 @@ class GeminiAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         max_tokens = resolve_max_tokens(model, max_tokens)
         gemini_schema = schema_mod.to_gemini_schema(schema)
-        contents: Any = prompt
-        if cache_prefix:
-            # No inline breakpoint on Gemini: putting the static text first, as
-            # its own part, is what lets implicit caching match the prefix.
-            parts = [{"text": cache_prefix}] + ([{"text": prompt}] if prompt else [])
-            contents = [{"role": "user", "parts": parts}]
+        contents = gemini_user_contents(prompt, cache_prefix, images)
         response = self._generate(
             on_stream,
             model=model,
@@ -436,13 +459,14 @@ class GeminiAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> str:
         types = require_sdk("google.genai", "gemini").types
         response = self._generate(
             on_stream,
             model=model,
-            contents=prompt,
+            contents=gemini_user_contents(prompt, images=images),
             config=types.GenerateContentConfig(
                 system_instruction=system,
                 temperature=temperature,

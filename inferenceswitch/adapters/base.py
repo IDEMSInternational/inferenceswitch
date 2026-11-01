@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import importlib
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any
 
 from ..errors import MissingDependencyError, UnsupportedCapabilityError
 from ..messages import (
     CacheHandle,
     Effort,
+    Image,
     Message,
     Response,
     StreamCallback,
@@ -96,6 +98,7 @@ class Adapter(ABC):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         """Return schema-constrained JSON as a native Python object, with the
@@ -105,6 +108,11 @@ class Adapter(ABC):
         turn. Adapters with inline breakpoints mark it for caching; the rest
         send it first so the provider's implicit prefix caching can match it.
         It never changes what the model is asked, so no adapter rejects it.
+
+        ``images``, on this and :meth:`generate_text`, go in the same user turn,
+        after ``cache_prefix`` and before ``prompt``, as the provider's native
+        image part. The client passes them only when there are some, and only
+        to a model with VISION.
 
         ``on_stream``, on this and the other calls, receives each
         :class:`~inferenceswitch.StreamDelta` while the reply streams. It never
@@ -124,6 +132,7 @@ class Adapter(ABC):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> str:
         """Return a plain text completion."""
