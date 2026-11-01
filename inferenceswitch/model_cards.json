@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "updated": "2026-10-29",
+  "updated": "2026-10-31",
   "cards": [
     {
       "id": "claude-haiku-4-5",
@@ -500,6 +500,27 @@
       "structured_output": "best_effort",
       "context_window": 1000000,
       "notes": "Lower end of large. Thinking on by default. Peak price shown; off-peak is half. DeepSeek offers json_object only, so best_effort."
+    },
+    {
+      "id": "grok-4.6",
+      "rung": "large",
+      "routes": {
+        "xai": {"models": ["grok-4.6"], "cost": {"input": 2.0, "output": 6.0}}
+      },
+      "structured_output": "best_effort",
+      "context_window": null,
+      "notes": "xAI's below-200K-token price (2026-09-03); xAI doubles every rate above 200K input tokens. Reads PNG and JPEG images. reasoning_effort low to xhigh. inferenceswitch sends json_schema without strict, so best_effort."
+    },
+    {
+      "id": "grok-4.20-non-reasoning",
+      "rung": "mid",
+      "routes": {
+        "xai": {"models": ["grok-4.20-0309-non-reasoning"], "cost": {"input": 1.25, "output": 2.5}}
+      },
+      "structured_output": "best_effort",
+      "context_window": null,
+      "features": {"add": [], "remove": ["reasoning_effort", "streamed_thinking", "vision"]},
+      "notes": "xAI's below-200K-token price (2026-10-08). No reasoning, so no effort. Image input not checked, so vision is off until it is. inferenceswitch sends json_schema without strict, so best_effort."
     }
   ]
 }

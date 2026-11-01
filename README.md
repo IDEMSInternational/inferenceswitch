@@ -81,6 +81,7 @@ no silent default provider.
 | `openai` | openai-compat | `OPENAI_API_KEY` | |
 | `mistral` | openai-compat | `MISTRAL_API_KEY` | |
 | `deepseek` | openai-compat | `DEEPSEEK_API_KEY` | |
+| `xai` | openai-compat | `XAI_API_KEY` | Grok (`grok-*` routes here) |
 | `groq` | openai-compat | `GROQ_API_KEY` | select explicitly (`groq/...`) |
 | `ollama` | openai-compat | — | local `http://localhost:11434/v1`, best-effort JSON |
 | `lmstudio` | openai-compat | — | local `http://localhost:1234/v1`, best-effort JSON |
@@ -159,6 +160,44 @@ system prompt and tools) and is forwarded to every round.
 
 Passing `tools` to a provider without `Capability.TOOL_CALLING` raises
 `UnsupportedCapabilityError` — it fails loudly instead of silently dropping tools.
+
+## Images
+
+An `Image` is a content part of a user message: the bytes (or a base64
+string) and the media type. PNG and JPEG are read by every provider with
+`Capability.VISION`; GIF and WebP are accepted too, but xAI takes neither and
+Gemini no GIF.
+
+```python
+from inferenceswitch import Client, Image, user
+
+photo = Image.from_file("exercise.jpg")       # or Image(data, "image/jpeg")
+
+resp = client.chat(model="claude-sonnet-5",
+                   messages=[user("Transcribe this exercise.", images=[photo])])
+
+text = client.generate_text(model="grok-4.6", prompt="Transcribe it.",
+                            images=[photo])
+data = client.generate_structured_json(model="gemini-3.8-flash", schema=SCHEMA,
+                                       prompt="Transcribe it.", images=[photo])
+```
+
+`run_tools` takes the same messages. Each adapter sends the provider's own
+part:
+
+| Provider | What is sent |
+|---|---|
+| Anthropic | `{"type": "image", "source": {"type": "base64", "media_type": ..., "data": ...}}` |
+| OpenAI-compatible (OpenAI, xAI, Mistral, ...) | `{"type": "image_url", "image_url": {"url": "data:<type>;base64,..."}}` in a content-part array |
+| Gemini | `{"inline_data": {"mime_type": ..., "data": <bytes>}}` |
+
+On the structured calls and `generate_text`, the images go in the user turn
+after `cache_prefix` and before `prompt`, so a cached prefix is read back for
+the next image. An image sent to a model without `Capability.VISION` (by its
+provider or its model card) raises `UnsupportedCapabilityError` before any
+request; so does an image outside a user message. Size limits are the
+provider's (Anthropic: 5 MB per image), and a too-large image surfaces the
+provider's own 400.
 
 ## Reasoning effort (one level, three native knobs)
 

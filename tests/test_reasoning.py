@@ -70,7 +70,7 @@ def test_effort_requires_capability():
 def test_discovery_lists_effort_capable_models():
     client = Client()
     provs = set(client.providers_for(Capability.REASONING_EFFORT))
-    assert {"anthropic", "openai", "gemini"} == provs   # exactly these
+    assert {"anthropic", "openai", "gemini", "xai"} == provs   # exactly these
     assert "deepseek" not in provs                       # reasoning via model choice, not effort
 
 

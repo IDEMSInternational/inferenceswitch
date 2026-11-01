@@ -11,13 +11,14 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from .. import schema as schema_mod
 from ..capabilities import Capability, StructuredMode, _for_model
 from ..errors import StructuredOutputError, UnsupportedSchemaError
 from ..messages import (
     Effort,
+    Image,
     Response,
     Message,
     StopReason,
@@ -131,8 +132,28 @@ def encode_openai_messages(messages: list[Message]) -> list[dict]:
                 {"role": "tool", "tool_call_id": r.tool_call_id, "content": r.content}
             )
         text = _join_text(message)
-        if text or not results:
+        images = [p for p in message.parts() if isinstance(p, Image)]
+        if images:
+            out.append({"role": "user", "content": openai_user_content(message.parts())})
+        elif text or not results:
             out.append({"role": "user", "content": text})
+    return out
+
+
+def openai_image_part(image: Image) -> dict:
+    """An ``image_url`` content part carrying the image as a ``data:`` URL."""
+    return {"type": "image_url", "image_url": {"url": image.data_url()}}
+
+
+def openai_user_content(parts: Sequence) -> list[dict]:
+    """A user turn's text and images as a content-part array, in order. Tool
+    results are not content parts here; they go in their own messages."""
+    out: list[dict] = []
+    for part in parts:
+        if isinstance(part, Text) and part.text:
+            out.append({"type": "text", "text": part.text})
+        elif isinstance(part, Image):
+            out.append(openai_image_part(part))
     return out
 
 
@@ -259,11 +280,20 @@ class OpenAICompatibleAdapter(Adapter):
             kwargs[self.capabilities.config.get("max_tokens_param", "max_tokens")] = max_tokens
         return kwargs
 
-    def _messages(self, prompt: str, system: str | None) -> list[dict]:
+    def _messages(
+        self, prompt: str, system: str | None, images: Sequence[Image] = ()
+    ) -> list[dict]:
+        """A system message (where the provider takes one) and the user turn:
+        ``prompt`` as a string, or, with ``images``, a content-part array of the
+        images then the prompt."""
         messages: list[dict] = []
         if system and self.capabilities.has(Capability.SYSTEM_PROMPT):
             messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
+        if images:
+            content: Any = openai_user_content([*images, Text(prompt)])
+        else:
+            content = prompt
+        messages.append({"role": "user", "content": content})
         return messages
 
     def generate_structured(
@@ -277,6 +307,7 @@ class OpenAICompatibleAdapter(Adapter):
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
         cache_prefix: str | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> StructuredResult:
         mode = self.capabilities.structured_output
@@ -301,7 +332,7 @@ class OpenAICompatibleAdapter(Adapter):
             if strict:
                 json_schema["strict"] = True
             kwargs["response_format"] = {"type": "json_schema", "json_schema": json_schema}
-            messages = self._messages(prompt, system)
+            messages = self._messages(prompt, system, images)
         elif mode is StructuredMode.JSON_OBJECT_BEST_EFFORT:
             # Servers that take the OpenAI format but not per-field enforcement:
             # ask for a JSON object and put the schema in the prompt.
@@ -312,7 +343,7 @@ class OpenAICompatibleAdapter(Adapter):
                 "(no prose, no markdown fences):\n"
                 f"{json.dumps(schema)}"
             )
-            messages = self._messages(augmented, system)
+            messages = self._messages(augmented, system, images)
         else:  # pragma: no cover - registry never assigns another mode to this kind
             raise StructuredOutputError(
                 f"OpenAI-compatible adapter cannot honor structured mode {mode!r}.",
@@ -375,11 +406,12 @@ class OpenAICompatibleAdapter(Adapter):
         system: str | None = None,
         temperature: float | None = 0.1,
         max_tokens: int | None = None,
+        images: Sequence[Image] = (),
         on_stream: StreamCallback | None = None,
     ) -> str:
         kwargs: dict[str, Any] = {
             "model": model,
-            "messages": self._messages(prompt, system),
+            "messages": self._messages(prompt, system, images),
         }
         kwargs.update(self._sampling_kwargs(temperature, max_tokens))
         response = self._create(on_stream, **kwargs)

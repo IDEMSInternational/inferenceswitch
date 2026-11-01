@@ -40,6 +40,8 @@ from .client import Client, ModelChoice, Resolution, env_key_provider
 from .messages import (
     CacheHandle,
     Effort,
+    IMAGE_MEDIA_TYPES,
+    Image,
     Response,
     Message,
     StopReason,
@@ -82,7 +84,7 @@ from .selection import (
     static_availability,
 )
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 __all__ = [
     "Client",
@@ -132,6 +134,8 @@ __all__ = [
     "ToolResult",
     "ToolRun",
     "Text",
+    "Image",
+    "IMAGE_MEDIA_TYPES",
     "CacheHandle",
     "Effort",
     "Response",

@@ -5,6 +5,32 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-10-31
+
+Sends images to the models that read them
+([#22](https://github.com/IDEMSInternational/inferenceswitch/issues/22)), and
+adds xAI as a provider.
+
+### Added
+
+- **`Image`**, a content part of a user message: bytes or a base64 string,
+  and a media type (PNG, JPEG, GIF or WebP). `user(text, images=[...])` puts
+  images before the text. `Image.from_file(path)` guesses the type from the
+  extension.
+- **`images=`** on `generate_structured`, `generate_structured_json` and
+  `generate_text`: sent in the user turn after `cache_prefix` and before
+  `prompt`. `chat` and `run_tools` take images in their messages.
+- Each adapter sends its provider's native part: Anthropic an `image` block
+  with a `base64` source, OpenAI-compatible servers an `image_url` part with a
+  `data:` URL, Gemini `inline_data`.
+- An image sent to a model without `Capability.VISION` raises
+  `UnsupportedCapabilityError` before any request, as an image outside a user
+  message raises `InferenceSwitchError`.
+- **The `xai` provider** (OpenAI-compatible, `https://api.x.ai/v1`,
+  `XAI_API_KEY`, `grok-*` routes there), with cards for `grok-4.6` (vision,
+  `reasoning_effort` low to xhigh) and `grok-4.20-0309-non-reasoning`
+  (vision off until checked, no effort). No sampling parameters are sent.
+
 ## [0.9.0] — 2026-10-29
 
 Says which provider SDK each provider needs, so an application that freezes
