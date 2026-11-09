@@ -221,7 +221,8 @@ for model in client.models_for(Capability.REASONING_EFFORT):
 the provider allows it; `MAX` maps to each provider's ceiling (Anthropic `max`,
 Gemini dynamic budget, OpenAI `high`). Requesting `effort` from a provider
 without `Capability.REASONING_EFFORT` (Groq, Mistral, DeepSeek, locals) raises
-`UnsupportedCapabilityError`. DeepSeek reasoning is reached by selecting the
+`UnsupportedCapabilityError`. The local providers do not declare it; a model card
+can, for a model seen to honour it (`google/gemma-4-e2b` on LM Studio does). DeepSeek reasoning is reached by selecting the
 `deepseek-reasoner` *model*, not an effort level, so it isn't an effort knob.
 
 > Effort support is per-**model** for some providers (e.g. Anthropic Haiku 4.5

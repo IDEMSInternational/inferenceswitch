@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "updated": "2026-10-31",
+  "updated": "2026-11-09",
   "cards": [
     {
       "id": "claude-haiku-4-5",
@@ -521,6 +521,18 @@
       "context_window": null,
       "features": {"add": [], "remove": ["reasoning_effort", "streamed_thinking", "vision"]},
       "notes": "xAI's below-200K-token price (2026-10-08). No reasoning, so no effort. Image input not checked, so vision is off until it is. inferenceswitch sends json_schema without strict, so best_effort."
+    },
+    {
+      "id": "gemma-4-e2b",
+      "rung": "nano",
+      "routes": {
+        "lmstudio": {"models": ["google/gemma-4-e2b"], "cost": null}
+      },
+      "structured_output": "none",
+      "context_window": 131072,
+      "features": {"add": ["reasoning_effort", "streamed_thinking", "vision"], "remove": []},
+      "open_weight": {"family": "gemma-4", "params_b": 2, "quantization": "Q4_K_M"},
+      "notes": "The e2b is Google's effective-2B Gemma 4, so nano; most STACK-style agents ask for small or above and must pin it. Seen on LM Studio (2026-11-09): native tool calling, streaming (thinking arrives as it is produced), image input (one solid-colour PNG read correctly), and thinking on by default, which reasoning_effort none switches off (the other levels are accepted; whether they differ was not measured). structured_output is none because inferenceswitch sends json_object to LM Studio, which answers 400 (#25); LM Studio does accept json_schema, so this moves up when that is fixed. No Ollama route: its tag was not checked."
     }
   ]
 }

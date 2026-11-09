@@ -11,7 +11,7 @@ says which provider SDK that adapter kind imports, and which extra installs it.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMode
 
@@ -246,6 +246,21 @@ _LOCAL_CAPS = Capabilities(
         }
     ),
 )
+# LM Studio takes the OpenAI field ``reasoning_effort`` (it checks the value and
+# answers 400 to one outside none/minimal/low/medium/high/xhigh), so the adapter
+# may send it. That is only the wire parameter: the capability itself stays off
+# the provider and is declared per model card, for the models seen to honour it
+# (#26). A model with no card still fails closed on ``effort=``. ``reasoning_none``
+# is what Effort.NONE sends: "none" switches Gemma's thinking off; the "minimal"
+# the adapter would otherwise send does not, and other models are unprobed, so
+# they get "low", which every reasoning model takes.
+_LMSTUDIO_CAPS = replace(
+    _LOCAL_CAPS,
+    config={
+        "reasoning_param": "reasoning_effort",
+        "reasoning_none": {"*": "low", "gemma": "none"},
+    },
+)
 _ANTHROPIC_CAPS = Capabilities(
     # Structured outputs (constrained decoding) on every current Claude model,
     # including models released after this table was written. Forced tool use is
@@ -465,7 +480,7 @@ def default_registry() -> Registry:
             ProviderSpec(
                 name="lmstudio",
                 kind=KIND_OPENAI,
-                capabilities=_LOCAL_CAPS,
+                capabilities=_LMSTUDIO_CAPS,
                 api_key_env=None,
                 base_url="http://localhost:1234/v1",
                 is_local=True,
