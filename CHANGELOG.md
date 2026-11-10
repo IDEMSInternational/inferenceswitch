@@ -5,6 +5,28 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-11-09
+
+Adds a local Gemma model and lets a model card turn on `reasoning_effort` for
+LM Studio, so an application can run its agents on a small local model
+([#24](https://github.com/IDEMSInternational/inferenceswitch/issues/24),
+decision [#26](https://github.com/IDEMSInternational/inferenceswitch/issues/26)).
+
+### Added
+
+- **A model card for `google/gemma-4-e2b`** on `lmstudio`: rung `nano` (an
+  effective-2B model), 131072-token context, native tool calling, streaming
+  with streamed thinking, image input and `reasoning_effort`, each seen against
+  a live LM Studio. Structured output is graded `none` until
+  [#25](https://github.com/IDEMSInternational/inferenceswitch/issues/25) is
+  fixed (LM Studio answers 400 to the `json_object` format inferenceswitch
+  sends it).
+- **`effort=` on LM Studio, for carded models.** The `lmstudio` provider now
+  sends `reasoning_effort`, and `Effort.NONE` sends `"none"` for Gemma (LM
+  Studio's `"minimal"` leaves its thinking on). The capability is declared by
+  the card, not the provider, so an LM Studio model with no card still raises
+  `UnsupportedCapabilityError` for `effort=`, as before. `ollama` is unchanged.
+
 ## [0.10.0] — 2026-10-31
 
 Sends images to the models that read them
