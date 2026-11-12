@@ -68,6 +68,21 @@ class ProviderSpec:
     known_models: tuple[str, ...] = ()
     #: True for local servers with no authentication.
     is_local: bool = False
+    #: The provider as a person reads it ("Anthropic (Claude)"); empty means ``name``.
+    label: str = ""
+    #: What this provider's keys look like ("sk-ant-…"), for a hint beside the field;
+    #: empty when they have no recognisable shape. Never a real key.
+    key_hint: str = ""
+
+    @property
+    def title(self) -> str:
+        """The provider's name as a person reads it."""
+        return self.label or self.name
+
+    @property
+    def takes_key(self) -> bool:
+        """Whether a call to this provider needs an API key (a local server does not)."""
+        return self.api_key_env is not None
 
     @property
     def sdk(self) -> SDK:
@@ -104,6 +119,10 @@ class Registry:
 
     def __iter__(self):
         return iter(self._by_name.values())
+
+    def key_providers(self) -> list[ProviderSpec]:
+        """The providers that take an API key, in registry order (the most common first)."""
+        return [spec for spec in self if spec.takes_key]
 
     @property
     def names(self) -> list[str]:
@@ -371,6 +390,8 @@ def default_registry() -> Registry:
                 kind=KIND_ANTHROPIC,
                 capabilities=_ANTHROPIC_CAPS,
                 api_key_env="ANTHROPIC_API_KEY",
+                label="Anthropic (Claude)",
+                key_hint="sk-ant-…",
                 model_prefixes=("claude",),
                 known_models=(
                     "claude-haiku-4-5",
@@ -390,6 +411,8 @@ def default_registry() -> Registry:
                 kind=KIND_GEMINI,
                 capabilities=_GEMINI_CAPS,
                 api_key_env="GEMINI_API_KEY",
+                label="Google (Gemini)",
+                key_hint="AIza…",
                 model_prefixes=("gemini",),
                 # Google's own ids. gemini-3.5-flash is now served by 3.6 Flash,
                 # and Gemini 3 Flash only exists as gemini-3-flash-preview. The
@@ -406,6 +429,8 @@ def default_registry() -> Registry:
                 kind=KIND_OPENAI,
                 capabilities=_OPENAI_CAPS,
                 api_key_env="OPENAI_API_KEY",
+                label="OpenAI",
+                key_hint="sk-…",
                 base_url=None,  # SDK default: api.openai.com
                 model_prefixes=("gpt-", "o1", "o3", "o4"),
                 known_models=(
@@ -429,6 +454,7 @@ def default_registry() -> Registry:
                 kind=KIND_OPENAI,
                 capabilities=_MISTRAL_CAPS,
                 api_key_env="MISTRAL_API_KEY",
+                label="Mistral",
                 base_url="https://api.mistral.ai/v1",
                 model_prefixes=("mistral", "codestral", "ministral", "magistral"),
                 known_models=(
@@ -446,6 +472,8 @@ def default_registry() -> Registry:
                 kind=KIND_OPENAI,
                 capabilities=_DEEPSEEK_CAPS,
                 api_key_env="DEEPSEEK_API_KEY",
+                label="DeepSeek",
+                key_hint="sk-…",
                 base_url="https://api.deepseek.com/v1",
                 model_prefixes=("deepseek",),
                 known_models=("deepseek-flash", "deepseek-v4-pro"),
@@ -464,6 +492,8 @@ def default_registry() -> Registry:
                 kind=KIND_OPENAI,
                 capabilities=_GROQ_CAPS,
                 api_key_env="GROQ_API_KEY",
+                label="Groq",
+                key_hint="gsk_…",
                 base_url="https://api.groq.com/openai/v1",
                 # No prefixes: Groq serves llama/qwen/etc. that also run locally.
                 # Select it explicitly (provider="groq" or "groq/<model>").

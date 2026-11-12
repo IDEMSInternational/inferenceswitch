@@ -5,6 +5,15 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-11-11
+
+### Added
+
+- **`ProviderSpec.label`, `key_hint`, `title` and `takes_key`, and
+  `Registry.key_providers()`**: which providers take an API key, what a person
+  calls them and what their keys look like, so an application lists keys from
+  the registry instead of its own table (anastom#1324).
+
 ## [0.11.0] — 2026-11-09
 
 Adds a local Gemma model and lets a model card turn on `reasoning_effort` for
