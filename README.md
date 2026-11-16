@@ -371,14 +371,25 @@ raw.messages.create(..., extra_headers={...})       # provider-specific call
 ## Model cards and choosing a model by rung
 
 Capabilities above describe a *provider*. **Model cards** describe a *model*:
-a vendor-neutral **rung** (`nano` / `small` / `mid` / `large` / `frontier`,
-provisional), how reliably it returns schema-valid JSON (`reliable` /
+a vendor-neutral **rung** (`nano` / `small` / `mid` / `large` / `frontier`),
+how reliably it returns schema-valid JSON (`reliable` /
 `best_effort` / `none`), its context window, list price per million tokens,
 per-model capability overrides, and for open-weight models the family,
 parameter count and quantization. They ship as a versioned data file
 ([`inferenceswitch/model_cards.json`](inferenceswitch/model_cards.json)); the
 placement rubric and field reference are in
 [`docs/model-cards.md`](docs/model-cards.md).
+
+A rung is a **capability level with a fixed threshold**, placed by measured
+scores rather than a vendor's tier name, so a tool built for `mid` gets roughly
+the same results from any provider's `mid` model. A card is graded on two
+independent views, [Epoch AI's Capabilities Index](https://epoch.ai/benchmarks/eci)
+and Artificial Analysis's Intelligence Index, and sits on the lower; the
+thresholds never move when a new generation of models arrives. Each card
+records the scores it was placed on. A weekly job refreshes them and redraws
+this chart:
+
+![Model cards on the Epoch Capabilities Index, by rung](docs/model-cards-chart.svg)
 
 Ask for a rung, the hard requirements and a preference, and get back whichever
 *available* model fits, with the reason:

@@ -230,7 +230,9 @@ in code; a card with the same `id` replaces the shipped one.
   Monday. It reads OpenRouter's public catalog, Epoch AI's ECI data and
   Artificial Analysis's model pages, and
   - **rewrites** the `openrouter` route prices and the `benchmarks` (ECI, and
-    Artificial Analysis for cards that name a page there), then opens a pull request if the file
+    Artificial Analysis for cards that name a page there), **redraws the chart**
+    the README embeds (`docs/model-cards-chart.svg`, from the same data; a test
+    fails if it is stale), then opens a pull request if the file
     changed (after the test suite passes on it);
   - **reports**, in one standing issue refreshed each week, what only a person
     can decide: open models from the last 120 days with no card yet, other

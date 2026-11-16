@@ -197,3 +197,37 @@ def test_an_index_from_a_version_with_no_edges_has_no_view():
 def test_a_score_that_says_small_settles_a_nano_card():
     assert sweep.settles("nano", "small") and not sweep.settles("nano", "mid")
     assert sweep.settles("mid", None)
+
+
+# ── the chart ───────────────────────────────────────────────────────────────
+
+CHART_PATH = Path(sweep.CHART_PATH)
+
+
+def test_the_shipped_chart_is_the_one_the_shipped_cards_draw():
+    # The README embeds this file; a card or score changed without redrawing it
+    # (`python tools/sweep.py chart`) leaves the README showing the old placements.
+    text = CARDS_PATH.read_text(encoding="utf-8")
+    assert CHART_PATH.read_text(encoding="utf-8") == sweep.render_chart(json.loads(text))
+
+
+def test_the_chart_is_well_formed_and_has_a_row_per_scored_card():
+    import xml.etree.ElementTree as ET
+
+    data = json.loads(CARDS_PATH.read_text(encoding="utf-8"))
+    root = ET.fromstring(sweep.render_chart(data))
+    scored = [c["id"] for c in data["cards"] if "epoch_eci" in (c.get("benchmarks") or {})]
+    labels = {t.text for t in root.iter("{http://www.w3.org/2000/svg}text")}
+    assert set(scored) <= labels
+    assert root.find("{http://www.w3.org/2000/svg}title") is not None
+
+
+def test_the_chart_is_deterministic_and_ignores_cards_without_an_eci():
+    data = {"updated": "2026-01-01", "cards": [
+        {"id": "a", "rung": "mid", "open_weight": {"family": "f", "params_b": 1},
+         "benchmarks": {"epoch_eci": {"score": 160.0, "interval": [158.0, 162.0]}}},
+        {"id": "b", "rung": "small", "benchmarks": {"hle": {"score": 3.0}}},
+    ]}
+    one = sweep.render_chart(data)
+    assert one == sweep.render_chart(data)
+    assert ">a<" in one and ">b<" not in one

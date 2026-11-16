@@ -1053,7 +1053,7 @@
       "id": "deepseek-v4.1-flash-1017",
       "rung": "mid",
       "routes": {
-        "openrouter": {"models": ["deepseek/deepseek-v4.1-flash-1017"], "cost": {"input": 0.1498, "output": 0.60455, "cache_read": 0.00321}}
+        "openrouter": {"models": ["deepseek/deepseek-v4.1-flash-1017"], "cost": {"input": 0.15, "output": 0.5, "cache_read": 0.003}}
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
@@ -1110,7 +1110,7 @@
       "id": "qwen3.6-35b-a3b",
       "rung": "small",
       "routes": {
-        "openrouter": {"models": ["qwen/qwen3.6-35b-a3b"], "cost": {"input": 0.1, "output": 0.9, "cache_read": 0.05}}
+        "openrouter": {"models": ["qwen/qwen3.6-35b-a3b"], "cost": {"input": 0.1, "output": 0.9, "cache_read": 0.025}}
       },
       "structured_output": "best_effort",
       "context_window": 262144,
@@ -1241,6 +1241,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "gemma-4", "params_b": 30.7},
       "benchmarks": {
+        "epoch_eci": {"score": 144.3, "source": "epoch.ai/data/eci_scores.csv#Gemma 4 31B IT", "date": "2026-11-16", "interval": [141.7, 146.8]},
         "aa_intelligence_index": {"score": 4.4, "source": "artificialanalysis.ai/models/gemma-4-31b", "date": "2026-11-16", "version": "5.0.1"},
         "gpqa_diamond": {"score": 85.7, "source": "artificialanalysis.ai/models/gemma-4-31b", "date": "2026-11-16"},
         "hle": {"score": 23.6, "source": "artificialanalysis.ai/models/gemma-4-31b", "date": "2026-11-16"},
@@ -1299,7 +1300,7 @@
       "id": "hy3",
       "rung": "small",
       "routes": {
-        "openrouter": {"models": ["tencent/hy3"], "cost": {"input": 0.132, "output": 0.528, "cache_read": 0.033}}
+        "openrouter": {"models": ["tencent/hy3"], "cost": {"input": 0.0825, "output": 0.33, "cache_read": 0.020625}}
       },
       "structured_output": "best_effort",
       "context_window": 256000,
@@ -1384,6 +1385,47 @@
         "terminal_bench_2_1": {"score": 51.7, "source": "artificialanalysis.ai/models/muse-glimmer", "date": "2026-11-16", "setting": "high"}
       },
       "notes": "Small: 6.3 on the Artificial Analysis index, below its resolution, and HLE 22.0. Meta's 30B Muse model. Reads images. Apache 2.0."
+    },
+    {
+      "id": "gemma-4-e4b",
+      "rung": "small",
+      "routes": {
+        "lmstudio": {"models": ["google/gemma-4-e4b"], "cost": null}
+      },
+      "structured_output": "none",
+      "context_window": 131072,
+      "features": {"add": ["reasoning_effort", "streamed_thinking", "vision"], "remove": []},
+      "open_weight": {"family": "gemma-4", "params_b": 4, "quantization": "Q4_K_M", "active_params_b": 4.5},
+      "benchmarks": {
+        "gpqa_diamond": {"score": 57.6, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "hle": {"score": 3.8, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "scicode": {"score": 24.4, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "aa_lcr": {"score": 32.0, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "ifbench": {"score": 44.2, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "tau2": {"score": 20.8, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
+        "terminal_bench_2_1": {"score": 1.9, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"}
+      },
+      "notes": "Small: Google's effective-4B Gemma 4 (8B parameters with embeddings, 4.5B active). It has no Epoch row and no index above the floor, so it is placed by its scores against qwen3-8b (small): GPQA Diamond 57.6 against 45.2, HLE 3.8 against 1.9, IFBench 44.2 against 28.6. Not nano, which is the e2b. Seen on LM Studio (2026-11-16): native tool calling, streaming (thinking arrives as reasoning_content), image input (a solid-colour PNG read correctly), thinking on by default, and reasoning_effort none leaving it empty. json_schema is accepted, but inferenceswitch sends json_object to LM Studio, which answers 400 (#25), so structured_output is none until that is fixed. No Ollama route: its tag was not checked. On a one-line sum, reasoning_effort low and high produced no reasoning tokens, so the levels are not graded."
+    },
+    {
+      "id": "gemma-4-12b-qat",
+      "rung": "small",
+      "routes": {
+        "lmstudio": {"models": ["google/gemma-4-12b-qat"], "cost": null}
+      },
+      "structured_output": "none",
+      "context_window": 262144,
+      "features": {"add": ["reasoning_effort", "streamed_thinking", "vision"], "remove": []},
+      "open_weight": {"family": "gemma-4", "params_b": 12, "quantization": "Q4_0 (QAT)"},
+      "benchmarks": {
+        "gpqa_diamond": {"score": 75.3, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"},
+        "hle": {"score": 15.7, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"},
+        "aa_lcr": {"score": 63.7, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"},
+        "ifbench": {"score": 73.5, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"},
+        "tau2": {"score": 36.3, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"},
+        "terminal_bench_2_1": {"score": 27.3, "source": "artificialanalysis.ai/models/gemma-4-12b", "date": "2026-11-16"}
+      },
+      "notes": "Small: GPQA Diamond 75.3, HLE 15.7 and IFBench 73.5 are level with qwen3.5-9b (small: 80.6, 14.9, 66.7) and below gemma-4-26b-a4b; no Epoch row and no index above the floor. Google's quantization-aware-trained 4-bit build, a separate card from any other quantization of the 12B; the scores are for the unquantized model. Seen on LM Studio (2026-11-16): native tool calling, streaming (thinking arrives as reasoning_content), image input (a solid-colour PNG read correctly), thinking on by default, and reasoning_effort none leaving it empty. json_schema is accepted, but inferenceswitch sends json_object to LM Studio, which answers 400 (#25), so structured_output is none until that is fixed. No Ollama route: its tag was not checked. reasoning_effort low and high gave the same reasoning length (232 tokens) on a one-line sum, so the levels are not graded."
     }
   ]
 }

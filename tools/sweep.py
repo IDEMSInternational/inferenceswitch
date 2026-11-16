@@ -29,6 +29,10 @@ Commands::
     python tools/sweep.py update              # rewrite openrouter prices and benchmarks in place
     python tools/sweep.py report --cards PATH # a card file other than the shipped one
     python tools/sweep.py report --out report.md --findings count.txt
+    python tools/sweep.py chart               # redraw docs/model-cards-chart.svg from the cards
+
+``update`` also redraws the chart the README embeds, so a sweep's pull request
+shows the cards that moved on it.
 
 ``update`` changes only what a machine can know: ``openrouter`` route prices,
 the Artificial Analysis ``benchmarks`` of cards that already name a page in their
@@ -50,6 +54,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CARDS_PATH = ROOT / "inferenceswitch" / "model_cards.json"
+CHART_PATH = ROOT / "docs" / "model-cards-chart.svg"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/models"
 AA_PAGE = "https://artificialanalysis.ai/models/{slug}"
@@ -336,7 +341,7 @@ def eci_row_for(card: dict, rows: dict[str, dict], aa_name: str | None = None) -
         m = re.match(r"epoch\.ai/data/eci_scores\.csv#(.+)$", bench.get("source", ""))
         if m:
             return rows.get(m.group(1))
-    wanted = {norm(card["id"])}
+    wanted = {norm(card["id"]), norm(card["id"]) + "it"}  # Epoch lists "Gemma 4 31B IT"
     if aa_name:
         wanted.add(norm(re.sub(r"\(.*?\)", "", aa_name)))
     return next((r for name, r in rows.items() if norm(name) in wanted), None)
@@ -491,6 +496,99 @@ def rung_section(cards: list[dict]) -> list[str]:
     return lines
 
 
+# ── the chart ───────────────────────────────────────────────────────────────
+
+_CHART_STYLE = """<style>
+.bg{fill:#fff}.t{fill:#1f2328}.m{fill:#59636e}.g{stroke:#59636e;stroke-opacity:.25}.e{stroke:#59636e}
+.z1{fill:#59636e;fill-opacity:.04}.z2{fill:#59636e;fill-opacity:.10}
+.small{--c:#8EBCEB}.mid{--c:#3E8FDD}.large{--c:#1F6BC0}.frontier{--c:#0B4EA2}
+.dot{fill:var(--c)}.ring{fill:none;stroke:var(--c);stroke-width:2}.bar{stroke:var(--c);stroke-opacity:.55}
+@media (prefers-color-scheme:dark){.bg{fill:#0d1117}.t{fill:#e6edf3}.m{fill:#9198a1}.g{stroke:#9198a1;stroke-opacity:.25}.e{stroke:#9198a1}
+.z1{fill:#9198a1;fill-opacity:.05}.z2{fill:#9198a1;fill-opacity:.12}
+.small{--c:#3F78B8}.mid{--c:#5C9BE0}.large{--c:#8FBDF2}.frontier{--c:#C7E0FF}}
+</style>"""
+
+
+def render_chart(data: dict) -> str:
+    """The cards that have an Epoch score as one SVG: each card a dot at its ECI
+    with its 95% interval, coloured by rung, between the frozen rung edges.
+    Written by ``update`` and ``chart``, embedded in the README. Deterministic:
+    the same cards give the same bytes, so a sweep's diff is the cards that moved."""
+    rows = []
+    for card in data["cards"]:
+        eci = (card.get("benchmarks") or {}).get(ECI)
+        if eci:
+            low, high = eci.get("interval") or (eci["score"], eci["score"])
+            rows.append((eci["score"], card["id"], card["rung"], bool(card.get("open_weight")), low, high))
+    rows.sort(key=lambda r: (-r[0], r[1]))
+    width, left, right, top, rh = 760, 190, 70, 36, 15
+    lo_x, hi_x = 100.0, 180.0
+    plot_h = len(rows) * rh
+    height = top + plot_h + 100
+
+    def x(v: float) -> float:
+        return round(left + (v - lo_x) / (hi_x - lo_x) * (width - left - right), 1)
+
+    def zone(v: float) -> str:
+        return suggest_rung_eci(v)
+
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
+        f'role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">',
+        "<title>Model cards on the Epoch Capabilities Index</title>",
+        f"<desc>{len(rows)} model cards placed by Epoch Capabilities Index with 95% intervals, "
+        "between the rung edges at " + ", ".join(f"{e:g}" for _, e in ECI_EDGES) + ".</desc>",
+        _CHART_STYLE,
+        f'<rect class="bg" width="{width}" height="{height}"/>',
+    ]
+    edges = [("small", lo_x), *ECI_EDGES, ("end", hi_x)]
+    for i in range(len(edges) - 1):
+        x_a, x_b = x(edges[i][1]), x(edges[i + 1][1])
+        out.append(f'<rect class="z{1 + i % 2}" x="{x_a}" y="{top}" width="{round(x_b - x_a, 1)}" height="{plot_h}"/>')
+        out.append(f'<text class="m" x="{round((x_a + x_b) / 2, 1)}" y="{top - 10}" text-anchor="middle" '
+                   f'font-size="12">{edges[i][0]}</text>')
+    for v in range(int(lo_x) + 10, int(hi_x), 10):
+        out.append(f'<line class="g" x1="{x(v)}" x2="{x(v)}" y1="{top}" y2="{top + plot_h}" stroke-width="0.5"/>')
+        out.append(f'<text class="m" x="{x(v)}" y="{top + plot_h + 15}" text-anchor="middle" font-size="11">{v}</text>')
+    for _, e in ECI_EDGES:
+        out.append(f'<line class="e" x1="{x(e)}" x2="{x(e)}" y1="{top}" y2="{top + plot_h}" '
+                   'stroke-width="1" stroke-dasharray="4 3"/>')
+        out.append(f'<text class="t" x="{x(e)}" y="{top + plot_h + 28}" text-anchor="middle" font-size="11">{e:g}</text>')
+    for i, (score, cid, rung, is_open, low, high) in enumerate(rows):
+        y = top + i * rh + rh / 2
+        title = (f"{cid}: ECI {score} [{low}, {high}], rung {rung}"
+                 + (", open weights" if is_open else ", hosted only"))
+        out.append(f'<g class="{rung}"><title>{title}</title>')
+        out.append(f'<text class="t" x="{left - 8}" y="{round(y + 4, 1)}" text-anchor="end" font-size="11">{cid}</text>')
+        out.append(f'<line class="bar" x1="{x(low)}" x2="{x(high)}" y1="{y}" y2="{y}" stroke-width="2" stroke-linecap="round"/>')
+        if is_open:
+            out.append(f'<circle class="dot" cx="{x(score)}" cy="{y}" r="4.5"/>')
+        else:
+            out.append(f'<circle class="ring" cx="{x(score)}" cy="{y}" r="3.8"/>')
+        if zone(score) != rung:
+            out.append(f'<circle cx="{x(score)}" cy="{y}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
+        out.append(f'<text class="m" x="{width - right + 10}" y="{round(y + 4, 1)}" font-size="11">{rung}</text></g>')
+    notes = [
+        "Epoch Capabilities Index with 95% interval. Source: Epoch AI (CC-BY 4.0).",
+        "Filled dot: open weights. Ring: hosted only. Orange ring: the card's rung is lower than this zone,",
+        "because its other view (Artificial Analysis index) is lower.",
+        f"{len(rows)} of {len(data['cards'])} cards have an Epoch score. Cards updated {data['updated']}.",
+    ]
+    for i, line in enumerate(notes):
+        out.append(f'<text class="m" x="{left - 8}" y="{top + plot_h + 48 + i * 14}" font-size="11">{line}</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def write_chart(cards_path: Path, chart_path: Path) -> bool:
+    """Regenerate the chart from a card file; ``True`` when the file changed."""
+    svg = render_chart(load_cards(cards_path))
+    if chart_path.exists() and chart_path.read_text(encoding="utf-8") == svg:
+        return False
+    chart_path.write_text(svg, encoding="utf-8", newline="\n")
+    return True
+
+
 # ── updating the card file ──────────────────────────────────────────────────
 
 
@@ -592,12 +690,14 @@ def update(cards_path: Path) -> list[str]:
     if changes:
         data["updated"] = today
         cards_path.write_text(dump_cards(data), encoding="utf-8", newline="\n")
+    if cards_path == CARDS_PATH and write_chart(cards_path, CHART_PATH):
+        changes.append(f"chart redrawn: {CHART_PATH.relative_to(ROOT)}")
     return changes
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["report", "update"])
+    ap.add_argument("command", choices=["report", "update", "chart"])
     ap.add_argument("--cards", type=Path, default=CARDS_PATH)
     ap.add_argument("--no-aa", action="store_true", help="skip Artificial Analysis (OpenRouter only)")
     ap.add_argument("--out", type=Path, help="report: write the report here instead of stdout")
@@ -615,6 +715,8 @@ def main(argv: list[str] | None = None) -> int:
             # with a code-quoted name; headings, prose and table headers do not.
             count = sum(1 for line in text.splitlines() if line.startswith(("- `", "| `")))
             args.findings.write_text(f"{count}\n", encoding="utf-8")
+    elif args.command == "chart":
+        print("Chart redrawn." if write_chart(args.cards, CHART_PATH) else "Chart unchanged.")
     else:
         changes = update(args.cards)
         print("\n".join(changes) if changes else "Nothing changed.")

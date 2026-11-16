@@ -1,7 +1,7 @@
 name: Sweep model cards
 
 # Weekly: refresh what a machine can know about the model cards (OpenRouter
-# route prices, benchmark scores) and report what a person should look at (new
+# route prices, benchmark scores, the chart the README embeds) and report what a person should look at (new
 # open models, other routes whose price OpenRouter lists differently, rung
 # suggestions). No keys and no model calls: it reads two public catalogs.
 # See tools/sweep.py and "Keeping cards current" in docs/model-cards.md.
@@ -53,7 +53,7 @@ jobs:
 
       - name: Open a pull request when the data changed
         run: |
-          if git diff --quiet -- inferenceswitch/model_cards.json; then
+          if git diff --quiet -- inferenceswitch/model_cards.json docs/model-cards-chart.svg; then
             echo "Cards unchanged."
             exit 0
           fi
@@ -65,10 +65,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add inferenceswitch/model_cards.json
+          git add inferenceswitch/model_cards.json docs/model-cards-chart.svg
           git commit -m "cards: weekly sweep, $(date -u +%F)" -m "$(cat changes.txt)"
           git push -u origin "$branch"
-          { echo "Prices and scores refreshed by \`tools/sweep.py update\`. Rungs, notes and other providers' prices are untouched."; echo; cat changes.txt; echo; cat report.md; } > pr-body.md
+          { echo "Prices and scores refreshed, and the README chart redrawn, by \`tools/sweep.py update\`. Rungs, notes and other providers' prices are untouched."; echo; cat changes.txt; echo; cat report.md; } > pr-body.md
           gh pr create --title "cards: weekly sweep, $(date -u +%F)" --body-file pr-body.md
 
       # One standing issue for the items a machine cannot decide, refreshed each

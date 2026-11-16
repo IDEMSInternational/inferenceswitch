@@ -53,6 +53,16 @@ and the prices current.
   `kimi-k3.1-pro` is `mid`, a candidate for `large`: its two views split. The
   existing cards the two sources cover gain their scores too (50 with an ECI, 41
   with an Artificial Analysis page).
+- **Gemma 4 E4B and 12B (QAT) cards** on `lmstudio`, both `small` (no Epoch row;
+  placed by their scores against `qwen3-8b` and `qwen3.5-9b`), with tool calling,
+  streaming thinking, image input and `reasoning_effort none` seen against a live
+  LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
+  card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
+  quantization-aware build.
+- **`docs/model-cards-chart.svg`**, the chart in the README: every card with an
+  Epoch score as a dot with its 95% interval between the rung edges, redrawn by
+  `python tools/sweep.py chart` and by each weekly sweep. A test fails if it is
+  stale.
 - **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
   refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
   Analysis) in a pull request, and
