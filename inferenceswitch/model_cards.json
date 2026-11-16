@@ -555,7 +555,7 @@
     },
     {
       "id": "qwen3.8-27b",
-      "rung": "mid",
+      "rung": "small",
       "routes": {
         "groq": {"models": ["qwen/qwen3.8-27b"], "cost": {"input": 0.8, "output": 4.0}}
       },
@@ -571,7 +571,7 @@
         "aa_lcr": {"score": 82.0, "source": "artificialanalysis.ai/models/qwen3-8-27b", "date": "2026-11-16", "setting": "xhigh"},
         "terminal_bench_2_1": {"score": 79.8, "source": "artificialanalysis.ai/models/qwen3-8-27b", "date": "2026-11-16", "setting": "xhigh"}
       },
-      "notes": "Groq preview model; may be withdrawn at short notice. Takes image input."
+      "notes": "Groq preview model; may be withdrawn at short notice. Takes image input. Small, moved down from mid on review: 20.1 on the Artificial Analysis index (GPT-5.6 Luna, small, is 23.8; the mid references are 27.9 and up) and HLE 33.9."
     },
     {
       "id": "gemini-3.8-flash",

@@ -10,6 +10,12 @@ Cards for the open models used as small steps
 benchmark scores that back their placement, and a weekly sweep that keeps both
 and the prices current.
 
+### Changed
+
+- **`qwen3.8-27b` moves from `mid` to `small`**: 20.1 on the Artificial Analysis
+  index (GPT-5.6 Luna, `small`, is 23.8; the `mid` references start at 27.9) and
+  HLE 33.9. `select_model("mid")` no longer returns it.
+
 ### Added
 
 - **An `openrouter` provider** (`OPENROUTER_API_KEY`, `https://openrouter.ai/api/v1`,

@@ -230,8 +230,6 @@ RUNG_EDGES = (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0
 #: card that sits off its band, so a new exception has to be written here.
 OFF_BAND = {
     "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
-    "qwen3.8-27b": "the index suggests small (20.1 against GPT-5.6 Luna's 23.8); "
-                   "left on mid for the team to move, see #29",
 }
 
 
