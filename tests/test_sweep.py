@@ -137,16 +137,6 @@ def test_scores_for_one_card_come_from_one_page():
         assert len({b.source for b in card.benchmarks}) <= 1, card.id
 
 
-#: Open-weight cards whose rung is not the one the index bands suggest, and why.
-#: A rung is a judgement and the bands only prompt a look, so each exception is
-#: written down here; a new card off its band fails until it is.
-OFF_BAND = {
-    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
-    "qwen3.8-27b": "the index suggests small (20.1 against GPT-5.6 Luna's 23.8); "
-                   "left on mid for the team to move, see #29",
-}
-
-
 def test_open_weight_cards_sit_where_the_index_bands_put_them_or_are_listed():
     off = {}
     for card in default_cards():
@@ -156,4 +146,4 @@ def test_open_weight_cards_sit_where_the_index_bands_put_them_or_are_listed():
         suggested = sweep.suggest_rung(index.score)
         if suggested is not None and suggested != card.rung.value:
             off[card.id] = suggested
-    assert set(off) == set(OFF_BAND), off
+    assert set(off) == set(sweep.OFF_BAND), off

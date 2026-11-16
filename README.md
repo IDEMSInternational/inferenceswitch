@@ -24,7 +24,7 @@ Provider SDKs are optional extras — install only what you use:
 ```
 pip install "inferenceswitch[anthropic]"   # Anthropic (native)
 pip install "inferenceswitch[gemini]"      # Google Gemini (native)
-pip install "inferenceswitch[openai]"      # OpenAI + Mistral/DeepSeek/Groq/Ollama/LM Studio
+pip install "inferenceswitch[openai]"      # OpenAI + Mistral/DeepSeek/Groq/OpenRouter/Ollama/LM Studio
 pip install "inferenceswitch[all]"
 ```
 
@@ -83,6 +83,7 @@ no silent default provider.
 | `deepseek` | openai-compat | `DEEPSEEK_API_KEY` | |
 | `xai` | openai-compat | `XAI_API_KEY` | Grok (`grok-*` routes here) |
 | `groq` | openai-compat | `GROQ_API_KEY` | select explicitly (`groq/...`) |
+| `openrouter` | openai-compat | `OPENROUTER_API_KEY` | one key, many hosted models; select explicitly (`openrouter/z-ai/glm-5.3-flash`), best-effort JSON |
 | `ollama` | openai-compat | — | local `http://localhost:11434/v1`, best-effort JSON |
 | `lmstudio` | openai-compat | — | local `http://localhost:1234/v1`, best-effort JSON |
 

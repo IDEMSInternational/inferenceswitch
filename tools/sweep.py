@@ -25,6 +25,7 @@ Commands::
     python tools/sweep.py report              # markdown report on stdout
     python tools/sweep.py update              # rewrite openrouter prices and benchmarks in place
     python tools/sweep.py report --cards PATH # a card file other than the shipped one
+    python tools/sweep.py report --out report.md --findings count.txt
 
 ``update`` changes only what a machine can know: ``openrouter`` route prices
 and the ``benchmarks`` of cards that already name an Artificial Analysis page
@@ -220,6 +221,16 @@ def endpoint_price(model_id: str) -> dict | None:
 RUNG_EDGES = (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))
 
 
+#: Open-weight cards whose rung is not the one the bands suggest, and why. The
+#: report leaves them out of its suggestions, and a test fails for any other
+#: card that sits off its band, so a new exception has to be written here.
+OFF_BAND = {
+    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
+    "qwen3.8-27b": "the index suggests small (20.1 against GPT-5.6 Luna's 23.8); "
+                   "left on mid for the team to move, see #29",
+}
+
+
 def suggest_rung(score: float) -> str | None:
     """The rung ``RUNG_EDGES`` puts an index score on; ``None`` below the first."""
     rung = None
@@ -361,6 +372,8 @@ def aa_section(cards: list[dict], today: dt.date) -> list[str]:
             continue
         moved = old is None or abs(fresh["score"] - old["score"]) >= 0.5 or fresh.get("version") != old.get("version")
         suggestion = suggest_rung(fresh["score"]) if card.get("open_weight") else None
+        if card["id"] in OFF_BAND:
+            suggestion = None
         flag = "" if suggestion in (None, card["rung"]) else f" **suggest `{suggestion}`**"
         if moved or flag:
             was = f"{old['score']} (v{old.get('version')})" if old else "-"
@@ -463,9 +476,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("command", choices=["report", "update"])
     ap.add_argument("--cards", type=Path, default=CARDS_PATH)
     ap.add_argument("--no-aa", action="store_true", help="skip Artificial Analysis (OpenRouter only)")
+    ap.add_argument("--out", type=Path, help="report: write the report here instead of stdout")
+    ap.add_argument("--findings", type=Path,
+                    help="report: write how many items need a person's look here (0 when none)")
     args = ap.parse_args(argv)
     if args.command == "report":
-        sys.stdout.write(report(args.cards, use_aa=not args.no_aa))
+        text = report(args.cards, use_aa=not args.no_aa)
+        if args.out:
+            args.out.write_text(text, encoding="utf-8", newline="\n")
+        else:
+            sys.stdout.write(text)
+        if args.findings:
+            # Every item the report raises is a bullet or a table row that opens
+            # with a code-quoted name; headings, prose and table headers do not.
+            count = sum(1 for line in text.splitlines() if line.startswith(("- `", "| `")))
+            args.findings.write_text(f"{count}\n", encoding="utf-8")
     else:
         changes = update(args.cards)
         print("\n".join(changes) if changes else "Nothing changed.")

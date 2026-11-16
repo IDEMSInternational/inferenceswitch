@@ -5,6 +5,39 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+Cards for the open models used as small steps
+([#29](https://github.com/IDEMSInternational/inferenceswitch/issues/29)), the
+benchmark scores that back their placement, and a weekly sweep that keeps both
+and the prices current.
+
+### Added
+
+- **An `openrouter` provider** (`OPENROUTER_API_KEY`, `https://openrouter.ai/api/v1`,
+  OpenAI-compatible, structured output best effort). Selected explicitly:
+  `openrouter/z-ai/glm-5.3-flash`. Answers the question #29 left open: a
+  gateway with one key and a fixed `base_url` is a provider of its own.
+- **`ModelCard.benchmarks`** (`Benchmark`, `ModelCard.benchmark(name)`): published
+  scores for a model, each with its source, date and version, as evidence for
+  its rung. Optional; selection does not read them. Format stays `1`: a card file
+  without the field loads as before, and an older inferenceswitch rejects one
+  with it, since unknown fields are rejected.
+- **24 model cards**: `qwen3-30b-a3b` (Ollama, LM Studio, OpenRouter; thinking on
+  or off only, no `reasoning_effort`), `glm-5.3`, `glm-5.3-flash`,
+  `minimax-m3.1-flash`, `mimo-v2.6-flash`, `mimo-v2.6-pro`, `kimi-k3.1-pro`,
+  `deepseek-v4.1-flash`, `deepseek-v4.1-flash-1017`, `qwen3.8-flash`,
+  `qwen3.8-2.4t-a95b`, `qwen3.6-35b-a3b`, `qwen3.6-27b`, `qwen3.5-9b`,
+  `nemotron-3.5-lightning`, `nemotron-3.5-super-vl`, `gemma-4-31b`,
+  `gemma-4-26b-a4b`, `step-3.7-flash`, `hy3`, `hy4`, `inkling-2-small`,
+  `granite-4.2-8b` and `muse-glimmer-30b`, each placed by the new
+  "Benchmarks as evidence" bands in `docs/model-cards.md`, with scores read from
+  Artificial Analysis. The other 41 cards that Artificial Analysis lists gain
+  their scores too.
+- **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
+  refreshes `openrouter` route prices and benchmark scores in a pull request, and
+  keeps one issue of what needs a person (new open models, prices OpenRouter lists
+  differently from a card, cards off their index band). Standard library only; no
+  keys and no model calls.
+
 ## [0.12.0] — 2026-11-11
 
 ### Added
