@@ -234,4 +234,5 @@ def test_the_chart_is_deterministic_and_shows_cards_with_and_without_an_eci():
     one = sweep.render_chart(data)
     assert one == sweep.render_chart(data)
     assert ">a<" in one and ">b<" in one and ">c<" in one
-    assert "AA 20" in one and "1 of 3 cards have an Epoch score" in one
+    assert "AA index 20" in one and "no Epoch score yet" in one and "no index score" in one
+    assert "1 of 3 cards have an Epoch score, 1 an index score, 1 neither" in one

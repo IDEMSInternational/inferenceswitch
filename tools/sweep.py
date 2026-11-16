@@ -509,7 +509,7 @@ _CHART_STYLE = """<style>
 .small{--c:#8EBCEB}.mid{--c:#3E8FDD}.large{--c:#1F6BC0}.frontier{--c:#0B4EA2}
 .dot{fill:var(--c)}.ring{fill:none;stroke:var(--c);stroke-width:2}.bar{stroke:var(--c);stroke-opacity:.55}
 .band{fill:var(--c);fill-opacity:.13}.rule{stroke:#59636e;stroke-opacity:.35}
-.nano{--c:#B7C4D6}
+.nano{--c:#B7C4D6}.floor{fill:#59636e;fill-opacity:.55}
 @media (prefers-color-scheme:dark){.bg{fill:#0d1117}.t{fill:#e6edf3}.m{fill:#9198a1}.g{stroke:#9198a1;stroke-opacity:.25}.e{stroke:#9198a1}
 .z1{fill:#9198a1;fill-opacity:.05}.z2{fill:#9198a1;fill-opacity:.12}
 .nano{--c:#4A5A70}.small{--c:#3F78B8}.mid{--c:#5C9BE0}.large{--c:#8FBDF2}.frontier{--c:#C7E0FF}}
@@ -517,107 +517,134 @@ _CHART_STYLE = """<style>
 
 
 def render_chart(data: dict) -> str:
-    """Every card as a row, grouped by rung. A card with an Epoch score is a dot at
-    its ECI with its 95% interval, inside its rung's own band, so a card outside
-    its band stands out; a card without one sits in a gutter at the left, marked
-    with its Artificial Analysis index when it has one. Written by ``update`` and
-    ``chart``, embedded in the README. Deterministic: the same cards give the same
-    bytes, so a sweep's diff is the cards that moved."""
+    """Every card as a row, grouped by rung, against both views its rung is read
+    from: the Epoch Capabilities Index on the left (a dot with its 95% interval)
+    and the Artificial Analysis index on the right (a dot), each inside the rung's
+    band on that scale. A card missing from one view says so there, so
+    nothing is left hanging: the cards Epoch has not scored yet sit on their
+    Artificial Analysis dot. An orange ring marks a view that puts the card on a
+    different rung from the one it carries (the lower view wins). Written by
+    ``update`` and ``chart``, embedded in the README. Deterministic: the same
+    cards give the same bytes, so a sweep's diff is the cards that moved."""
     groups: dict[str, list] = {r: [] for r in RUNGS}
     for card in data["cards"]:
         b = card.get("benchmarks") or {}
         eci, idx = b.get(ECI), b.get(INDEX)
         low, high = (eci.get("interval") or (eci["score"], eci["score"])) if eci else (None, None)
-        groups[card["rung"]].append((
-            eci["score"] if eci else None, card["id"], bool(card.get("open_weight")), low, high,
-            idx["score"] if idx else None,
-        ))
+        groups[card["rung"]].append({
+            "id": card["id"], "open": bool(card.get("open_weight")),
+            "eci": eci["score"] if eci else None, "lo": low, "hi": high,
+            "aa": idx["score"] if idx else None, "aa_v": idx.get("version") if idx else None,
+        })
     for rows in groups.values():
-        rows.sort(key=lambda r: (r[0] is None, -(r[0] or 0), r[1]))
-    n_scored = sum(1 for rows in groups.values() for r in rows if r[0] is not None)
+        rows.sort(key=lambda r: (r["eci"] is None, -(r["eci"] or r["aa"] or 0), r["id"]))
     n_all = sum(len(rows) for rows in groups.values())
+    n_eci = sum(1 for rows in groups.values() for r in rows if r["eci"] is not None)
+    n_aa = sum(1 for rows in groups.values() for r in rows if r["aa"] is not None)
+    n_neither = sum(1 for rows in groups.values() for r in rows if r["eci"] is None and r["aa"] is None)
 
-    width, label_right, gutter_x, plot_l, plot_r = 800, 178, 196, 290, 770
-    top, rh, hh = 40, 15, 24
-    lo_x, hi_x = 100.0, 180.0
+    width, label_right = 900, 178
+    e_l, e_r, a_l, a_r = 196, 566, 616, 860
+    top, rh, hh = 54, 15, 24
+    e_lo, e_hi, a_lo, a_hi = 100.0, 180.0, 0.0, 62.0
     order = [r for r in reversed(RUNGS) if groups[r]]
     plot_h = sum(hh + len(groups[r]) * rh + 6 for r in order)
-    height = top + plot_h + 118
+    height = top + plot_h + 124
 
-    def x(v: float) -> float:
-        return round(plot_l + (v - lo_x) / (hi_x - lo_x) * (plot_r - plot_l), 1)
+    def ex(v: float) -> float:
+        return round(e_l + (v - e_lo) / (e_hi - e_lo) * (e_r - e_l), 1)
 
-    bounds = {"nano": (lo_x, ECI_EDGES[0][1])}
-    edge_list = list(ECI_EDGES)
-    for i, (name, e) in enumerate(edge_list):
-        bounds[name] = (e, edge_list[i + 1][1] if i + 1 < len(edge_list) else hi_x)
-    rule = {r: (f"below {bounds[r][1]:g}" if r == "nano" else f"{bounds[r][0]:g} and up" if r == "frontier"
-                else f"{bounds[r][0]:g} to {bounds[r][1]:g}") for r in RUNGS}
+    def ax(v: float) -> float:
+        return round(a_l + (v - a_lo) / (a_hi - a_lo) * (a_r - a_l), 1)
+
+    e_edges = list(ECI_EDGES)
+    a_edges = list(AA_EDGES["5.0.1"])
+    e_bounds = {"nano": (e_lo, e_edges[0][1])}
+    for i, (name, e) in enumerate(e_edges):
+        e_bounds[name] = (e, e_edges[i + 1][1] if i + 1 < len(e_edges) else e_hi)
+    # The AA index cannot tell nano from small, so the nano band spans both.
+    a_bounds = {"nano": (a_lo, a_edges[1][1])}
+    for i, (name, e) in enumerate(a_edges):
+        a_bounds[name] = (e, a_edges[i + 1][1] if i + 1 < len(a_edges) else a_hi)
 
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
         f'role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">',
-        "<title>All model cards by rung, on the Epoch Capabilities Index</title>",
-        f"<desc>{n_all} model cards grouped by rung. {n_scored} have an Epoch Capabilities Index score, "
-        "shown with its 95% interval inside the rung's band; the rest are shown in a gutter at the left.</desc>",
+        "<title>All model cards by rung, on the Epoch Capabilities Index and the Artificial Analysis index</title>",
+        f"<desc>{n_all} model cards grouped by rung. {n_eci} have an Epoch Capabilities Index score (left, with its "
+        f"95% interval) and {n_aa} have an Artificial Analysis index score (right), each shown inside the rung's band.</desc>",
         _CHART_STYLE,
         f'<rect class="bg" width="{width}" height="{height}"/>',
-        f'<text class="m" x="{gutter_x + 28}" y="{top - 18}" text-anchor="middle" font-size="11">no Epoch score</text>',
+        f'<text class="t" x="{round((e_l + e_r) / 2, 1)}" y="{top - 32}" text-anchor="middle" font-size="12" font-weight="600">Epoch Capabilities Index</text>',
+        f'<text class="t" x="{round((a_l + a_r) / 2, 1)}" y="{top - 32}" text-anchor="middle" font-size="12" font-weight="600">Artificial Analysis index (v5.0.1)</text>',
     ]
-    # axis ticks along the top
-    for v in range(int(lo_x) + 10, int(hi_x), 10):
-        out.append(f'<text class="m" x="{x(v)}" y="{top - 8}" text-anchor="middle" font-size="11">{v}</text>')
+    for v in range(int(e_lo) + 10, int(e_hi), 10):
+        out.append(f'<text class="m" x="{ex(v)}" y="{top - 8}" text-anchor="middle" font-size="11">{v}</text>')
+    for v in range(10, int(a_hi), 10):
+        out.append(f'<text class="m" x="{ax(v)}" y="{top - 8}" text-anchor="middle" font-size="11">{v}</text>')
+
+    def disagrees(view: str | None, rung: str, from_aa: bool) -> bool:
+        if view is None or view == rung:
+            return False
+        return not (from_aa and rung == "nano" and view == "small")  # the index cannot tell these apart
+
     y = float(top)
     for rung in order:
         rows = groups[rung]
         band_h = hh + len(rows) * rh + 6
-        bl, br = bounds[rung]
-        out.append(f'<g class="{rung}"><rect class="band" x="{x(bl)}" y="{y}" width="{round(x(br) - x(bl), 1)}" height="{band_h}"/>')
-        out.append(f'<line class="rule" x1="{label_right - 150}" x2="{plot_r}" y1="{y}" y2="{y}" stroke-width="0.5"/>')
-        out.append(f'<text class="t" x="{label_right - 150}" y="{y + 16}" font-size="13" font-weight="600">{rung}</text>')
-        out.append(f'<text class="m" x="{label_right - 150 + 62}" y="{y + 16}" font-size="11">ECI {rule[rung]}, {len(rows)} cards</text></g>')
+        (el, er), (al, ar) = e_bounds[rung], a_bounds[rung]
+        out.append(f'<g class="{rung}"><rect class="band" x="{ex(el)}" y="{y}" width="{round(ex(er) - ex(el), 1)}" height="{band_h}"/>')
+        out.append(f'<rect class="band" x="{ax(al)}" y="{y}" width="{round(ax(ar) - ax(al), 1)}" height="{band_h}"/>')
+        out.append(f'<line class="rule" x1="28" x2="{a_r}" y1="{y}" y2="{y}" stroke-width="0.5"/>')
+        out.append(f'<text class="t" x="28" y="{y + 16}" font-size="13" font-weight="600">{rung}</text>')
+        out.append(f'<text class="m" x="86" y="{y + 16}" font-size="11">{len(rows)} cards</text></g>')
         y += hh
-        for score, cid, is_open, low, high, aa in rows:
-            cy = y + rh / 2
-            if score is None:
-                title = f"{cid}: no Epoch score, rung {rung}" + (f", AA index {aa}" if aa is not None else ", unscored") \
-                    + (", open weights" if is_open else ", hosted only")
-                out.append(f'<g class="{rung}"><title>{title}</title>')
-                out.append(f'<text class="t" x="{label_right}" y="{round(cy + 4, 1)}" text-anchor="end" font-size="11">{cid}</text>')
-                shape = (f'<rect class="dot" x="{gutter_x - 4}" y="{round(cy - 4, 1)}" width="8" height="8" transform="rotate(45 {gutter_x} {round(cy, 1)})"/>'
-                         if is_open else
-                         f'<rect class="ring" x="{gutter_x - 3.5}" y="{round(cy - 3.5, 1)}" width="7" height="7" transform="rotate(45 {gutter_x} {round(cy, 1)})"/>')
-                out.append(shape)
-                if aa is not None:
-                    out.append(f'<text class="m" x="{gutter_x + 12}" y="{round(cy + 4, 1)}" font-size="10">AA {aa:g}</text>')
-                out.append("</g>")
+        for r in rows:
+            cy = round(y + rh / 2, 1)
+            cid = r["id"]
+            kind = "open weights" if r["open"] else "hosted only"
+            if r["eci"] is not None:
+                e_view = suggest_rung_eci(r["eci"])
+                title = f"{cid}: ECI {r['eci']} [{r['lo']}, {r['hi']}], {e_view} on this view, rung {rung}, {kind}"
             else:
-                title = (f"{cid}: ECI {score} [{low}, {high}], rung {rung}"
-                         + (", open weights" if is_open else ", hosted only"))
-                out.append(f'<g class="{rung}"><title>{title}</title>')
-                out.append(f'<text class="t" x="{label_right}" y="{round(cy + 4, 1)}" text-anchor="end" font-size="11">{cid}</text>')
-                out.append(f'<line class="bar" x1="{x(low)}" x2="{x(high)}" y1="{round(cy, 1)}" y2="{round(cy, 1)}" stroke-width="2" stroke-linecap="round"/>')
-                if is_open:
-                    out.append(f'<circle class="dot" cx="{x(score)}" cy="{round(cy, 1)}" r="4.5"/>')
-                else:
-                    out.append(f'<circle class="ring" cx="{x(score)}" cy="{round(cy, 1)}" r="3.8"/>')
-                if suggest_rung_eci(score) != rung:
-                    out.append(f'<circle cx="{x(score)}" cy="{round(cy, 1)}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
-                out.append("</g>")
+                e_view = None
+                title = f"{cid}: no Epoch score yet, rung {rung}, {kind}"
+            a_view = suggest_rung(r["aa"], r["aa_v"]) if r["aa"] is not None else None
+            out.append(f'<g class="{rung}"><title>{title}' + (f"; AA index {r['aa']:g}" if r["aa"] is not None else "") + "</title>")
+            out.append(f'<text class="t" x="{label_right}" y="{round(cy + 4, 1)}" text-anchor="end" font-size="11">{cid}</text>')
+            if r["eci"] is not None:
+                out.append(f'<line class="bar" x1="{ex(r["lo"])}" x2="{ex(r["hi"])}" y1="{cy}" y2="{cy}" stroke-width="2" stroke-linecap="round"/>')
+                out.append(f'<circle class="{"dot" if r["open"] else "ring"}" cx="{ex(r["eci"])}" cy="{cy}" r="{4.5 if r["open"] else 3.8}"/>')
+                if disagrees(e_view, rung, False):
+                    out.append(f'<circle cx="{ex(r["eci"])}" cy="{cy}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
+            else:
+                out.append(f'<text class="m" x="{e_l + 8}" y="{round(cy + 4, 1)}" font-size="11">no Epoch score yet</text>')
+            if r["aa"] is not None and r["aa_v"] in AA_EDGES:
+                floor = a_view is None  # under the first edge: the index gives no view
+                cls = "floor" if floor else ("dot" if r["open"] else "ring")
+                out.append(f'<circle class="{cls}" cx="{ax(r["aa"])}" cy="{cy}" r="{3.6 if floor else (4.5 if r["open"] else 3.8)}"/>')
+                if disagrees(a_view, rung, True):
+                    out.append(f'<circle cx="{ax(r["aa"])}" cy="{cy}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
+            elif r["aa"] is None:
+                out.append(f'<text class="m" x="{a_l + 8}" y="{round(cy + 4, 1)}" font-size="11">no index score</text>')
+            out.append("</g>")
             y += rh
         y += 6
-    for _, e in ECI_EDGES:
-        out.append(f'<line class="e" x1="{x(e)}" x2="{x(e)}" y1="{top}" y2="{round(y, 1)}" stroke-width="1" stroke-dasharray="4 3"/>')
-        out.append(f'<text class="t" x="{x(e)}" y="{round(y + 14, 1)}" text-anchor="middle" font-size="11">{e:g}</text>')
+    for _, e in e_edges:
+        out.append(f'<line class="e" x1="{ex(e)}" x2="{ex(e)}" y1="{top}" y2="{round(y, 1)}" stroke-width="1" stroke-dasharray="4 3"/>')
+        out.append(f'<text class="t" x="{ex(e)}" y="{round(y + 14, 1)}" text-anchor="middle" font-size="11">{e:g}</text>')
+    for _, e in a_edges:
+        out.append(f'<line class="e" x1="{ax(e)}" x2="{ax(e)}" y1="{top}" y2="{round(y, 1)}" stroke-width="1" stroke-dasharray="4 3"/>')
+        out.append(f'<text class="t" x="{ax(e)}" y="{round(y + 14, 1)}" text-anchor="middle" font-size="11">{e:g}</text>')
     notes = [
-        "Epoch Capabilities Index with 95% interval. Source: Epoch AI (CC-BY 4.0). Dashed lines: the rung edges.",
-        "Dot: open weights. Ring: hosted only. Orange ring: the card's rung is lower than this zone,",
-        "because its other view (Artificial Analysis index) is lower.",
-        "Diamond at the left: no Epoch score yet, placed by its Artificial Analysis index (AA) or by size and judgement.",
-        f"{n_scored} of {n_all} cards have an Epoch score. Cards updated {data['updated']}.",
+        "Each card sits in its rung's band on both scales; dashed lines are the rung edges. A card is placed on the lower of its two views.",
+        "Dot: open weights. Ring: hosted only. Orange ring: this view puts the card on a different rung from the one it carries.",
+        "Small grey dot: the index is at its floor (under 12), so it gives no view. The index cannot tell nano from small, so its nano band spans both.",
+        "ECI with 95% interval: Epoch AI (CC-BY 4.0). Index: Artificial Analysis. Grey words mean that source has no score for the card yet.",
+        f"{n_eci} of {n_all} cards have an Epoch score, {n_aa} an index score, {n_neither} neither (placed by size or judgement). Cards updated {data['updated']}.",
     ]
     for i, line in enumerate(notes):
-        out.append(f'<text class="m" x="{label_right - 150}" y="{round(y + 36 + i * 14, 1)}" font-size="11">{line}</text>')
+        out.append(f'<text class="m" x="28" y="{round(y + 36 + i * 14, 1)}" font-size="11">{line}</text>')
     out.append("</svg>")
     return "\n".join(out) + "\n"
 

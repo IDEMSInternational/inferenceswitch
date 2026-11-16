@@ -64,10 +64,11 @@ and the prices current.
   card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
   quantization-aware build.
 - **`docs/model-cards-chart.svg`**, the chart in the README: every card, grouped
-  by rung, a dot at its Epoch score with its 95% interval inside the rung's band,
-  or a diamond in a gutter when it has no Epoch score yet, redrawn by
-  `python tools/sweep.py chart` and by each weekly sweep. A test fails if it is
-  stale.
+  by rung, against both views its rung is read from: the Epoch Capabilities Index
+  (a dot with its 95% interval) and the Artificial Analysis index (a dot), each in
+  the rung's band on that scale, so a card Epoch has not scored yet still shows
+  where it stands. Redrawn by `python tools/sweep.py chart` and by each weekly
+  sweep. A test fails if it is stale.
 - **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
   refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
   Analysis) in a pull request, and
