@@ -218,37 +218,41 @@ def endpoint_price(model_id: str) -> dict | None:
     return cost
 
 
-#: Rung placement is read from two independent views of a model, because each
-#: benchmark is a sigmoid in capability: it separates models only where it is
-#: neither at its floor nor at its ceiling, and a model that tops one benchmark
-#: still gets a fair score on a harder one (Epoch's point in building the ECI).
+#: A rung is a capability level with a fixed threshold, not a vendor's name for a
+#: tier: a card goes on the rung its measured scores put it on, so that changing
+#: provider at one rung gives roughly the same results.
+#:
+#: **These thresholds are frozen.** They were set once, on 2026-11-16, from the
+#: reference models of that day, and are never moved when a new generation of
+#: references arrives: raising a rung's bar would silently break every tool
+#: already pinned to it. Models are re-scored and may change rung; if models
+#: outgrow the top rung, add a rung above it. Do not edit these numbers.
+#:
+#: Placement reads two independent views, because each benchmark is a sigmoid in
+#: capability: it separates models only where it is neither at its floor nor at
+#: its ceiling, and a model that tops one still gets a fair score on a harder one
+#: (Epoch's point in building the ECI).
 #:
 #: * Epoch Capabilities Index (ECI): one scale stitched from 50+ benchmarks of
-#:   very different difficulty, with a 95% interval. Broad and general, so it is
-#:   the main view, but it covers the models Epoch has results for, which lags
-#:   releases by weeks.
-#: * Artificial Analysis Intelligence Index (v5): nine agentic, coding and
-#:   professional-task evaluations. Covers the newest models, leans to agentic
-#:   work, and sits at its floor for models that are not agentic (gpt-oss-120b
-#:   3.8, Gemma 4 31B 4.4), where it gives no view.
+#:   very different difficulty, with a 95% interval. Broad and general, so the
+#:   main view, but it covers a model only once Epoch has results for it.
+#: * Artificial Analysis Intelligence Index: nine agentic, coding and
+#:   professional-task evaluations. Covers the newest models first, leans to
+#:   agentic work, and sits at its floor for models that are not agentic
+#:   (gpt-oss-120b 3.8), where it gives no view. Artificial Analysis re-bases it
+#:   between versions, so its edges are fixed *per version*: a score from a
+#:   version with no edges here has no view until a person adds them.
 #:
-#: Each view's edges are the midpoints between the medians of the reference
-#: models in ``docs/model-cards.md`` released in the current generation.
-#: ECI (small): Gemini 3.5 Flash-Lite 145.6, GPT-5.4 nano 146.4, Gemini 3.1
-#: Flash-Lite 145.0, GPT-5.6 Luna 156.7. (mid): Haiku 5.5 160.4, GPT-5.6 Terra
-#: 160.7, Gemini 3.8 Flash 158.8, GPT-6 Luna 156.4, Gemini 3.5 Flash 155.3.
-#: (large): Sonnet 5.5 166.6, GPT-6 Sol 163.8, GPT-6.1 Sol 168.5. (frontier):
-#: GPT-6 Astra 169.0, Opus 5.5 168.5, Fable 5.2 173.4.
-#: AA index (small): Gemini 3.5 Flash-Lite 11.7, GPT-5.6 Luna 23.8. (mid): GPT-6
-#: Luna 27.9, Gemini 3.8 Flash 30.8, GPT-5.6 Terra 32.3, Haiku 5.5 36.5.
-#: (large): GPT-6 Sol 44.2, Sonnet 5.5 54.5. (frontier): GPT-6 Astra 56.9, Opus 5.5 59.1.
-#: A vendor's tiers overlap on both (Opus 5 scores 44.2 on the AA index and Opus
-#: 4.8 is below Haiku 5.5 on ECI), so the views place open-weight models only.
-#: ECI starts at ``small``: below its first edge a model is ``small`` or
-#: ``nano``, which the scale does not separate.
+#: The 2026-11-16 reference scores the edges sit between (ECI, then AA v5.0.1):
+#: small: Gemini 3.5 Flash-Lite 145.6 / 11.7, GPT-5.4 nano 146.4, GPT-5.6 Luna
+#: 156.7 / 23.8. mid: Haiku 5.5 160.4 / 36.5, GPT-5.6 Terra 160.7 / 32.3, Gemini
+#: 3.8 Flash 158.8 / 30.8, GPT-6 Luna 156.4 / 27.9. large: Sonnet 5.5 166.6 /
+#: 54.5, GPT-6 Sol 163.8 / 44.2. frontier: GPT-6 Astra 169.0 / 56.9, Opus 5.5
+#: 168.5 / 59.1. ECI has no nano edge: ``nano`` is judged by size (on-device,
+#: about 4B and under) and the score only says "small or below".
 ECI = "epoch_eci"
 ECI_EDGES = (("mid", 152.0), ("large", 163.0), ("frontier", 168.0))
-AA_EDGES = (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))
+AA_EDGES = {"5.0.1": (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))}
 ECI_CSV = "https://epoch.ai/data/eci_scores.csv"
 ECI_SOURCE = "epoch.ai/data/eci_scores.csv#{model}"
 
@@ -261,9 +265,11 @@ def _rung_of(score: float, edges, floor: str | None) -> str | None:
     return rung
 
 
-def suggest_rung(score: float) -> str | None:
-    """The rung the AA index puts a score on; ``None`` below its first edge."""
-    return _rung_of(score, AA_EDGES, None)
+def suggest_rung(score: float, version: str | None = "5.0.1") -> str | None:
+    """The rung the AA index puts a score on; ``None`` below its first edge or for
+    a version with no edges."""
+    edges = AA_EDGES.get(version or "")
+    return _rung_of(score, edges, None) if edges else None
 
 
 def suggest_rung_eci(score: float) -> str:
@@ -275,11 +281,11 @@ def grade(benchmarks: dict | None) -> dict:
     """What a card's recorded scores say about its rung.
 
     ``views`` maps each view that has a say (``eci``, ``aa``) to the rung it
-    suggests; ``suggested`` is the lower of them (the under-claim rule: a
-    consumer pays more for a model placed too low, and gets a wrong answer from
-    one placed too high); ``borderline`` is true when the ECI interval crosses
-    an edge, so that view could as well say the rung next to it; ``agree`` is
-    false when the views differ. ``suggested`` is ``None`` when neither speaks.
+    suggests; ``suggested`` is the lower of them (a consumer pays more for a
+    model placed too low, and gets a wrong answer from one placed too high);
+    ``borderline`` is true when the ECI interval crosses an edge, so that view
+    could as well say the rung next to it; ``agree`` is false when the views
+    differ. ``suggested`` is ``None`` when neither speaks.
     """
     b = benchmarks or {}
     views: dict[str, str] = {}
@@ -290,24 +296,17 @@ def grade(benchmarks: dict | None) -> dict:
         low, high = eci.get("interval") or (eci["score"], eci["score"])
         borderline = suggest_rung_eci(low) != suggest_rung_eci(high)
     idx = b.get(INDEX)
-    if idx and suggest_rung(idx["score"]):
-        views["aa"] = suggest_rung(idx["score"])
+    if idx and suggest_rung(idx["score"], idx.get("version")):
+        views["aa"] = suggest_rung(idx["score"], idx.get("version"))
     suggested = min(views.values(), key=RUNGS.index) if views else None
     return {"views": views, "suggested": suggested, "borderline": borderline,
             "agree": len(set(views.values())) <= 1}
 
 
-#: Open-weight cards whose rung is not the one their scores suggest, and why. The
-#: report leaves them out of its table, and a test fails for any other open-weight
-#: card that sits off its suggestion, so a new exception has to be written here.
-REVIEWED = {
-    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
-    "gpt-oss-120b": "ECI suggests small (an older generation than the current references; "
-                    "Haiku 4.5 and GPT-4.1, mid, score 143 and 136 on it); left on mid for the team to move",
-    "qwen3-32b": "ECI suggests small (older generation, as gpt-oss-120b); left on mid for the team to move",
-    "llama3.3-70b": "ECI suggests small (older generation, level with GPT-4o mini); "
-                    "left on mid for the team to move",
-}
+def settles(rung: str, suggested: str | None) -> bool:
+    """Whether a card's ``rung`` is where its scores put it. A score cannot tell
+    ``nano`` from ``small``, so ``small`` settles a ``nano`` card."""
+    return suggested is None or suggested == rung or (suggested == "small" and rung == "nano")
 
 
 def fetch_eci() -> dict[str, dict]:
@@ -458,21 +457,21 @@ def _aa_slug_index() -> dict[str, str]:
 
 
 def rung_section(cards: list[dict]) -> list[str]:
-    """Open-weight cards whose recorded scores suggest another rung."""
+    """Cards whose recorded scores put them on another rung."""
     lines = ["## Rungs against the scores", "",
-             "Open-weight cards only. Each card is graded on two views, the Epoch Capabilities "
-             "Index and the Artificial Analysis index, and placed on the lower when they differ. "
-             "A suggestion prompts a look; it is not a decision. Edges: ECI "
+             "Every card is graded on two views, the Epoch Capabilities Index and the Artificial "
+             "Analysis index, and placed on the lower when they differ. The rung thresholds are "
+             "frozen (see `tools/sweep.py`); a card changes rung when its scores do. A suggestion "
+             "prompts a look and a decision: it is never applied by the sweep. Edges: ECI "
              + ", ".join(f"`{r}` from {e:g}" for r, e in ECI_EDGES)
-             + "; index " + ", ".join(f"`{r}` from {e:g}" for r, e in AA_EDGES) + ".", ""]
-    rows, soft = [], []
+             + "; index v5.0.1 " + ", ".join(f"`{r}` from {e:g}" for r, e in AA_EDGES["5.0.1"]) + ".", ""]
+    rows, soft, unmeasured = [], [], []
     for card in cards:
-        if not card.get("open_weight") or card["id"] in REVIEWED:
-            continue
         g = grade(card.get("benchmarks"))
         if g["suggested"] is None:
+            unmeasured.append(card["id"])
             continue
-        if g["suggested"] != card["rung"]:
+        if not settles(card["rung"], g["suggested"]):
             b = card.get("benchmarks") or {}
             eci, idx = b.get(ECI), b.get(INDEX)
             eci_txt = f"{eci['score']} [{eci['interval'][0]}, {eci['interval'][1]}]" if eci else "-"
@@ -486,6 +485,9 @@ def rung_section(cards: list[dict]) -> list[str]:
     if soft:
         lines += ["Close calls, not counted as findings (the two views differ, or the ECI "
                   "interval crosses an edge): " + ", ".join(f"`{c}`" for c in soft) + ".", ""]
+    if unmeasured:
+        lines += ["No view from either source, so placed by size or judgement until scored: "
+                  + ", ".join(f"`{c}`" for c in unmeasured) + ".", ""]
     return lines
 
 

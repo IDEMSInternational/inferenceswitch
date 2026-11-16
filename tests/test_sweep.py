@@ -158,22 +158,42 @@ def test_eci_rung_edges(score, rung):
 def test_a_card_is_placed_on_the_lower_of_its_two_views():
     g = sweep.grade({
         "epoch_eci": {"score": 152.6, "interval": [150.6, 154.8]},
-        "aa_intelligence_index": {"score": 20.1},
+        "aa_intelligence_index": {"score": 20.1, "version": "5.0.1"},
     })
     assert g["views"] == {"eci": "mid", "aa": "small"}
     assert (g["suggested"], g["agree"], g["borderline"]) == ("small", False, True)
     # The AA index at its floor has no view, so the ECI alone speaks.
-    only = sweep.grade({"epoch_eci": {"score": 140.0}, "aa_intelligence_index": {"score": 3.8}})
+    only = sweep.grade({"epoch_eci": {"score": 140.0}, "aa_intelligence_index": {"score": 3.8, "version": "5.0.1"}})
     assert only["views"] == {"eci": "small"} and only["agree"]
     assert sweep.grade({})["suggested"] is None
 
 
-def test_open_weight_cards_sit_where_their_scores_put_them_or_are_listed():
+def test_every_card_sits_on_the_rung_its_scores_put_it_on():
+    # Rungs are capability levels, not a vendor's tier names, so a card whose
+    # scores say another rung is wrong until it is moved (or re-scored). A card
+    # with no score is placed by size or judgement and is not tested.
     off = {}
     for card in default_cards():
-        if card.open_weight is None:
-            continue
-        g = sweep.grade(json.loads(json.dumps(card.to_dict().get("benchmarks"))) or None)
-        if g["suggested"] is not None and g["suggested"] != card.rung.value:
-            off[card.id] = g["suggested"]
-    assert set(off) == set(sweep.REVIEWED), off
+        g = sweep.grade(card.to_dict().get("benchmarks"))
+        if not sweep.settles(card.rung.value, g["suggested"]):
+            off[card.id] = (card.rung.value, g["suggested"])
+    assert not off, off
+
+
+def test_the_rung_edges_are_frozen():
+    # They define what a rung means to every tool pinned to one. Moving them
+    # needs a decision, not an edit: this fails so that it cannot be quiet.
+    assert sweep.ECI_EDGES == (("mid", 152.0), ("large", 163.0), ("frontier", 168.0))
+    assert sweep.AA_EDGES == {"5.0.1": (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))}
+
+
+def test_an_index_from_a_version_with_no_edges_has_no_view():
+    assert sweep.suggest_rung(40.0, "6.0.0") is None
+    assert sweep.suggest_rung(40.0, None) is None
+    g = sweep.grade({"aa_intelligence_index": {"score": 50.0, "version": "6.0.0"}})
+    assert g["suggested"] is None
+
+
+def test_a_score_that_says_small_settles_a_nano_card():
+    assert sweep.settles("nano", "small") and not sweep.settles("nano", "mid")
+    assert sweep.settles("mid", None)

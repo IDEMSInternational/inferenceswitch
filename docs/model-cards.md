@@ -13,42 +13,54 @@ wins over selection. Placements below are provisional and open to review.
 
 ### Rungs
 
-Each rung is anchored on reference models. A model goes on the rung of the
-reference model it most nearly substitutes for on **general reasoning and
-instruction following**: not coding, not one benchmark, and not price.
+A rung is a **capability level**, defined by a fixed score threshold, not a
+vendor's name for a tier. A card goes on the rung its measured scores put it on,
+so that switching provider at one rung gives roughly the same results: a
+provider whose "mid" model measures as `small` does not get to be `mid`, because
+a tool built for `mid` would break on it.
 
-| Rung | Anchors | Open-weight starting point |
-|---|---|---|
-| `nano` | On-device models | up to ~4B parameters |
-| `small` | Gemini Flash-Lite, GPT nano / 5.6 Luna | ~7–14B |
-| `mid` | Claude Haiku, Gemini Flash, GPT mini / 5.6 Terra / 6 Luna | ~30B and up, dense |
-| `large` | Claude Sonnet, Gemini Pro, GPT Sol, Mistral Large | — |
-| `frontier` | Claude Opus and Fable, GPT-6 Astra | — |
+| Rung | Epoch ECI from | What is on it (at calibration, 2026-11-16) | Unmeasured, open-weight starting guess |
+|---|---|---|---|
+| `nano` | (none: judged by size) | On-device models, about 4B and under: Gemma 4 E2B, Qwen3 4B | up to ~4B parameters |
+| `small` | below 152 | Gemini 3.5 Flash-Lite 145.6, GPT-5.4 nano 146.4, Qwen3.6 27B 146.7, gpt-oss-120b 140.2 | ~7–14B |
+| `mid` | 152 | Haiku 5.5 160.4, GPT-5.6 Terra 160.7, Gemini 3.8 Flash 158.8, GPT-6 Luna 156.4, GLM-5.3 157.1 | ~30B and up, dense |
+| `large` | 163 | GPT-6 Sol 163.8, Opus 5 164.7, Sonnet 5.5 166.6 | — |
+| `frontier` | 168 | GPT-6 Astra 169.0, Opus 5.5 168.5 | — |
+
+**The thresholds are frozen.** They were set once, on 2026-11-16, from the
+reference models of that day, and are never moved when a new generation arrives:
+raising a rung's bar would silently break every tool already pinned to it.
+Models are re-scored and may change rung (the sweep reports it; a person moves
+the card); if models outgrow the top rung, a rung is added above it rather than
+the existing ones moving. A test fails if an edge in `tools/sweep.py` changes.
 
 How to place a model:
 
-1. **Hosted models from a vendor with a tiered line** go on the rung of their
-   tier (Haiku and Flash on `mid`, Sonnet and Pro on `large`, Opus on
-   `frontier`). Where a vendor's naming shifts between generations, follow
-   its own description of the tier: GPT-6 Luna is priced and described like
-   Haiku, so `mid`, while GPT-5.6 Luna is the old "nano" tier, so `small`. Move a model off its tier's rung only with evidence, and say
-   why in `notes`.
-2. **Open-weight models** start from the parameter-count column, then move
-   **down** a rung if they are clearly weaker than that rung's anchors (for
-   example, an older generation). Move one up only with eval evidence. When
-   unsure, place lower: under-claiming costs a consumer a more expensive model;
-   over-claiming costs them a wrong answer.
-3. **Mixture-of-experts models** are placed by quality, using total
-   parameters as the starting point; record `active_params_b` too.
-4. Use `notes` for anything a reviewer should know: "lower end of mid",
-   "candidate for large if evals support it", memory needed locally.
+1. **Measured models go where their scores put them** (below). This applies to
+   hosted models and open-weight ones alike, and to every vendor: a vendor's own
+   tier name (Haiku, Flash, Sonnet, Opus, "Luna") is not evidence. Haiku 4.5 is
+   `small`, Opus 4.8 is `mid` and Mistral Large 4 is `mid` on their scores, and
+   their cards say they were moved.
+2. **Unmeasured models** (no Epoch row, and no Artificial Analysis score above
+   its floor) are placed by judgement until they are scored: open-weight ones
+   from the parameter-count column, moved **down** a rung if they look clearly
+   weaker (an older generation, say), hosted ones by what their vendor says the
+   model is. Say in `notes` that the card is unmeasured; the sweep lists those
+   cards. When unsure, place lower: under-claiming costs a consumer a more
+   expensive model, over-claiming costs them a wrong answer. There will always
+   be open models nobody scores; the rung is a best effort, not an exact figure.
+3. **Mixture-of-experts models** are placed by their scores, or when unmeasured
+   by quality using total parameters as the starting point; record
+   `active_params_b` too.
+4. Use `notes` for anything a reviewer should know: "candidate for large if
+   evals support it", memory needed locally.
 
 ### Benchmarks as evidence
 
 Parameter count is a starting point, not a measure: GLM-5.3 has 753B parameters
 and scores like a `mid` model, and a dense 31B Gemma 4 scores below Haiku-class
-work. For open-weight models the card therefore records published scores
-(`benchmarks`) and the rung is checked against them.
+work. The card therefore records published scores (`benchmarks`) and the rung is
+checked against them.
 
 **Never one benchmark.** Each benchmark is a sigmoid in capability: it separates
 models only in its middle, sits at its floor for models below it and at its
@@ -70,39 +82,27 @@ combining many benchmarks:
   evaluations: AA-Briefcase, AutomationBench-AA, Terminal-Bench 4.0,
   FrontierCode-AA 2.0, AA-Omniscience, GDP.pdf, HLE-Diamond, CritPt (hard
   subset) and Terminal-Bench-Science. It covers the newest models first, but is
-  weighted to agentic, coding and professional-task work, where the rubric above
-  places a model on general reasoning and instruction following. Where it is at
-  its floor it gives no view.
+  weighted to agentic, coding and professional-task work, where a rung is about
+  general reasoning and instruction following. Where it is at its floor it gives
+  no view. Artificial Analysis re-bases it between versions, so its edges are
+  fixed per version (`AA_EDGES` in `tools/sweep.py`): a score from a version with
+  no edges has no view until a person adds them.
 
 The two are recorded as `epoch_eci` and `aa_intelligence_index`, next to the
 single benchmarks Artificial Analysis publishes (`hle`, `gpqa_diamond`,
 `ifbench` and others), which are kept for a reviewer to read and are not used to
-place a card. **The lower of the two views places a card** (an index that is not
-published, or at its floor, has no view). That is the under-claim rule: placing
-a model too low costs a consumer a dearer model, placing it too high gives them
-a wrong answer. A card whose two views differ, or whose ECI interval crosses a
-rung's edge, is a close call and says so in its `notes`.
+place a card. **The lower of the two views places a card** (a view that is not
+published, or at its floor, has no say). That is the under-claim rule. A card
+whose two views differ, or whose ECI interval crosses a rung's edge, is a close
+call: the sweep lists it, and it may say so in its `notes`. A card with only one
+view, because the newest models are not in Epoch's data yet, is placed on that
+one and picks up the other when it appears.
 
-The edges are the midpoints between the medians of the current generation of
-reference models in the rubric table (the tiers of Claude, Gemini, GPT and
-Mistral on the table below, mostly released since spring 2026):
-
-| Rung | ECI from | AA index from | Reference models (ECI, then AA index) |
-|---|---|---|---|
-| `small` | below 152 | 12 | Gemini 3.5 Flash-Lite 145.6 / 11.7, GPT-5.4 nano 146.4, GPT-5.6 Luna 156.7 / 23.8 |
-| `mid` | 152 | 26 | Haiku 5.5 160.4 / 36.5, GPT-5.6 Terra 160.7 / 32.3, Gemini 3.8 Flash 158.8 / 30.8, GPT-6 Luna 156.4 / 27.9 |
-| `large` | 163 | 40 | Sonnet 5.5 166.6 / 54.5, GPT-6 Sol 163.8 / 44.2, GPT-6.1 Sol 168.5 / 54.6 |
-| `frontier` | 168 | 55 | GPT-6 Astra 169.0 / 56.9, Opus 5.5 168.5 / 59.1, Fable 5.2 173.4 |
-
-The edges are for **open-weight** cards only. A vendor's own tiers overlap on
-them (Opus 4.8 scores below Haiku 5.5 on ECI; Opus 5 scores 44.2 on the index),
-and rule 1 above places those by tier. A model of an older generation is
-compared with the current references and lands lower than the vendor tier it
-would once have matched (gpt-oss-120b is 140 on ECI against Haiku 4.5's 143),
-which is the rubric's "move down if clearly weaker, for example an older
-generation". `tools/sweep.py` lists an open-weight card that sits off the rung
-its scores suggest, and a card that stays off it is written down in `REVIEWED`
-there with the reason.
+The edges (ECI `mid` 152, `large` 163, `frontier` 168; index v5.0.1 `small` 12,
+`mid` 26, `large` 40, `frontier` 55) sit between the medians of the
+reference models of calibration day, listed in `tools/sweep.py`. `nano` has no
+score edge: the ECI does not separate it from `small`, so a score that says
+`small` leaves a `nano` card where it is.
 
 Selection never picks a model **below** the requested rung. By default it may
 pick one above (`allow_higher=False` asks for the exact rung), preferring the

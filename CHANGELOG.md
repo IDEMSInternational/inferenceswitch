@@ -12,10 +12,21 @@ and the prices current.
 
 ### Changed
 
-- **`qwen3.8-27b` moves from `mid` to `small`**: 20.1 on the Artificial Analysis
-  index (GPT-5.6 Luna, `small`, is 23.8; the `mid` references start at 27.9) and
-  152.6 on the Epoch Capabilities Index, on the `mid` edge with its interval
-  across it. `select_model("mid")` no longer returns it.
+- **Rungs are capability levels, placed by measured scores, not vendor tiers.**
+  A tool built for `mid` should get roughly the same results from any provider's
+  `mid` model. The thresholds are fixed (Epoch ECI `mid` 152, `large` 163,
+  `frontier` 168; frozen, never moved when a new generation arrives; see
+  `docs/model-cards.md`). 17 cards move, so `select_model` returns different
+  models:
+  - `frontier` to `large`: `claude-opus-5`, `claude-fable-5`, `claude-fable-5-1`;
+    `frontier` to `mid`: `claude-opus-4-8`
+  - `large` to `mid`: `claude-sonnet-4-6`, `claude-sonnet-5`, `gpt-5.4`,
+    `grok-4.6`, `mistral-large-4`; `large` to `small`: `deepseek-v4-pro`
+  - `mid` to `small`: `claude-haiku-4-5`, `gpt-5.4-mini`, `gpt-4.1`,
+    `gpt-oss-120b`, `llama3.3-70b`, `mistral-medium-3-5`, `qwen3-32b`
+  - `qwen3.8-27b` goes from `mid` to `small` too (before it was moved, 20.1 on
+    the Artificial Analysis index and 152.6 on the ECI).
+  Each moved card's `notes` says so. Cards with no score keep their placement.
 
 ### Added
 

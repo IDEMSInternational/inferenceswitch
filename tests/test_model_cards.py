@@ -28,7 +28,7 @@ def test_shipped_cards_load():
     cards = default_cards()
     assert len(cards) >= 6
     assert cards.updated
-    assert cards.get("claude-haiku-4-5").rung is Rung.MID
+    assert cards.get("claude-haiku-5-5").rung is Rung.MID
 
 
 def test_every_route_names_a_registered_provider():
@@ -207,16 +207,16 @@ def test_merged_adds_and_overrides_without_touching_defaults():
     defaults = default_cards()
     mine = ModelCards.from_dict(
         _file(
-            _card_dict(id="claude-haiku-4-5", rung="small",
-                       routes={"anthropic": {"models": ["claude-haiku-4-5"]}},
+            _card_dict(id="claude-haiku-5-5", rung="large",
+                       routes={"anthropic": {"models": ["claude-haiku-5-5"]}},
                        structured_output="reliable"),
             _card_dict(id="my-model"),
         )
     )
     merged = defaults.merged(mine)
-    assert merged.get("claude-haiku-4-5").rung is Rung.SMALL
+    assert merged.get("claude-haiku-5-5").rung is Rung.LARGE
     assert "my-model" in merged
-    assert defaults.get("claude-haiku-4-5").rung is Rung.MID
+    assert defaults.get("claude-haiku-5-5").rung is Rung.MID
     assert "my-model" not in defaults
     assert len(merged) == len(defaults) + 1
     assert "my-model" not in merged.without("my-model")
