@@ -1,0 +1,159 @@
+"""The sweep script's pure parts and the card data it keeps up to date — offline."""
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+
+import pytest
+
+from inferenceswitch import Client, ModelCards, default_cards, default_registry
+
+SWEEP_PATH = Path(__file__).resolve().parent.parent / "tools" / "sweep.py"
+_spec = importlib.util.spec_from_file_location("sweep", SWEEP_PATH)
+sweep = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(sweep)
+
+CARDS_PATH = Path(sweep.CARDS_PATH)
+
+
+def test_the_writer_reproduces_the_shipped_file_exactly():
+    # The sweep rewrites model_cards.json; if its layout drifted from the
+    # hand-kept one, every sweep would be a whole-file diff.
+    text = CARDS_PATH.read_text(encoding="utf-8")
+    assert sweep.dump_cards(json.loads(text)) == text
+
+
+def _page(*records: dict, version: str = "5.0.1") -> str:
+    """An Artificial Analysis page: the records inside a streamed Next.js chunk."""
+    body = ",".join(json.dumps(r, separators=(",", ":")) for r in records)
+    chunk = '2a:[{"models":[' + body + "]}]\n"
+    push = "self.__next_f.push([1," + json.dumps(chunk) + "])"
+    return f"<html><body>Intelligence Index v{version}<script>{push}</script></body></html>"
+
+
+def _record(**over) -> dict:
+    rec = {
+        "id": "1", "slug": "m-1", "name": "M 1 (Max)", "isReasoning": True,
+        "effort": {"slug": "max", "label": "max", "level": 60},
+        "intelligenceIndex": 31.64, "gpqa": 0.9123, "hle": 0.4, "lcr": None,
+        "scicode": 0.5162,
+    }
+    rec.update(over)
+    return rec
+
+
+def test_a_page_is_read_for_its_scores_and_index_version():
+    aa = sweep.read_aa_page(_page(_record()), "m-1")
+    assert aa["version"] == "5.0.1"
+    bench = sweep.benchmarks_from(aa, "2026-11-16")
+    assert bench["aa_intelligence_index"] == {
+        "score": 31.6, "source": "artificialanalysis.ai/models/m-1",
+        "date": "2026-11-16", "version": "5.0.1", "setting": "max",
+    }
+    # Fractions become percentages; a null score is left out, not zero.
+    assert bench["gpqa_diamond"]["score"] == 91.2
+    assert "aa_lcr" not in bench
+
+
+def test_the_highest_effort_record_for_a_slug_is_the_one_read():
+    low = _record(intelligenceIndex=10.0, effort={"slug": "low", "label": "low", "level": 10})
+    page = _page(low, _record())
+    assert sweep.read_aa_page(page, "m-1")["record"]["intelligenceIndex"] == 31.64
+
+
+def test_a_page_of_another_shape_is_unreadable_not_an_error():
+    assert sweep.read_aa_page("<html>nothing here</html>", "m-1") is None
+    assert sweep.read_aa_page(_page(_record(slug="other")), "m-1") is None
+
+
+@pytest.mark.parametrize("score,rung", [
+    (3.8, None),      # gpt-oss-120b: below the index's resolution
+    (11.9, None), (12.0, "small"),
+    (20.1, "small"),  # Qwen3.8 27B
+    (26.7, "mid"),    # MiMo-V2.6-Flash
+    (31.7, "mid"),    # GLM-5.3
+    (46.5, "large"),  # Kimi K3.1 Pro
+    (59.1, "frontier"),
+])
+def test_rung_suggestions_follow_the_published_bands(score, rung):
+    assert sweep.suggest_rung(score) == rung
+
+
+def test_normalised_names_match_across_catalogs():
+    assert sweep.norm("z-ai/glm-5.3-flash:free") == sweep.norm("glm-5-3-flash")
+    assert sweep.norm("qwen/qwen3.8-27b") == sweep.norm("qwen3-8-27b")
+
+
+def test_a_card_names_the_page_its_scores_came_from():
+    card = default_cards().get("glm-5.3-flash")
+    assert sweep.aa_slug(card.to_dict()) == "glm-5-3-flash"
+    assert sweep.aa_slug({"id": "x", "benchmarks": {}}) is None
+
+
+# ── the data the sweep keeps ────────────────────────────────────────────────
+
+
+OPEN_MODELS_FROM_ISSUE_29 = [
+    "qwen3-30b-a3b", "glm-5.3", "glm-5.3-flash", "minimax-m3.1-flash",
+    "mimo-v2.6-flash", "kimi-k3.1-pro", "deepseek-v4.1-flash",
+]
+
+
+@pytest.mark.parametrize("card_id", OPEN_MODELS_FROM_ISSUE_29)
+def test_the_open_models_from_issue_29_have_cards_a_caller_can_pin(card_id):
+    cards = default_cards()
+    card = cards.get(card_id)
+    assert card.context_window and card.open_weight
+    route = card.route("openrouter") or card.route("ollama")
+    model = route.models[0]
+    provider = "openrouter" if card.route("openrouter") else "ollama"
+    assert Client().card(f"{provider}/{model}") is card
+
+
+def test_the_self_hosted_qwen_card_offers_no_graded_effort():
+    card = default_cards().get("qwen3-30b-a3b")
+    assert {"ollama", "lmstudio", "openrouter"} == {r.provider for r in card.routes}
+    assert "reasoning_effort" not in {c.value for c in card.features_add}
+
+
+def test_openrouter_is_a_keyed_provider_with_no_bare_name_routing():
+    spec = default_registry()["openrouter"]
+    assert spec.takes_key and not spec.is_local
+    assert spec.base_url == "https://openrouter.ai/api/v1"
+    assert not spec.model_prefixes and not spec.known_models
+
+
+def test_every_benchmark_says_where_and_when_it_was_read():
+    for card in default_cards():
+        for bench in card.benchmarks:
+            assert 0 <= bench.score <= 100, (card.id, bench.name)
+            assert bench.source and bench.date, (card.id, bench.name)
+            assert bench.date <= default_cards().updated, (card.id, bench.name)
+
+
+def test_scores_for_one_card_come_from_one_page():
+    for card in default_cards():
+        assert len({b.source for b in card.benchmarks}) <= 1, card.id
+
+
+#: Open-weight cards whose rung is not the one the index bands suggest, and why.
+#: A rung is a judgement and the bands only prompt a look, so each exception is
+#: written down here; a new card off its band fails until it is.
+OFF_BAND = {
+    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
+    "qwen3.8-27b": "the index suggests small (20.1 against GPT-5.6 Luna's 23.8); "
+                   "left on mid for the team to move, see #29",
+}
+
+
+def test_open_weight_cards_sit_where_the_index_bands_put_them_or_are_listed():
+    off = {}
+    for card in default_cards():
+        index = card.benchmark("aa_intelligence_index")
+        if card.open_weight is None or index is None:
+            continue
+        suggested = sweep.suggest_rung(index.score)
+        if suggested is not None and suggested != card.rung.value:
+            off[card.id] = suggested
+    assert set(off) == set(OFF_BAND), off

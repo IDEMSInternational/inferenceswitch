@@ -249,6 +249,16 @@ _GROQ_CAPS = Capabilities(
     features=_OPENAI_COMPAT_BASE,  # fast inference; no batch / explicit caching
     config={"openai_strict": False},
 )
+# OpenRouter: one key, many hosted models, OpenAI wire format. Whether a model
+# honours json_schema, tools or images depends on the model and on which host
+# OpenRouter routes the call to, so structured output stays best effort (the
+# card for each model says what it takes) and the feature set is the common one.
+_OPENROUTER_CAPS = Capabilities(
+    structured_output=StructuredMode.RESPONSE_FORMAT_JSON_SCHEMA,
+    schema_dialect=SchemaDialect.OPENAI,
+    features=_OPENAI_COMPAT_BASE,
+    config={"openai_strict": False},
+)
 # Local servers accept the OpenAI wire format but json_schema enforcement and
 # tool/vision support are model-dependent, so default to best-effort JSON and a
 # minimal feature set. Override per entry if your local model does more.
@@ -497,6 +507,18 @@ def default_registry() -> Registry:
                 base_url="https://api.groq.com/openai/v1",
                 # No prefixes: Groq serves llama/qwen/etc. that also run locally.
                 # Select it explicitly (provider="groq" or "groq/<model>").
+            ),
+            ProviderSpec(
+                name="openrouter",
+                kind=KIND_OPENAI,
+                capabilities=_OPENROUTER_CAPS,
+                api_key_env="OPENROUTER_API_KEY",
+                label="OpenRouter",
+                key_hint="sk-or-…",
+                base_url="https://openrouter.ai/api/v1",
+                # No prefixes: OpenRouter ids are vendor/model, and a bare model
+                # name is ambiguous with the vendor's own API. Select it
+                # explicitly (provider="openrouter" or "openrouter/<vendor>/<model>").
             ),
             # ── OpenAI-compatible (local, keyless) ──────────────────────────
             ProviderSpec(

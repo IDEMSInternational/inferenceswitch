@@ -160,12 +160,32 @@ def _file(*cards, fmt=1):
         _card_dict(context_window="8k"),
         _card_dict(routes={"groq": {"models": ["x"], "cost": {"input": 1, "output": 2, "cached": 1}}}),
         _card_dict(features={"add": ["telepathy"]}),
+        _card_dict(benchmarks=[{"score": 1}]),   # a list, not an object by name
+        _card_dict(benchmarks={"b": {"score": 1, "source": "s"}}),                    # no date
+        _card_dict(benchmarks={"b": {"score": "high", "source": "s", "date": "d"}}),  # not a number
+        _card_dict(benchmarks={"b": {"score": 1, "source": "s", "date": "d", "note": "x"}}),  # typo'd field
         {"id": "x", "rung": "small"},            # missing fields
     ],
 )
 def test_malformed_cards_are_rejected(card):
     with pytest.raises(ModelCardError):
         ModelCards.from_dict(_file(card))
+
+
+def test_benchmarks_round_trip_and_stay_optional():
+    bench = {"aa_intelligence_index": {"score": 31.7, "source": "artificialanalysis.ai/models/glm-5-3",
+                                       "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
+             "hle": {"score": 42.3, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16"}}
+    cards = ModelCards.from_dict(_file(_card_dict(benchmarks=bench), _card_dict(id="y")))
+    card = cards.get("x")
+    index = card.benchmark("aa_intelligence_index")
+    assert (index.score, index.version, index.setting) == (31.7, "5.0.1", "max")
+    assert card.benchmark("hle").version is None
+    assert card.benchmark("gpqa_diamond") is None
+    assert cards.get("y").benchmarks == ()
+    assert "benchmarks" not in cards.get("y").to_dict()
+    assert cards.to_dict()["cards"][0]["benchmarks"] == bench
+    assert ModelCards.from_json(json.dumps(cards.to_dict())).get("x") == card
 
 
 def test_unknown_format_is_rejected():

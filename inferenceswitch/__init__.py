@@ -27,6 +27,7 @@ from .adapters.gemini import (
 )
 from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMode
 from .cards import (
+    Benchmark,
     Cost,
     ModelCard,
     ModelCards,
@@ -103,6 +104,7 @@ __all__ = [
     "Rung",
     "Reliability",
     "Preference",
+    "Benchmark",
     "ModelCard",
     "ModelCards",
     "Route",
