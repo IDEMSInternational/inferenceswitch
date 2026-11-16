@@ -14,8 +14,8 @@ and the prices current.
 
 - **Rungs are capability levels, placed by measured scores, not vendor tiers.**
   A tool built for `mid` should get roughly the same results from any provider's
-  `mid` model. The thresholds are fixed (Epoch ECI `mid` 152, `large` 163,
-  `frontier` 168; frozen, never moved when a new generation arrives; see
+  `mid` model. The thresholds are fixed (Epoch ECI `small` 130, `mid` 152, `large`
+  163, `frontier` 168; frozen, never moved when a new generation arrives; see
   `docs/model-cards.md`). 17 cards move, so `select_model` returns different
   models:
   - `frontier` to `large`: `claude-opus-5`, `claude-fable-5`, `claude-fable-5-1`;
@@ -26,6 +26,9 @@ and the prices current.
     `gpt-oss-120b`, `llama3.3-70b`, `mistral-medium-3-5`, `qwen3-32b`
   - `qwen3.8-27b` goes from `mid` to `small` too (before it was moved, 20.1 on
     the Artificial Analysis index and 152.6 on the ECI).
+  - the `small` edge at 130 puts `llama3.3-70b`, `gpt-4o-mini` and `llama3.1-8b`
+    on `nano`: a rung is capability, so a 70B model that scores like GPT-4o mini
+    is `nano`.
   Each moved card's `notes` says so. Cards with no score keep their placement.
 
 ### Added
@@ -60,8 +63,9 @@ and the prices current.
   LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
   card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
   quantization-aware build.
-- **`docs/model-cards-chart.svg`**, the chart in the README: every card with an
-  Epoch score as a dot with its 95% interval between the rung edges, redrawn by
+- **`docs/model-cards-chart.svg`**, the chart in the README: every card, grouped
+  by rung, a dot at its Epoch score with its 95% interval inside the rung's band,
+  or a diamond in a gutter when it has no Epoch score yet, redrawn by
   `python tools/sweep.py chart` and by each weekly sweep. A test fails if it is
   stale.
 - **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that

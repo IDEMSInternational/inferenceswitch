@@ -278,7 +278,7 @@
     },
     {
       "id": "llama3.1-8b",
-      "rung": "small",
+      "rung": "nano",
       "routes": {
         "ollama": {"models": ["llama3.1:8b", "llama3.1:latest", "llama3.1"], "cost": null},
         "lmstudio": {"models": ["meta-llama-3.1-8b-instruct", "llama-3.1-8b-instruct"], "cost": null}
@@ -289,11 +289,11 @@
       "benchmarks": {
         "epoch_eci": {"score": 111.1, "source": "epoch.ai/data/eci_scores.csv#Llama 3.1-8B", "date": "2026-11-16", "interval": [105.5, 116.2]}
       },
-      "notes": "Lower end of small."
+      "notes": "Nano on its score, whatever its size: ECI 111.1 [105.5, 116.2], below the nano edge (130). Moved from small when the nano edge was set (2026-11-16)."
     },
     {
       "id": "llama3.3-70b",
-      "rung": "small",
+      "rung": "nano",
       "routes": {
         "ollama": {"models": ["llama3.3:70b", "llama3.3:latest", "llama3.3"], "cost": null},
         "lmstudio": {"models": ["llama-3.3-70b-instruct", "meta-llama-3.3-70b-instruct"], "cost": null}
@@ -311,7 +311,7 @@
         "terminal_bench_2_1": {"score": 4.9, "source": "artificialanalysis.ai/models/llama-3-3-instruct-70b", "date": "2026-11-16", "setting": "non-reasoning"},
         "livecodebench": {"score": 28.8, "source": "artificialanalysis.ai/models/llama-3-3-instruct-70b", "date": "2026-11-16", "setting": "non-reasoning"}
       },
-      "notes": "Moved from mid to small when rungs became score-based rather than vendor-tier (2026-11-16): ECI 126.1 [123.1, 129.0]. Needs roughly 43 GB of memory at Q4_K_M."
+      "notes": "Nano on its score, whatever its size: ECI 126.1 [123.1, 129.0], below the nano edge (130). Moved from mid when the nano edge was set (2026-11-16). Needs roughly 43 GB of memory at Q4_K_M."
     },
     {
       "id": "gpt-6-astra",
@@ -535,7 +535,7 @@
     },
     {
       "id": "gpt-4o-mini",
-      "rung": "small",
+      "rung": "nano",
       "routes": {
         "openai": {"models": ["gpt-4o-mini"], "cost": {"input": 0.15, "output": 0.6}}
       },
@@ -545,7 +545,7 @@
       "benchmarks": {
         "epoch_eci": {"score": 123.9, "source": "epoch.ai/data/eci_scores.csv#GPT-4o mini", "date": "2026-11-16", "interval": [120.5, 126.9]}
       },
-      "notes": "Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
+      "notes": "Nano on its score, whatever its size: ECI 123.9 [120.5, 126.9], below the nano edge (130). Moved from small when the nano edge was set (2026-11-16). Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
     },
     {
       "id": "gpt-oss-120b",

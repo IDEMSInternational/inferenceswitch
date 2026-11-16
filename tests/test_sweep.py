@@ -149,8 +149,8 @@ def test_scores_for_one_card_come_from_one_page_per_source():
         assert len(aa) + len(epoch) == len({b.source for b in card.benchmarks}), card.id
 
 
-@pytest.mark.parametrize("score,rung", [(125.0, "small"), (151.9, "small"), (152.0, "mid"),
-                                        (161.4, "mid"), (163.0, "large"), (168.0, "frontier")])
+@pytest.mark.parametrize("score,rung", [(111.1, "nano"), (129.9, "nano"), (130.0, "small"), (151.9, "small"),
+                                        (152.0, "mid"), (161.4, "mid"), (163.0, "large"), (168.0, "frontier")])
 def test_eci_rung_edges(score, rung):
     assert sweep.suggest_rung_eci(score) == rung
 
@@ -165,6 +165,7 @@ def test_a_card_is_placed_on_the_lower_of_its_two_views():
     # The AA index at its floor has no view, so the ECI alone speaks.
     only = sweep.grade({"epoch_eci": {"score": 140.0}, "aa_intelligence_index": {"score": 3.8, "version": "5.0.1"}})
     assert only["views"] == {"eci": "small"} and only["agree"]
+    assert sweep.grade({"epoch_eci": {"score": 126.1}})["suggested"] == "nano"
     assert sweep.grade({})["suggested"] is None
 
 
@@ -175,7 +176,7 @@ def test_every_card_sits_on_the_rung_its_scores_put_it_on():
     off = {}
     for card in default_cards():
         g = sweep.grade(card.to_dict().get("benchmarks"))
-        if not sweep.settles(card.rung.value, g["suggested"]):
+        if not sweep.settles(card.rung.value, g["suggested"], "eci" in g["views"]):
             off[card.id] = (card.rung.value, g["suggested"])
     assert not off, off
 
@@ -183,7 +184,7 @@ def test_every_card_sits_on_the_rung_its_scores_put_it_on():
 def test_the_rung_edges_are_frozen():
     # They define what a rung means to every tool pinned to one. Moving them
     # needs a decision, not an edit: this fails so that it cannot be quiet.
-    assert sweep.ECI_EDGES == (("mid", 152.0), ("large", 163.0), ("frontier", 168.0))
+    assert sweep.ECI_EDGES == (("small", 130.0), ("mid", 152.0), ("large", 163.0), ("frontier", 168.0))
     assert sweep.AA_EDGES == {"5.0.1": (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))}
 
 
@@ -194,8 +195,10 @@ def test_an_index_from_a_version_with_no_edges_has_no_view():
     assert g["suggested"] is None
 
 
-def test_a_score_that_says_small_settles_a_nano_card():
+def test_a_score_that_says_small_settles_a_nano_card_only_without_an_eci():
+    # The AA index has no nano edge, so it cannot tell small from nano; the ECI can.
     assert sweep.settles("nano", "small") and not sweep.settles("nano", "mid")
+    assert not sweep.settles("nano", "small", eci=True)
     assert sweep.settles("mid", None)
 
 
@@ -211,23 +214,24 @@ def test_the_shipped_chart_is_the_one_the_shipped_cards_draw():
     assert CHART_PATH.read_text(encoding="utf-8") == sweep.render_chart(json.loads(text))
 
 
-def test_the_chart_is_well_formed_and_has_a_row_per_scored_card():
+def test_the_chart_is_well_formed_and_has_a_row_for_every_card():
     import xml.etree.ElementTree as ET
 
     data = json.loads(CARDS_PATH.read_text(encoding="utf-8"))
     root = ET.fromstring(sweep.render_chart(data))
-    scored = [c["id"] for c in data["cards"] if "epoch_eci" in (c.get("benchmarks") or {})]
     labels = {t.text for t in root.iter("{http://www.w3.org/2000/svg}text")}
-    assert set(scored) <= labels
+    assert {c["id"] for c in data["cards"]} <= labels  # every card, scored or not
     assert root.find("{http://www.w3.org/2000/svg}title") is not None
 
 
-def test_the_chart_is_deterministic_and_ignores_cards_without_an_eci():
+def test_the_chart_is_deterministic_and_shows_cards_with_and_without_an_eci():
     data = {"updated": "2026-01-01", "cards": [
         {"id": "a", "rung": "mid", "open_weight": {"family": "f", "params_b": 1},
          "benchmarks": {"epoch_eci": {"score": 160.0, "interval": [158.0, 162.0]}}},
-        {"id": "b", "rung": "small", "benchmarks": {"hle": {"score": 3.0}}},
+        {"id": "b", "rung": "small", "benchmarks": {"aa_intelligence_index": {"score": 20.0}}},
+        {"id": "c", "rung": "nano"},
     ]}
     one = sweep.render_chart(data)
     assert one == sweep.render_chart(data)
-    assert ">a<" in one and ">b<" not in one
+    assert ">a<" in one and ">b<" in one and ">c<" in one
+    assert "AA 20" in one and "1 of 3 cards have an Epoch score" in one

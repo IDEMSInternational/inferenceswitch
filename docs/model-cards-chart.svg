@@ -1,304 +1,426 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 901" width="760" role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">
-<title>Model cards on the Epoch Capabilities Index</title>
-<desc>51 model cards placed by Epoch Capabilities Index with 95% intervals, between the rung edges at 152, 163, 168.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1448" width="800" role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">
+<title>All model cards by rung, on the Epoch Capabilities Index</title>
+<desc>76 model cards grouped by rung. 51 have an Epoch Capabilities Index score, shown with its 95% interval inside the rung's band; the rest are shown in a gutter at the left.</desc>
 <style>
 .bg{fill:#fff}.t{fill:#1f2328}.m{fill:#59636e}.g{stroke:#59636e;stroke-opacity:.25}.e{stroke:#59636e}
 .z1{fill:#59636e;fill-opacity:.04}.z2{fill:#59636e;fill-opacity:.10}
 .small{--c:#8EBCEB}.mid{--c:#3E8FDD}.large{--c:#1F6BC0}.frontier{--c:#0B4EA2}
 .dot{fill:var(--c)}.ring{fill:none;stroke:var(--c);stroke-width:2}.bar{stroke:var(--c);stroke-opacity:.55}
+.band{fill:var(--c);fill-opacity:.13}.rule{stroke:#59636e;stroke-opacity:.35}
+.nano{--c:#B7C4D6}
 @media (prefers-color-scheme:dark){.bg{fill:#0d1117}.t{fill:#e6edf3}.m{fill:#9198a1}.g{stroke:#9198a1;stroke-opacity:.25}.e{stroke:#9198a1}
 .z1{fill:#9198a1;fill-opacity:.05}.z2{fill:#9198a1;fill-opacity:.12}
-.small{--c:#3F78B8}.mid{--c:#5C9BE0}.large{--c:#8FBDF2}.frontier{--c:#C7E0FF}}
+.nano{--c:#4A5A70}.small{--c:#3F78B8}.mid{--c:#5C9BE0}.large{--c:#8FBDF2}.frontier{--c:#C7E0FF}}
 </style>
-<rect class="bg" width="760" height="901"/>
-<rect class="z1" x="190.0" y="36" width="325.0" height="765"/>
-<text class="m" x="352.5" y="26" text-anchor="middle" font-size="12">small</text>
-<rect class="z2" x="515.0" y="36" width="68.8" height="765"/>
-<text class="m" x="549.4" y="26" text-anchor="middle" font-size="12">mid</text>
-<rect class="z1" x="583.8" y="36" width="31.2" height="765"/>
-<text class="m" x="599.4" y="26" text-anchor="middle" font-size="12">large</text>
-<rect class="z2" x="615.0" y="36" width="75.0" height="765"/>
-<text class="m" x="652.5" y="26" text-anchor="middle" font-size="12">frontier</text>
-<line class="g" x1="252.5" x2="252.5" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="252.5" y="816" text-anchor="middle" font-size="11">110</text>
-<line class="g" x1="315.0" x2="315.0" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="315.0" y="816" text-anchor="middle" font-size="11">120</text>
-<line class="g" x1="377.5" x2="377.5" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="377.5" y="816" text-anchor="middle" font-size="11">130</text>
-<line class="g" x1="440.0" x2="440.0" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="440.0" y="816" text-anchor="middle" font-size="11">140</text>
-<line class="g" x1="502.5" x2="502.5" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="502.5" y="816" text-anchor="middle" font-size="11">150</text>
-<line class="g" x1="565.0" x2="565.0" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="565.0" y="816" text-anchor="middle" font-size="11">160</text>
-<line class="g" x1="627.5" x2="627.5" y1="36" y2="801" stroke-width="0.5"/>
-<text class="m" x="627.5" y="816" text-anchor="middle" font-size="11">170</text>
-<line class="e" x1="515.0" x2="515.0" y1="36" y2="801" stroke-width="1" stroke-dasharray="4 3"/>
-<text class="t" x="515.0" y="829" text-anchor="middle" font-size="11">152</text>
-<line class="e" x1="583.8" x2="583.8" y1="36" y2="801" stroke-width="1" stroke-dasharray="4 3"/>
-<text class="t" x="583.8" y="829" text-anchor="middle" font-size="11">163</text>
-<line class="e" x1="615.0" x2="615.0" y1="36" y2="801" stroke-width="1" stroke-dasharray="4 3"/>
-<text class="t" x="615.0" y="829" text-anchor="middle" font-size="11">168</text>
+<rect class="bg" width="800" height="1448"/>
+<text class="m" x="224" y="22" text-anchor="middle" font-size="11">no Epoch score</text>
+<text class="m" x="350.0" y="32" text-anchor="middle" font-size="11">110</text>
+<text class="m" x="410.0" y="32" text-anchor="middle" font-size="11">120</text>
+<text class="m" x="470.0" y="32" text-anchor="middle" font-size="11">130</text>
+<text class="m" x="530.0" y="32" text-anchor="middle" font-size="11">140</text>
+<text class="m" x="590.0" y="32" text-anchor="middle" font-size="11">150</text>
+<text class="m" x="650.0" y="32" text-anchor="middle" font-size="11">160</text>
+<text class="m" x="710.0" y="32" text-anchor="middle" font-size="11">170</text>
+<g class="frontier"><rect class="band" x="698.0" y="40.0" width="72.0" height="60"/>
+<line class="rule" x1="28" x2="770" y1="40.0" y2="40.0" stroke-width="0.5"/>
+<text class="t" x="28" y="56.0" font-size="13" font-weight="600">frontier</text>
+<text class="m" x="90" y="56.0" font-size="11">ECI 168 and up, 2 cards</text></g>
 <g class="frontier"><title>gpt-6-astra: ECI 169.0 [166.1, 172.3], rung frontier, hosted only</title>
-<text class="t" x="182" y="47.5" text-anchor="end" font-size="11">gpt-6-astra</text>
-<line class="bar" x1="603.1" x2="641.9" y1="43.5" y2="43.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="621.2" cy="43.5" r="3.8"/>
-<text class="m" x="700" y="47.5" font-size="11">frontier</text></g>
+<text class="t" x="178" y="75.5" text-anchor="end" font-size="11">gpt-6-astra</text>
+<line class="bar" x1="686.6" x2="723.8" y1="71.5" y2="71.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="704.0" cy="71.5" r="3.8"/>
+</g>
 <g class="frontier"><title>claude-opus-5-5: ECI 168.5 [165.6, 171.8], rung frontier, hosted only</title>
-<text class="t" x="182" y="62.5" text-anchor="end" font-size="11">claude-opus-5-5</text>
-<line class="bar" x1="600.0" x2="638.8" y1="58.5" y2="58.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="618.1" cy="58.5" r="3.8"/>
-<text class="m" x="700" y="62.5" font-size="11">frontier</text></g>
+<text class="t" x="178" y="90.5" text-anchor="end" font-size="11">claude-opus-5-5</text>
+<line class="bar" x1="683.6" x2="720.8" y1="86.5" y2="86.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="701.0" cy="86.5" r="3.8"/>
+</g>
+<g class="large"><rect class="band" x="668.0" y="100.0" width="30.0" height="165"/>
+<line class="rule" x1="28" x2="770" y1="100.0" y2="100.0" stroke-width="0.5"/>
+<text class="t" x="28" y="116.0" font-size="13" font-weight="600">large</text>
+<text class="m" x="90" y="116.0" font-size="11">ECI 163 to 168, 9 cards</text></g>
 <g class="large"><title>gpt-6.1-sol: ECI 168.5 [165.5, 171.8], rung large, hosted only</title>
-<text class="t" x="182" y="77.5" text-anchor="end" font-size="11">gpt-6.1-sol</text>
-<line class="bar" x1="599.4" x2="638.8" y1="73.5" y2="73.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="618.1" cy="73.5" r="3.8"/>
-<circle cx="618.1" cy="73.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
-<text class="m" x="700" y="77.5" font-size="11">large</text></g>
+<text class="t" x="178" y="135.5" text-anchor="end" font-size="11">gpt-6.1-sol</text>
+<line class="bar" x1="683.0" x2="720.8" y1="131.5" y2="131.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="701.0" cy="131.5" r="3.8"/>
+<circle cx="701.0" cy="131.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
+</g>
 <g class="large"><title>claude-fable-5-1: ECI 167.0 [164.2, 170.1], rung large, hosted only</title>
-<text class="t" x="182" y="92.5" text-anchor="end" font-size="11">claude-fable-5-1</text>
-<line class="bar" x1="591.2" x2="628.1" y1="88.5" y2="88.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="608.8" cy="88.5" r="3.8"/>
-<text class="m" x="700" y="92.5" font-size="11">large</text></g>
+<text class="t" x="178" y="150.5" text-anchor="end" font-size="11">claude-fable-5-1</text>
+<line class="bar" x1="675.2" x2="710.6" y1="146.5" y2="146.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="692.0" cy="146.5" r="3.8"/>
+</g>
 <g class="large"><title>claude-sonnet-5-5: ECI 166.6 [163.8, 169.6], rung large, hosted only</title>
-<text class="t" x="182" y="107.5" text-anchor="end" font-size="11">claude-sonnet-5-5</text>
-<line class="bar" x1="588.8" x2="625.0" y1="103.5" y2="103.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="606.2" cy="103.5" r="3.8"/>
-<text class="m" x="700" y="107.5" font-size="11">large</text></g>
+<text class="t" x="178" y="165.5" text-anchor="end" font-size="11">claude-sonnet-5-5</text>
+<line class="bar" x1="672.8" x2="707.6" y1="161.5" y2="161.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="689.6" cy="161.5" r="3.8"/>
+</g>
 <g class="large"><title>claude-opus-5: ECI 164.7 [162.1, 167.5], rung large, hosted only</title>
-<text class="t" x="182" y="122.5" text-anchor="end" font-size="11">claude-opus-5</text>
-<line class="bar" x1="578.1" x2="611.9" y1="118.5" y2="118.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="594.4" cy="118.5" r="3.8"/>
-<text class="m" x="700" y="122.5" font-size="11">large</text></g>
+<text class="t" x="178" y="180.5" text-anchor="end" font-size="11">claude-opus-5</text>
+<line class="bar" x1="662.6" x2="695.0" y1="176.5" y2="176.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="678.2" cy="176.5" r="3.8"/>
+</g>
 <g class="large"><title>claude-fable-5: ECI 164.1 [161.7, 166.8], rung large, hosted only</title>
-<text class="t" x="182" y="137.5" text-anchor="end" font-size="11">claude-fable-5</text>
-<line class="bar" x1="575.6" x2="607.5" y1="133.5" y2="133.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="590.6" cy="133.5" r="3.8"/>
-<text class="m" x="700" y="137.5" font-size="11">large</text></g>
+<text class="t" x="178" y="195.5" text-anchor="end" font-size="11">claude-fable-5</text>
+<line class="bar" x1="660.2" x2="690.8" y1="191.5" y2="191.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="674.6" cy="191.5" r="3.8"/>
+</g>
 <g class="large"><title>gpt-6-sol: ECI 163.8 [161.3, 166.4], rung large, hosted only</title>
-<text class="t" x="182" y="152.5" text-anchor="end" font-size="11">gpt-6-sol</text>
-<line class="bar" x1="573.1" x2="605.0" y1="148.5" y2="148.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="588.8" cy="148.5" r="3.8"/>
-<text class="m" x="700" y="152.5" font-size="11">large</text></g>
+<text class="t" x="178" y="210.5" text-anchor="end" font-size="11">gpt-6-sol</text>
+<line class="bar" x1="657.8" x2="688.4" y1="206.5" y2="206.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="672.8" cy="206.5" r="3.8"/>
+</g>
 <g class="large"><title>gpt-5.6-sol: ECI 163.0 [160.7, 165.5], rung large, hosted only</title>
-<text class="t" x="182" y="167.5" text-anchor="end" font-size="11">gpt-5.6-sol</text>
-<line class="bar" x1="569.4" x2="599.4" y1="163.5" y2="163.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="583.8" cy="163.5" r="3.8"/>
-<text class="m" x="700" y="167.5" font-size="11">large</text></g>
+<text class="t" x="178" y="225.5" text-anchor="end" font-size="11">gpt-5.6-sol</text>
+<line class="bar" x1="654.2" x2="683.0" y1="221.5" y2="221.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="668.0" cy="221.5" r="3.8"/>
+</g>
+<g class="large"><title>gemini-3.1-pro-preview: no Epoch score, rung large, unscored, hosted only</title>
+<text class="t" x="178" y="240.5" text-anchor="end" font-size="11">gemini-3.1-pro-preview</text>
+<rect class="ring" x="192.5" y="233.0" width="7" height="7" transform="rotate(45 196 236.5)"/>
+</g>
+<g class="large"><title>mistral-large-3: no Epoch score, rung large, unscored, open weights</title>
+<text class="t" x="178" y="255.5" text-anchor="end" font-size="11">mistral-large-3</text>
+<rect class="dot" x="192" y="247.5" width="8" height="8" transform="rotate(45 196 251.5)"/>
+</g>
+<g class="mid"><rect class="band" x="602.0" y="265.0" width="66.0" height="435"/>
+<line class="rule" x1="28" x2="770" y1="265.0" y2="265.0" stroke-width="0.5"/>
+<text class="t" x="28" y="281.0" font-size="13" font-weight="600">mid</text>
+<text class="m" x="90" y="281.0" font-size="11">ECI 152 to 163, 27 cards</text></g>
 <g class="mid"><title>kimi-k3.1-pro: ECI 161.4 [159.0, 164.0], rung mid, open weights</title>
-<text class="t" x="182" y="182.5" text-anchor="end" font-size="11">kimi-k3.1-pro</text>
-<line class="bar" x1="558.8" x2="590.0" y1="178.5" y2="178.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="573.8" cy="178.5" r="4.5"/>
-<text class="m" x="700" y="182.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="300.5" text-anchor="end" font-size="11">kimi-k3.1-pro</text>
+<line class="bar" x1="644.0" x2="674.0" y1="296.5" y2="296.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="658.4" cy="296.5" r="4.5"/>
+</g>
 <g class="mid"><title>gpt-5.6-terra: ECI 160.7 [158.5, 163.2], rung mid, hosted only</title>
-<text class="t" x="182" y="197.5" text-anchor="end" font-size="11">gpt-5.6-terra</text>
-<line class="bar" x1="555.6" x2="585.0" y1="193.5" y2="193.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="569.4" cy="193.5" r="3.8"/>
-<text class="m" x="700" y="197.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="315.5" text-anchor="end" font-size="11">gpt-5.6-terra</text>
+<line class="bar" x1="641.0" x2="669.2" y1="311.5" y2="311.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="654.2" cy="311.5" r="3.8"/>
+</g>
 <g class="mid"><title>claude-haiku-5-5: ECI 160.4 [158.3, 162.9], rung mid, hosted only</title>
-<text class="t" x="182" y="212.5" text-anchor="end" font-size="11">claude-haiku-5-5</text>
-<line class="bar" x1="554.4" x2="583.1" y1="208.5" y2="208.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="567.5" cy="208.5" r="3.8"/>
-<text class="m" x="700" y="212.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="330.5" text-anchor="end" font-size="11">claude-haiku-5-5</text>
+<line class="bar" x1="639.8" x2="667.4" y1="326.5" y2="326.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="652.4" cy="326.5" r="3.8"/>
+</g>
 <g class="mid"><title>claude-opus-4-8: ECI 159.9 [157.9, 162.2], rung mid, hosted only</title>
-<text class="t" x="182" y="227.5" text-anchor="end" font-size="11">claude-opus-4-8</text>
-<line class="bar" x1="551.9" x2="578.8" y1="223.5" y2="223.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="564.4" cy="223.5" r="3.8"/>
-<text class="m" x="700" y="227.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="345.5" text-anchor="end" font-size="11">claude-opus-4-8</text>
+<line class="bar" x1="637.4" x2="663.2" y1="341.5" y2="341.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="649.4" cy="341.5" r="3.8"/>
+</g>
 <g class="mid"><title>deepseek-v4.1-flash-1017: ECI 159.4 [157.0, 162.0], rung mid, open weights</title>
-<text class="t" x="182" y="242.5" text-anchor="end" font-size="11">deepseek-v4.1-flash-1017</text>
-<line class="bar" x1="546.2" x2="577.5" y1="238.5" y2="238.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="561.2" cy="238.5" r="4.5"/>
-<text class="m" x="700" y="242.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="360.5" text-anchor="end" font-size="11">deepseek-v4.1-flash-1017</text>
+<line class="bar" x1="632.0" x2="662.0" y1="356.5" y2="356.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="646.4" cy="356.5" r="4.5"/>
+</g>
 <g class="mid"><title>gemini-3.8-flash: ECI 158.8 [156.8, 160.9], rung mid, hosted only</title>
-<text class="t" x="182" y="257.5" text-anchor="end" font-size="11">gemini-3.8-flash</text>
-<line class="bar" x1="545.0" x2="570.6" y1="253.5" y2="253.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="557.5" cy="253.5" r="3.8"/>
-<text class="m" x="700" y="257.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="375.5" text-anchor="end" font-size="11">gemini-3.8-flash</text>
+<line class="bar" x1="630.8" x2="655.4" y1="371.5" y2="371.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="642.8" cy="371.5" r="3.8"/>
+</g>
 <g class="mid"><title>gpt-5.4: ECI 157.8 [155.9, 159.9], rung mid, hosted only</title>
-<text class="t" x="182" y="272.5" text-anchor="end" font-size="11">gpt-5.4</text>
-<line class="bar" x1="539.4" x2="564.4" y1="268.5" y2="268.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="551.2" cy="268.5" r="3.8"/>
-<text class="m" x="700" y="272.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="390.5" text-anchor="end" font-size="11">gpt-5.4</text>
+<line class="bar" x1="625.4" x2="649.4" y1="386.5" y2="386.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="636.8" cy="386.5" r="3.8"/>
+</g>
 <g class="mid"><title>grok-4.6: ECI 157.8 [155.8, 159.9], rung mid, hosted only</title>
-<text class="t" x="182" y="287.5" text-anchor="end" font-size="11">grok-4.6</text>
-<line class="bar" x1="538.8" x2="564.4" y1="283.5" y2="283.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="551.2" cy="283.5" r="3.8"/>
-<text class="m" x="700" y="287.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="405.5" text-anchor="end" font-size="11">grok-4.6</text>
+<line class="bar" x1="624.8" x2="649.4" y1="401.5" y2="401.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="636.8" cy="401.5" r="3.8"/>
+</g>
 <g class="mid"><title>glm-5.3: ECI 157.1 [154.9, 159.5], rung mid, open weights</title>
-<text class="t" x="182" y="302.5" text-anchor="end" font-size="11">glm-5.3</text>
-<line class="bar" x1="533.1" x2="561.9" y1="298.5" y2="298.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="546.9" cy="298.5" r="4.5"/>
-<text class="m" x="700" y="302.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="420.5" text-anchor="end" font-size="11">glm-5.3</text>
+<line class="bar" x1="619.4" x2="647.0" y1="416.5" y2="416.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="632.6" cy="416.5" r="4.5"/>
+</g>
 <g class="mid"><title>claude-sonnet-5: ECI 156.9 [154.8, 159.2], rung mid, hosted only</title>
-<text class="t" x="182" y="317.5" text-anchor="end" font-size="11">claude-sonnet-5</text>
-<line class="bar" x1="532.5" x2="560.0" y1="313.5" y2="313.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="545.6" cy="313.5" r="3.8"/>
-<text class="m" x="700" y="317.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="435.5" text-anchor="end" font-size="11">claude-sonnet-5</text>
+<line class="bar" x1="618.8" x2="645.2" y1="431.5" y2="431.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="631.4" cy="431.5" r="3.8"/>
+</g>
 <g class="mid"><title>deepseek-v4.1-flash: ECI 156.7 [154.8, 158.8], rung mid, open weights</title>
-<text class="t" x="182" y="332.5" text-anchor="end" font-size="11">deepseek-v4.1-flash</text>
-<line class="bar" x1="532.5" x2="557.5" y1="328.5" y2="328.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="544.4" cy="328.5" r="4.5"/>
-<text class="m" x="700" y="332.5" font-size="11">mid</text></g>
-<g class="small"><title>gpt-5.6-luna: ECI 156.7 [154.8, 158.7], rung small, hosted only</title>
-<text class="t" x="182" y="347.5" text-anchor="end" font-size="11">gpt-5.6-luna</text>
-<line class="bar" x1="532.5" x2="556.9" y1="343.5" y2="343.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="544.4" cy="343.5" r="3.8"/>
-<circle cx="544.4" cy="343.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
-<text class="m" x="700" y="347.5" font-size="11">small</text></g>
+<text class="t" x="178" y="450.5" text-anchor="end" font-size="11">deepseek-v4.1-flash</text>
+<line class="bar" x1="618.8" x2="642.8" y1="446.5" y2="446.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="630.2" cy="446.5" r="4.5"/>
+</g>
 <g class="mid"><title>gpt-6-luna: ECI 156.4 [154.4, 158.5], rung mid, hosted only</title>
-<text class="t" x="182" y="362.5" text-anchor="end" font-size="11">gpt-6-luna</text>
-<line class="bar" x1="530.0" x2="555.6" y1="358.5" y2="358.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="542.5" cy="358.5" r="3.8"/>
-<text class="m" x="700" y="362.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="465.5" text-anchor="end" font-size="11">gpt-6-luna</text>
+<line class="bar" x1="616.4" x2="641.0" y1="461.5" y2="461.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="628.4" cy="461.5" r="3.8"/>
+</g>
 <g class="mid"><title>gemini-3.5-flash: ECI 155.3 [153.5, 157.3], rung mid, hosted only</title>
-<text class="t" x="182" y="377.5" text-anchor="end" font-size="11">gemini-3.5-flash</text>
-<line class="bar" x1="524.4" x2="548.1" y1="373.5" y2="373.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="535.6" cy="373.5" r="3.8"/>
-<text class="m" x="700" y="377.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="480.5" text-anchor="end" font-size="11">gemini-3.5-flash</text>
+<line class="bar" x1="611.0" x2="633.8" y1="476.5" y2="476.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="621.8" cy="476.5" r="3.8"/>
+</g>
 <g class="mid"><title>gemini-3.6-flash: ECI 155.2 [153.4, 157.2], rung mid, hosted only</title>
-<text class="t" x="182" y="392.5" text-anchor="end" font-size="11">gemini-3.6-flash</text>
-<line class="bar" x1="523.8" x2="547.5" y1="388.5" y2="388.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="535.0" cy="388.5" r="3.8"/>
-<text class="m" x="700" y="392.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="495.5" text-anchor="end" font-size="11">gemini-3.6-flash</text>
+<line class="bar" x1="610.4" x2="633.2" y1="491.5" y2="491.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="621.2" cy="491.5" r="3.8"/>
+</g>
 <g class="mid"><title>mistral-large-4: ECI 154.6 [151.8, 157.5], rung mid, open weights</title>
-<text class="t" x="182" y="407.5" text-anchor="end" font-size="11">mistral-large-4</text>
-<line class="bar" x1="513.8" x2="549.4" y1="403.5" y2="403.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="531.2" cy="403.5" r="4.5"/>
-<text class="m" x="700" y="407.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="510.5" text-anchor="end" font-size="11">mistral-large-4</text>
+<line class="bar" x1="600.8" x2="635.0" y1="506.5" y2="506.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="617.6" cy="506.5" r="4.5"/>
+</g>
 <g class="mid"><title>glm-5.3-flash: ECI 153.8 [152.0, 155.8], rung mid, open weights</title>
-<text class="t" x="182" y="422.5" text-anchor="end" font-size="11">glm-5.3-flash</text>
-<line class="bar" x1="515.0" x2="538.8" y1="418.5" y2="418.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="526.2" cy="418.5" r="4.5"/>
-<text class="m" x="700" y="422.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="525.5" text-anchor="end" font-size="11">glm-5.3-flash</text>
+<line class="bar" x1="602.0" x2="624.8" y1="521.5" y2="521.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="612.8" cy="521.5" r="4.5"/>
+</g>
 <g class="mid"><title>claude-sonnet-4-6: ECI 152.9 [151.2, 154.7], rung mid, hosted only</title>
-<text class="t" x="182" y="437.5" text-anchor="end" font-size="11">claude-sonnet-4-6</text>
-<line class="bar" x1="510.0" x2="531.9" y1="433.5" y2="433.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="520.6" cy="433.5" r="3.8"/>
-<text class="m" x="700" y="437.5" font-size="11">mid</text></g>
-<g class="small"><title>qwen3.8-27b: ECI 152.6 [150.6, 154.8], rung small, open weights</title>
-<text class="t" x="182" y="452.5" text-anchor="end" font-size="11">qwen3.8-27b</text>
-<line class="bar" x1="506.2" x2="532.5" y1="448.5" y2="448.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="518.8" cy="448.5" r="4.5"/>
-<circle cx="518.8" cy="448.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
-<text class="m" x="700" y="452.5" font-size="11">small</text></g>
+<text class="t" x="178" y="540.5" text-anchor="end" font-size="11">claude-sonnet-4-6</text>
+<line class="bar" x1="597.2" x2="618.2" y1="536.5" y2="536.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="607.4" cy="536.5" r="3.8"/>
+</g>
 <g class="mid"><title>gemini-3-flash: ECI 152.3 [150.8, 154.0], rung mid, hosted only</title>
-<text class="t" x="182" y="467.5" text-anchor="end" font-size="11">gemini-3-flash</text>
-<line class="bar" x1="507.5" x2="527.5" y1="463.5" y2="463.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="516.9" cy="463.5" r="3.8"/>
-<text class="m" x="700" y="467.5" font-size="11">mid</text></g>
+<text class="t" x="178" y="555.5" text-anchor="end" font-size="11">gemini-3-flash</text>
+<line class="bar" x1="594.8" x2="614.0" y1="551.5" y2="551.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="603.8" cy="551.5" r="3.8"/>
+</g>
+<g class="mid"><title>deepseek-flash: no Epoch score, rung mid, unscored, hosted only</title>
+<text class="t" x="178" y="570.5" text-anchor="end" font-size="11">deepseek-flash</text>
+<rect class="ring" x="192.5" y="563.0" width="7" height="7" transform="rotate(45 196 566.5)"/>
+</g>
+<g class="mid"><title>grok-4.20-non-reasoning: no Epoch score, rung mid, unscored, hosted only</title>
+<text class="t" x="178" y="585.5" text-anchor="end" font-size="11">grok-4.20-non-reasoning</text>
+<rect class="ring" x="192.5" y="578.0" width="7" height="7" transform="rotate(45 196 581.5)"/>
+</g>
+<g class="mid"><title>hy4: no Epoch score, rung mid, AA index 34.6, hosted only</title>
+<text class="t" x="178" y="600.5" text-anchor="end" font-size="11">hy4</text>
+<rect class="ring" x="192.5" y="593.0" width="7" height="7" transform="rotate(45 196 596.5)"/>
+<text class="m" x="208" y="600.5" font-size="10">AA 34.6</text>
+</g>
+<g class="mid"><title>inkling-2-small: no Epoch score, rung mid, AA index 30.6, open weights</title>
+<text class="t" x="178" y="615.5" text-anchor="end" font-size="11">inkling-2-small</text>
+<rect class="dot" x="192" y="607.5" width="8" height="8" transform="rotate(45 196 611.5)"/>
+<text class="m" x="208" y="615.5" font-size="10">AA 30.6</text>
+</g>
+<g class="mid"><title>mimo-v2.6-flash: no Epoch score, rung mid, AA index 26.7, open weights</title>
+<text class="t" x="178" y="630.5" text-anchor="end" font-size="11">mimo-v2.6-flash</text>
+<rect class="dot" x="192" y="622.5" width="8" height="8" transform="rotate(45 196 626.5)"/>
+<text class="m" x="208" y="630.5" font-size="10">AA 26.7</text>
+</g>
+<g class="mid"><title>mimo-v2.6-pro: no Epoch score, rung mid, AA index 29.9, open weights</title>
+<text class="t" x="178" y="645.5" text-anchor="end" font-size="11">mimo-v2.6-pro</text>
+<rect class="dot" x="192" y="637.5" width="8" height="8" transform="rotate(45 196 641.5)"/>
+<text class="m" x="208" y="645.5" font-size="10">AA 29.9</text>
+</g>
+<g class="mid"><title>minimax-m3.1-flash: no Epoch score, rung mid, AA index 29.1, open weights</title>
+<text class="t" x="178" y="660.5" text-anchor="end" font-size="11">minimax-m3.1-flash</text>
+<rect class="dot" x="192" y="652.5" width="8" height="8" transform="rotate(45 196 656.5)"/>
+<text class="m" x="208" y="660.5" font-size="10">AA 29.1</text>
+</g>
+<g class="mid"><title>qwen3.8-2.4t-a95b: no Epoch score, rung mid, unscored, open weights</title>
+<text class="t" x="178" y="675.5" text-anchor="end" font-size="11">qwen3.8-2.4t-a95b</text>
+<rect class="dot" x="192" y="667.5" width="8" height="8" transform="rotate(45 196 671.5)"/>
+</g>
+<g class="mid"><title>qwen3.8-flash: no Epoch score, rung mid, AA index 28.6, open weights</title>
+<text class="t" x="178" y="690.5" text-anchor="end" font-size="11">qwen3.8-flash</text>
+<rect class="dot" x="192" y="682.5" width="8" height="8" transform="rotate(45 196 686.5)"/>
+<text class="m" x="208" y="690.5" font-size="10">AA 28.6</text>
+</g>
+<g class="small"><rect class="band" x="470.0" y="700.0" width="132.0" height="495"/>
+<line class="rule" x1="28" x2="770" y1="700.0" y2="700.0" stroke-width="0.5"/>
+<text class="t" x="28" y="716.0" font-size="13" font-weight="600">small</text>
+<text class="m" x="90" y="716.0" font-size="11">ECI 130 to 152, 31 cards</text></g>
+<g class="small"><title>gpt-5.6-luna: ECI 156.7 [154.8, 158.7], rung small, hosted only</title>
+<text class="t" x="178" y="735.5" text-anchor="end" font-size="11">gpt-5.6-luna</text>
+<line class="bar" x1="618.8" x2="642.2" y1="731.5" y2="731.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="630.2" cy="731.5" r="3.8"/>
+<circle cx="630.2" cy="731.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
+</g>
+<g class="small"><title>qwen3.8-27b: ECI 152.6 [150.6, 154.8], rung small, open weights</title>
+<text class="t" x="178" y="750.5" text-anchor="end" font-size="11">qwen3.8-27b</text>
+<line class="bar" x1="593.6" x2="618.8" y1="746.5" y2="746.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="605.6" cy="746.5" r="4.5"/>
+<circle cx="605.6" cy="746.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
+</g>
 <g class="small"><title>deepseek-v4-pro: ECI 150.2 [148.4, 152.0], rung small, hosted only</title>
-<text class="t" x="182" y="482.5" text-anchor="end" font-size="11">deepseek-v4-pro</text>
-<line class="bar" x1="492.5" x2="515.0" y1="478.5" y2="478.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="503.7" cy="478.5" r="3.8"/>
-<text class="m" x="700" y="482.5" font-size="11">small</text></g>
+<text class="t" x="178" y="765.5" text-anchor="end" font-size="11">deepseek-v4-pro</text>
+<line class="bar" x1="580.4" x2="602.0" y1="761.5" y2="761.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="591.2" cy="761.5" r="3.8"/>
+</g>
 <g class="small"><title>gpt-5.4-mini: ECI 149.3 [147.7, 151.1], rung small, hosted only</title>
-<text class="t" x="182" y="497.5" text-anchor="end" font-size="11">gpt-5.4-mini</text>
-<line class="bar" x1="488.1" x2="509.4" y1="493.5" y2="493.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="498.1" cy="493.5" r="3.8"/>
-<text class="m" x="700" y="497.5" font-size="11">small</text></g>
+<text class="t" x="178" y="780.5" text-anchor="end" font-size="11">gpt-5.4-mini</text>
+<line class="bar" x1="576.2" x2="596.6" y1="776.5" y2="776.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="585.8" cy="776.5" r="3.8"/>
+</g>
 <g class="small"><title>qwen3.6-27b: ECI 146.7 [144.5, 149.0], rung small, open weights</title>
-<text class="t" x="182" y="512.5" text-anchor="end" font-size="11">qwen3.6-27b</text>
-<line class="bar" x1="468.1" x2="496.2" y1="508.5" y2="508.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="481.9" cy="508.5" r="4.5"/>
-<text class="m" x="700" y="512.5" font-size="11">small</text></g>
+<text class="t" x="178" y="795.5" text-anchor="end" font-size="11">qwen3.6-27b</text>
+<line class="bar" x1="557.0" x2="584.0" y1="791.5" y2="791.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="570.2" cy="791.5" r="4.5"/>
+</g>
 <g class="small"><title>gpt-5.4-nano: ECI 146.4 [144.7, 148.1], rung small, hosted only</title>
-<text class="t" x="182" y="527.5" text-anchor="end" font-size="11">gpt-5.4-nano</text>
-<line class="bar" x1="469.4" x2="490.6" y1="523.5" y2="523.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="480.0" cy="523.5" r="3.8"/>
-<text class="m" x="700" y="527.5" font-size="11">small</text></g>
+<text class="t" x="178" y="810.5" text-anchor="end" font-size="11">gpt-5.4-nano</text>
+<line class="bar" x1="558.2" x2="578.6" y1="806.5" y2="806.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="568.4" cy="806.5" r="3.8"/>
+</g>
 <g class="small"><title>gemini-3.5-flash-lite: ECI 145.6 [144.0, 147.3], rung small, hosted only</title>
-<text class="t" x="182" y="542.5" text-anchor="end" font-size="11">gemini-3.5-flash-lite</text>
-<line class="bar" x1="465.0" x2="485.6" y1="538.5" y2="538.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="475.0" cy="538.5" r="3.8"/>
-<text class="m" x="700" y="542.5" font-size="11">small</text></g>
+<text class="t" x="178" y="825.5" text-anchor="end" font-size="11">gemini-3.5-flash-lite</text>
+<line class="bar" x1="554.0" x2="573.8" y1="821.5" y2="821.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="563.6" cy="821.5" r="3.8"/>
+</g>
 <g class="small"><title>gemini-3.1-flash-lite: ECI 145.0 [142.8, 147.2], rung small, hosted only</title>
-<text class="t" x="182" y="557.5" text-anchor="end" font-size="11">gemini-3.1-flash-lite</text>
-<line class="bar" x1="457.5" x2="485.0" y1="553.5" y2="553.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="471.2" cy="553.5" r="3.8"/>
-<text class="m" x="700" y="557.5" font-size="11">small</text></g>
+<text class="t" x="178" y="840.5" text-anchor="end" font-size="11">gemini-3.1-flash-lite</text>
+<line class="bar" x1="546.8" x2="573.2" y1="836.5" y2="836.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="560.0" cy="836.5" r="3.8"/>
+</g>
 <g class="small"><title>gemma-4-31b: ECI 144.3 [141.7, 146.8], rung small, open weights</title>
-<text class="t" x="182" y="572.5" text-anchor="end" font-size="11">gemma-4-31b</text>
-<line class="bar" x1="450.6" x2="482.5" y1="568.5" y2="568.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="466.9" cy="568.5" r="4.5"/>
-<text class="m" x="700" y="572.5" font-size="11">small</text></g>
+<text class="t" x="178" y="855.5" text-anchor="end" font-size="11">gemma-4-31b</text>
+<line class="bar" x1="540.2" x2="570.8" y1="851.5" y2="851.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="555.8" cy="851.5" r="4.5"/>
+</g>
 <g class="small"><title>qwen3.6-35b-a3b: ECI 144.0 [142.1, 145.9], rung small, open weights</title>
-<text class="t" x="182" y="587.5" text-anchor="end" font-size="11">qwen3.6-35b-a3b</text>
-<line class="bar" x1="453.1" x2="476.9" y1="583.5" y2="583.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="465.0" cy="583.5" r="4.5"/>
-<text class="m" x="700" y="587.5" font-size="11">small</text></g>
+<text class="t" x="178" y="870.5" text-anchor="end" font-size="11">qwen3.6-35b-a3b</text>
+<line class="bar" x1="542.6" x2="565.4" y1="866.5" y2="866.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="554.0" cy="866.5" r="4.5"/>
+</g>
 <g class="small"><title>claude-haiku-4-5: ECI 142.8 [141.1, 144.5], rung small, hosted only</title>
-<text class="t" x="182" y="602.5" text-anchor="end" font-size="11">claude-haiku-4-5</text>
-<line class="bar" x1="446.9" x2="468.1" y1="598.5" y2="598.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="457.5" cy="598.5" r="3.8"/>
-<text class="m" x="700" y="602.5" font-size="11">small</text></g>
+<text class="t" x="178" y="885.5" text-anchor="end" font-size="11">claude-haiku-4-5</text>
+<line class="bar" x1="536.6" x2="557.0" y1="881.5" y2="881.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="546.8" cy="881.5" r="3.8"/>
+</g>
 <g class="small"><title>gemma-4-26b-a4b: ECI 141.6 [139.1, 144.1], rung small, open weights</title>
-<text class="t" x="182" y="617.5" text-anchor="end" font-size="11">gemma-4-26b-a4b</text>
-<line class="bar" x1="434.4" x2="465.6" y1="613.5" y2="613.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="450.0" cy="613.5" r="4.5"/>
-<text class="m" x="700" y="617.5" font-size="11">small</text></g>
+<text class="t" x="178" y="900.5" text-anchor="end" font-size="11">gemma-4-26b-a4b</text>
+<line class="bar" x1="524.6" x2="554.6" y1="896.5" y2="896.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="539.6" cy="896.5" r="4.5"/>
+</g>
 <g class="small"><title>mistral-medium-3-5: ECI 141.6 [138.4, 144.6], rung small, hosted only</title>
-<text class="t" x="182" y="632.5" text-anchor="end" font-size="11">mistral-medium-3-5</text>
-<line class="bar" x1="430.0" x2="468.7" y1="628.5" y2="628.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="450.0" cy="628.5" r="3.8"/>
-<text class="m" x="700" y="632.5" font-size="11">small</text></g>
+<text class="t" x="178" y="915.5" text-anchor="end" font-size="11">mistral-medium-3-5</text>
+<line class="bar" x1="520.4" x2="557.6" y1="911.5" y2="911.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="539.6" cy="911.5" r="3.8"/>
+</g>
 <g class="small"><title>gpt-oss-120b: ECI 140.2 [138.2, 142.1], rung small, open weights</title>
-<text class="t" x="182" y="647.5" text-anchor="end" font-size="11">gpt-oss-120b</text>
-<line class="bar" x1="428.7" x2="453.1" y1="643.5" y2="643.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="441.2" cy="643.5" r="4.5"/>
-<text class="m" x="700" y="647.5" font-size="11">small</text></g>
+<text class="t" x="178" y="930.5" text-anchor="end" font-size="11">gpt-oss-120b</text>
+<line class="bar" x1="519.2" x2="542.6" y1="926.5" y2="926.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="531.2" cy="926.5" r="4.5"/>
+</g>
 <g class="small"><title>qwen3.5-9b: ECI 139.3 [136.9, 141.6], rung small, open weights</title>
-<text class="t" x="182" y="662.5" text-anchor="end" font-size="11">qwen3.5-9b</text>
-<line class="bar" x1="420.6" x2="450.0" y1="658.5" y2="658.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="435.6" cy="658.5" r="4.5"/>
-<text class="m" x="700" y="662.5" font-size="11">small</text></g>
+<text class="t" x="178" y="945.5" text-anchor="end" font-size="11">qwen3.5-9b</text>
+<line class="bar" x1="511.4" x2="539.6" y1="941.5" y2="941.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="525.8" cy="941.5" r="4.5"/>
+</g>
 <g class="small"><title>qwen3-32b: ECI 136.9 [134.4, 139.3], rung small, open weights</title>
-<text class="t" x="182" y="677.5" text-anchor="end" font-size="11">qwen3-32b</text>
-<line class="bar" x1="405.0" x2="435.6" y1="673.5" y2="673.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="420.6" cy="673.5" r="4.5"/>
-<text class="m" x="700" y="677.5" font-size="11">small</text></g>
+<text class="t" x="178" y="960.5" text-anchor="end" font-size="11">qwen3-32b</text>
+<line class="bar" x1="496.4" x2="525.8" y1="956.5" y2="956.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="511.4" cy="956.5" r="4.5"/>
+</g>
 <g class="small"><title>gpt-4.1: ECI 136.2 [134.1, 138.0], rung small, hosted only</title>
-<text class="t" x="182" y="692.5" text-anchor="end" font-size="11">gpt-4.1</text>
-<line class="bar" x1="403.1" x2="427.5" y1="688.5" y2="688.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="416.2" cy="688.5" r="3.8"/>
-<text class="m" x="700" y="692.5" font-size="11">small</text></g>
+<text class="t" x="178" y="975.5" text-anchor="end" font-size="11">gpt-4.1</text>
+<line class="bar" x1="494.6" x2="518.0" y1="971.5" y2="971.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="507.2" cy="971.5" r="3.8"/>
+</g>
 <g class="small"><title>gpt-oss-20b: ECI 135.0 [132.3, 137.5], rung small, open weights</title>
-<text class="t" x="182" y="707.5" text-anchor="end" font-size="11">gpt-oss-20b</text>
-<line class="bar" x1="391.9" x2="424.4" y1="703.5" y2="703.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="408.8" cy="703.5" r="4.5"/>
-<text class="m" x="700" y="707.5" font-size="11">small</text></g>
+<text class="t" x="178" y="990.5" text-anchor="end" font-size="11">gpt-oss-20b</text>
+<line class="bar" x1="483.8" x2="515.0" y1="986.5" y2="986.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="500.0" cy="986.5" r="4.5"/>
+</g>
 <g class="small"><title>gpt-4.1-mini: ECI 134.2 [131.9, 136.3], rung small, hosted only</title>
-<text class="t" x="182" y="722.5" text-anchor="end" font-size="11">gpt-4.1-mini</text>
-<line class="bar" x1="389.4" x2="416.9" y1="718.5" y2="718.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="403.7" cy="718.5" r="3.8"/>
-<text class="m" x="700" y="722.5" font-size="11">small</text></g>
+<text class="t" x="178" y="1005.5" text-anchor="end" font-size="11">gpt-4.1-mini</text>
+<line class="bar" x1="481.4" x2="507.8" y1="1001.5" y2="1001.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="495.2" cy="1001.5" r="3.8"/>
+</g>
 <g class="small"><title>qwen3-30b-a3b: ECI 134.1 [131.3, 136.8], rung small, open weights</title>
-<text class="t" x="182" y="737.5" text-anchor="end" font-size="11">qwen3-30b-a3b</text>
-<line class="bar" x1="385.6" x2="420.0" y1="733.5" y2="733.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="403.1" cy="733.5" r="4.5"/>
-<text class="m" x="700" y="737.5" font-size="11">small</text></g>
+<text class="t" x="178" y="1020.5" text-anchor="end" font-size="11">qwen3-30b-a3b</text>
+<line class="bar" x1="477.8" x2="510.8" y1="1016.5" y2="1016.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="494.6" cy="1016.5" r="4.5"/>
+</g>
 <g class="small"><title>qwen3-8b: ECI 132.1 [128.9, 135.0], rung small, open weights</title>
-<text class="t" x="182" y="752.5" text-anchor="end" font-size="11">qwen3-8b</text>
-<line class="bar" x1="370.6" x2="408.8" y1="748.5" y2="748.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="390.6" cy="748.5" r="4.5"/>
-<text class="m" x="700" y="752.5" font-size="11">small</text></g>
-<g class="small"><title>llama3.3-70b: ECI 126.1 [123.1, 129.0], rung small, open weights</title>
-<text class="t" x="182" y="767.5" text-anchor="end" font-size="11">llama3.3-70b</text>
-<line class="bar" x1="334.4" x2="371.2" y1="763.5" y2="763.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="353.1" cy="763.5" r="4.5"/>
-<text class="m" x="700" y="767.5" font-size="11">small</text></g>
-<g class="small"><title>gpt-4o-mini: ECI 123.9 [120.5, 126.9], rung small, hosted only</title>
-<text class="t" x="182" y="782.5" text-anchor="end" font-size="11">gpt-4o-mini</text>
-<line class="bar" x1="318.1" x2="358.1" y1="778.5" y2="778.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="339.4" cy="778.5" r="3.8"/>
-<text class="m" x="700" y="782.5" font-size="11">small</text></g>
-<g class="small"><title>llama3.1-8b: ECI 111.1 [105.5, 116.2], rung small, open weights</title>
-<text class="t" x="182" y="797.5" text-anchor="end" font-size="11">llama3.1-8b</text>
-<line class="bar" x1="224.4" x2="291.2" y1="793.5" y2="793.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="259.4" cy="793.5" r="4.5"/>
-<text class="m" x="700" y="797.5" font-size="11">small</text></g>
-<text class="m" x="182" y="849" font-size="11">Epoch Capabilities Index with 95% interval. Source: Epoch AI (CC-BY 4.0).</text>
-<text class="m" x="182" y="863" font-size="11">Filled dot: open weights. Ring: hosted only. Orange ring: the card's rung is lower than this zone,</text>
-<text class="m" x="182" y="877" font-size="11">because its other view (Artificial Analysis index) is lower.</text>
-<text class="m" x="182" y="891" font-size="11">51 of 76 cards have an Epoch score. Cards updated 2026-11-16.</text>
+<text class="t" x="178" y="1035.5" text-anchor="end" font-size="11">qwen3-8b</text>
+<line class="bar" x1="463.4" x2="500.0" y1="1031.5" y2="1031.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="482.6" cy="1031.5" r="4.5"/>
+</g>
+<g class="small"><title>gemma-4-12b-qat: no Epoch score, rung small, unscored, open weights</title>
+<text class="t" x="178" y="1050.5" text-anchor="end" font-size="11">gemma-4-12b-qat</text>
+<rect class="dot" x="192" y="1042.5" width="8" height="8" transform="rotate(45 196 1046.5)"/>
+</g>
+<g class="small"><title>granite-4.2-8b: no Epoch score, rung small, AA index 5.1, open weights</title>
+<text class="t" x="178" y="1065.5" text-anchor="end" font-size="11">granite-4.2-8b</text>
+<rect class="dot" x="192" y="1057.5" width="8" height="8" transform="rotate(45 196 1061.5)"/>
+<text class="m" x="208" y="1065.5" font-size="10">AA 5.1</text>
+</g>
+<g class="small"><title>hy3: no Epoch score, rung small, unscored, open weights</title>
+<text class="t" x="178" y="1080.5" text-anchor="end" font-size="11">hy3</text>
+<rect class="dot" x="192" y="1072.5" width="8" height="8" transform="rotate(45 196 1076.5)"/>
+</g>
+<g class="small"><title>ministral-3-14b: no Epoch score, rung small, unscored, open weights</title>
+<text class="t" x="178" y="1095.5" text-anchor="end" font-size="11">ministral-3-14b</text>
+<rect class="dot" x="192" y="1087.5" width="8" height="8" transform="rotate(45 196 1091.5)"/>
+</g>
+<g class="small"><title>ministral-3-8b: no Epoch score, rung small, unscored, open weights</title>
+<text class="t" x="178" y="1110.5" text-anchor="end" font-size="11">ministral-3-8b</text>
+<rect class="dot" x="192" y="1102.5" width="8" height="8" transform="rotate(45 196 1106.5)"/>
+</g>
+<g class="small"><title>mistral-small-4: no Epoch score, rung small, AA index 4.3, open weights</title>
+<text class="t" x="178" y="1125.5" text-anchor="end" font-size="11">mistral-small-4</text>
+<rect class="dot" x="192" y="1117.5" width="8" height="8" transform="rotate(45 196 1121.5)"/>
+<text class="m" x="208" y="1125.5" font-size="10">AA 4.3</text>
+</g>
+<g class="small"><title>muse-glimmer-30b: no Epoch score, rung small, AA index 6.3, open weights</title>
+<text class="t" x="178" y="1140.5" text-anchor="end" font-size="11">muse-glimmer-30b</text>
+<rect class="dot" x="192" y="1132.5" width="8" height="8" transform="rotate(45 196 1136.5)"/>
+<text class="m" x="208" y="1140.5" font-size="10">AA 6.3</text>
+</g>
+<g class="small"><title>nemotron-3.5-lightning: no Epoch score, rung small, AA index 5.5, open weights</title>
+<text class="t" x="178" y="1155.5" text-anchor="end" font-size="11">nemotron-3.5-lightning</text>
+<rect class="dot" x="192" y="1147.5" width="8" height="8" transform="rotate(45 196 1151.5)"/>
+<text class="m" x="208" y="1155.5" font-size="10">AA 5.5</text>
+</g>
+<g class="small"><title>nemotron-3.5-super-vl: no Epoch score, rung small, AA index 13.6, open weights</title>
+<text class="t" x="178" y="1170.5" text-anchor="end" font-size="11">nemotron-3.5-super-vl</text>
+<rect class="dot" x="192" y="1162.5" width="8" height="8" transform="rotate(45 196 1166.5)"/>
+<text class="m" x="208" y="1170.5" font-size="10">AA 13.6</text>
+</g>
+<g class="small"><title>step-3.7-flash: no Epoch score, rung small, unscored, open weights</title>
+<text class="t" x="178" y="1185.5" text-anchor="end" font-size="11">step-3.7-flash</text>
+<rect class="dot" x="192" y="1177.5" width="8" height="8" transform="rotate(45 196 1181.5)"/>
+</g>
+<g class="nano"><rect class="band" x="290.0" y="1195.0" width="180.0" height="135"/>
+<line class="rule" x1="28" x2="770" y1="1195.0" y2="1195.0" stroke-width="0.5"/>
+<text class="t" x="28" y="1211.0" font-size="13" font-weight="600">nano</text>
+<text class="m" x="90" y="1211.0" font-size="11">ECI below 130, 7 cards</text></g>
+<g class="nano"><title>llama3.3-70b: ECI 126.1 [123.1, 129.0], rung nano, open weights</title>
+<text class="t" x="178" y="1230.5" text-anchor="end" font-size="11">llama3.3-70b</text>
+<line class="bar" x1="428.6" x2="464.0" y1="1226.5" y2="1226.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="446.6" cy="1226.5" r="4.5"/>
+</g>
+<g class="nano"><title>gpt-4o-mini: ECI 123.9 [120.5, 126.9], rung nano, hosted only</title>
+<text class="t" x="178" y="1245.5" text-anchor="end" font-size="11">gpt-4o-mini</text>
+<line class="bar" x1="413.0" x2="451.4" y1="1241.5" y2="1241.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="433.4" cy="1241.5" r="3.8"/>
+</g>
+<g class="nano"><title>llama3.1-8b: ECI 111.1 [105.5, 116.2], rung nano, open weights</title>
+<text class="t" x="178" y="1260.5" text-anchor="end" font-size="11">llama3.1-8b</text>
+<line class="bar" x1="323.0" x2="387.2" y1="1256.5" y2="1256.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="356.6" cy="1256.5" r="4.5"/>
+</g>
+<g class="nano"><title>gemma-4-e2b: no Epoch score, rung nano, unscored, open weights</title>
+<text class="t" x="178" y="1275.5" text-anchor="end" font-size="11">gemma-4-e2b</text>
+<rect class="dot" x="192" y="1267.5" width="8" height="8" transform="rotate(45 196 1271.5)"/>
+</g>
+<g class="nano"><title>gemma-4-e4b: no Epoch score, rung nano, unscored, open weights</title>
+<text class="t" x="178" y="1290.5" text-anchor="end" font-size="11">gemma-4-e4b</text>
+<rect class="dot" x="192" y="1282.5" width="8" height="8" transform="rotate(45 196 1286.5)"/>
+</g>
+<g class="nano"><title>ministral-3-3b: no Epoch score, rung nano, unscored, open weights</title>
+<text class="t" x="178" y="1305.5" text-anchor="end" font-size="11">ministral-3-3b</text>
+<rect class="dot" x="192" y="1297.5" width="8" height="8" transform="rotate(45 196 1301.5)"/>
+</g>
+<g class="nano"><title>qwen3-4b: no Epoch score, rung nano, unscored, open weights</title>
+<text class="t" x="178" y="1320.5" text-anchor="end" font-size="11">qwen3-4b</text>
+<rect class="dot" x="192" y="1312.5" width="8" height="8" transform="rotate(45 196 1316.5)"/>
+</g>
+<line class="e" x1="470.0" x2="470.0" y1="40" y2="1330.0" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="t" x="470.0" y="1344.0" text-anchor="middle" font-size="11">130</text>
+<line class="e" x1="602.0" x2="602.0" y1="40" y2="1330.0" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="t" x="602.0" y="1344.0" text-anchor="middle" font-size="11">152</text>
+<line class="e" x1="668.0" x2="668.0" y1="40" y2="1330.0" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="t" x="668.0" y="1344.0" text-anchor="middle" font-size="11">163</text>
+<line class="e" x1="698.0" x2="698.0" y1="40" y2="1330.0" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="t" x="698.0" y="1344.0" text-anchor="middle" font-size="11">168</text>
+<text class="m" x="28" y="1366.0" font-size="11">Epoch Capabilities Index with 95% interval. Source: Epoch AI (CC-BY 4.0). Dashed lines: the rung edges.</text>
+<text class="m" x="28" y="1380.0" font-size="11">Dot: open weights. Ring: hosted only. Orange ring: the card's rung is lower than this zone,</text>
+<text class="m" x="28" y="1394.0" font-size="11">because its other view (Artificial Analysis index) is lower.</text>
+<text class="m" x="28" y="1408.0" font-size="11">Diamond at the left: no Epoch score yet, placed by its Artificial Analysis index (AA) or by size and judgement.</text>
+<text class="m" x="28" y="1422.0" font-size="11">51 of 76 cards have an Epoch score. Cards updated 2026-11-16.</text>
 </svg>

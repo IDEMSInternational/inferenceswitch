@@ -21,8 +21,8 @@ a tool built for `mid` would break on it.
 
 | Rung | Epoch ECI from | What is on it (at calibration, 2026-11-16) | Unmeasured, open-weight starting guess |
 |---|---|---|---|
-| `nano` | (none: judged by size) | On-device models, about 4B and under: Gemma 4 E2B, Qwen3 4B | up to ~4B parameters |
-| `small` | below 152 | Gemini 3.5 Flash-Lite 145.6, GPT-5.4 nano 146.4, Qwen3.6 27B 146.7, gpt-oss-120b 140.2 | ~7–14B |
+| `nano` | below 130 | GPT-4o mini 123.9, Llama 3.3 70B 126.1, Llama 3.1 8B 111.1; unscored on-device models (about 4B and under): Gemma 4 E2B and E4B, Qwen3 4B | up to ~4B parameters |
+| `small` | 130 | Gemini 3.5 Flash-Lite 145.6, GPT-5.4 nano 146.4, Qwen3.6 27B 146.7, gpt-oss-120b 140.2 | ~7–14B |
 | `mid` | 152 | Haiku 5.5 160.4, GPT-5.6 Terra 160.7, Gemini 3.8 Flash 158.8, GPT-6 Luna 156.4, GLM-5.3 157.1 | ~30B and up, dense |
 | `large` | 163 | GPT-6 Sol 163.8, Opus 5 164.7, Sonnet 5.5 166.6 | — |
 | `frontier` | 168 | GPT-6 Astra 169.0, Opus 5.5 168.5 | — |
@@ -98,11 +98,16 @@ call: the sweep lists it, and it may say so in its `notes`. A card with only one
 view, because the newest models are not in Epoch's data yet, is placed on that
 one and picks up the other when it appears.
 
-The edges (ECI `mid` 152, `large` 163, `frontier` 168; index v5.0.1 `small` 12,
-`mid` 26, `large` 40, `frontier` 55) sit between the medians of the
-reference models of calibration day, listed in `tools/sweep.py`. `nano` has no
-score edge: the ECI does not separate it from `small`, so a score that says
-`small` leaves a `nano` card where it is.
+The edges (ECI `small` 130, `mid` 152, `large` 163, `frontier` 168; index
+v5.0.1 `small` 12, `mid` 26, `large` 40, `frontier` 55) sit between the medians of
+the reference models of calibration day, listed in `tools/sweep.py`. The `small`
+edge at 130 splits a wide rung: the current `small` references sit at 145 to 157,
+and Qwen3 8B (132) and GPT-4.1 mini (134) are `small`, while GPT-4o mini (124) and
+Llama 3.3 70B (126) are `nano` whatever their size: a rung is capability, not
+parameters. Only the ECI has a `nano` edge. The index cannot tell `nano` from
+`small`, so a card with no Epoch score is `nano` by size (on-device, about 4B and
+under) and a score that says `small` leaves it where it is; a card with an ECI
+goes where the ECI puts it.
 
 Selection never picks a model **below** the requested rung. By default it may
 pick one above (`allow_higher=False` asks for the exact rung), preferring the

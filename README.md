@@ -389,7 +389,7 @@ thresholds never move when a new generation of models arrives. Each card
 records the scores it was placed on. A weekly job refreshes them and redraws
 this chart:
 
-![Model cards on the Epoch Capabilities Index, by rung](docs/model-cards-chart.svg)
+![Every model card, grouped by rung, on the Epoch Capabilities Index](docs/model-cards-chart.svg)
 
 Ask for a rung, the hard requirements and a preference, and get back whichever
 *available* model fits, with the reason:
