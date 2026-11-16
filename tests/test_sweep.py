@@ -56,6 +56,12 @@ def test_a_page_is_read_for_its_scores_and_index_version():
     assert "aa_lcr" not in bench
 
 
+def test_a_zero_on_the_long_context_test_is_not_recorded_as_a_score():
+    # Models with a 32K window score 0 on it because the prompts do not fit.
+    aa = sweep.read_aa_page(_page(_record(lcr=0.0)), "m-1")
+    assert "aa_lcr" not in sweep.benchmarks_from(aa, "2026-11-16")
+
+
 def test_the_highest_effort_record_for_a_slug_is_the_one_read():
     low = _record(intelligenceIndex=10.0, effort={"slug": "low", "label": "low", "level": 10})
     page = _page(low, _record())

@@ -234,7 +234,6 @@
       "benchmarks": {
         "gpqa_diamond": {"score": 45.2, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 1.9, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
-        "aa_lcr": {"score": 0.0, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 28.6, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "tau2": {"score": 24.9, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "livecodebench": {"score": 20.2, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"}
@@ -254,7 +253,6 @@
       "benchmarks": {
         "gpqa_diamond": {"score": 53.5, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 4.1, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
-        "aa_lcr": {"score": 0.0, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 31.5, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "livecodebench": {"score": 28.8, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"}
       },
@@ -1125,7 +1123,6 @@
       "benchmarks": {
         "gpqa_diamond": {"score": 51.5, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 4.6, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
-        "aa_lcr": {"score": 0.0, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 31.9, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "tau2": {"score": 22.2, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "livecodebench": {"score": 32.2, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"}

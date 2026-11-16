@@ -140,6 +140,10 @@ def benchmarks_from(aa: dict, today: str) -> dict[str, dict]:
         value = rec.get(field)
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             continue
+        if field == "lcr" and value == 0:
+            # A 0 on the long-context test is a model whose window is shorter
+            # than the test's prompts (Qwen3 8B, 32B, 30B-A3B), not a score.
+            continue
         entry = {
             "score": round(value * factor, 1),
             "source": AA_SOURCE.format(slug=rec["slug"]),
