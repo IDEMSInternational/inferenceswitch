@@ -5,6 +5,88 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+Cards for the open models used as small steps
+([#29](https://github.com/IDEMSInternational/inferenceswitch/issues/29)), the
+benchmark scores that back their placement, and a weekly sweep that keeps both
+and the prices current.
+
+### Changed
+
+- **Rungs are capability levels, placed by measured scores, not vendor tiers.**
+  A tool built for `mid` should get roughly the same results from any provider's
+  `mid` model. The thresholds are fixed (Epoch ECI `small` 130, `mid` 152, `large`
+  163, `frontier` 168; frozen, never moved when a new generation arrives; see
+  `docs/model-cards.md`). 17 cards move, so `select_model` returns different
+  models:
+  - `frontier` to `large`: `claude-opus-5`, `claude-fable-5`, `claude-fable-5-1`;
+    `frontier` to `mid`: `claude-opus-4-8`
+  - `large` to `mid`: `claude-sonnet-4-6`, `claude-sonnet-5`, `gpt-5.4`,
+    `grok-4.6`, `mistral-large-4`; `large` to `small`: `deepseek-v4-pro`
+  - `mid` to `small`: `claude-haiku-4-5`, `gpt-5.4-mini`, `gpt-4.1`,
+    `gpt-oss-120b`, `llama3.3-70b`, `mistral-medium-3-5`, `qwen3-32b`
+  - `qwen3.8-27b` goes from `mid` to `small` too (before it was moved, 20.1 on
+    the Artificial Analysis index and 152.6 on the ECI).
+  - `mistral-large-3` goes from `large` to `small`: it has no Epoch score, but its
+    other benchmarks estimate an ECI of about 135 [127, 142].
+  - the `small` edge at 130 puts `llama3.3-70b`, `gpt-4o-mini` and `llama3.1-8b`
+    on `nano`: a rung is capability, so a 70B model that scores like GPT-4o mini
+    is `nano`.
+  Each moved card's `notes` says so. Cards with no score keep their placement.
+
+### Added
+
+- **An `openrouter` provider** (`OPENROUTER_API_KEY`, `https://openrouter.ai/api/v1`,
+  OpenAI-compatible, structured output best effort). Selected explicitly:
+  `openrouter/z-ai/glm-5.3-flash`. Answers the question #29 left open: a
+  gateway with one key and a fixed `base_url` is a provider of its own.
+- **`ModelCard.benchmarks`** (`Benchmark`, `ModelCard.benchmark(name)`): published
+  scores for a model, each with its source, date, version and (where the source
+  gives one) 95% interval, as evidence for its rung. A card is placed on two
+  independent views, Epoch AI's Capabilities Index and Artificial Analysis's
+  index, and on the lower of them; no single benchmark places it (see
+  "Benchmarks as evidence" in `docs/model-cards.md`). Optional; selection does not read them. Format stays `1`: a card file
+  without the field loads as before, and an older inferenceswitch rejects one
+  with it, since unknown fields are rejected.
+- **24 model cards**: `qwen3-30b-a3b` (Ollama, LM Studio, OpenRouter; thinking on
+  or off only, no `reasoning_effort`), `glm-5.3`, `glm-5.3-flash`,
+  `minimax-m3.1-flash`, `mimo-v2.6-flash`, `mimo-v2.6-pro`, `kimi-k3.1-pro`,
+  `deepseek-v4.1-flash`, `deepseek-v4.1-flash-1017`, `qwen3.8-flash`,
+  `qwen3.8-2.4t-a95b`, `qwen3.6-35b-a3b`, `qwen3.6-27b`, `qwen3.5-9b`,
+  `nemotron-3.5-lightning`, `nemotron-3.5-super-vl`, `gemma-4-31b`,
+  `gemma-4-26b-a4b`, `step-3.7-flash`, `hy3`, `hy4`, `inkling-2-small`,
+  `granite-4.2-8b` and `muse-glimmer-30b`, each placed on those two views.
+  `kimi-k3.1-pro` is `mid`, a candidate for `large`: its two views split. The
+  existing cards the two sources cover gain their scores too (50 with an ECI, 41
+  with an Artificial Analysis page).
+- **Gemma 4 E4B and 12B (QAT) cards** on `lmstudio`, `gemma-4-e4b` `nano` (an effective-4B on-device model, though its scores match a
+  small one, so `select_model("small")` skips it) and `gemma-4-12b-qat` `small` (no
+  Epoch row; placed by its scores against `qwen3.5-9b`), with tool calling,
+  streaming thinking, image input and `reasoning_effort none` seen against a live
+  LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
+  card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
+  quantization-aware build.
+- **A provider-by-rung table in the README**, generated from the cards: each
+  provider's models on the rung they are placed on, best first, so a column reads
+  as the equivalent choices across providers. Redrawn by each sweep; a test fails
+  if it is stale.
+- **An ECI estimated from a card's other benchmarks**, for the models Epoch has not
+  scored (HLE, GPQA, IFBench, tool use and so on mapped onto the ECI scale from the
+  cards that have both, ignoring any benchmark at its floor or ceiling; leave-one-out
+  error about 4 ECI points, so the band is wide and a card inside it is not moved).
+  The README explains how a rung is decided.
+- **`docs/model-cards-chart.svg`**, the chart in the README: every card, grouped
+  by rung, against the evidence its rung is read from: the Epoch Capabilities Index
+  (a dot with its 95% interval, or for a card Epoch has not scored a diamond with a
+  dashed bar at its estimated ECI) and the Artificial Analysis index (a dot), each in
+  the rung's band on that scale. Redrawn by `python tools/sweep.py chart` and by each
+  weekly sweep. A test fails if it is stale.
+- **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
+  refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
+  Analysis) in a pull request, and
+  keeps one issue of what needs a person (new open models, prices OpenRouter lists
+  differently from a card, cards whose scores suggest another rung). Standard library only; no
+  keys and no model calls.
+
 ## [0.12.0] — 2026-11-11
 
 ### Added

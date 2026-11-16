@@ -142,6 +142,34 @@ class OpenWeight:
 
 
 @dataclass(frozen=True)
+class Benchmark:
+    """One published score for a model: evidence for its rung, not part of it.
+
+    A score is on the benchmark's own scale (a percentage for most, an index
+    that is not bounded by 100 for Epoch's). ``source`` and ``date`` say
+    who measured it and when, because the same benchmark run by the vendor and
+    by an independent evaluator is not the same number; ``version`` is the
+    benchmark's version where it has one (an index is re-based when its parts
+    change, so scores from different versions do not compare).
+    """
+
+    name: str
+    score: float
+    #: Who measured it: ``"artificialanalysis.ai"``, or the vendor's name for a
+    #: score taken from the vendor's own model card.
+    source: str
+    #: ISO date the score was read.
+    date: str
+    version: str | None = None
+    #: How the model was run, where that matters (``"max effort"``).
+    setting: str | None = None
+    #: The source's own 95% interval around ``score`` (low, high), where it
+    #: publishes one. A score near a rung's edge with an interval across it is
+    #: not evidence for either side.
+    interval: tuple[float, float] | None = None
+
+
+@dataclass(frozen=True)
 class ModelCard:
     id: str
     rung: Rung
@@ -154,7 +182,14 @@ class ModelCard:
     features_add: frozenset[Capability] = frozenset()
     features_remove: frozenset[Capability] = frozenset()
     open_weight: OpenWeight | None = None
+    #: Published scores, as evidence for ``rung`` (see ``docs/model-cards.md``).
+    #: Selection does not read them.
+    benchmarks: tuple[Benchmark, ...] = ()
     notes: str = ""
+
+    def benchmark(self, name: str) -> Benchmark | None:
+        """The card's score for ``name``, if it has one."""
+        return next((b for b in self.benchmarks if b.name == name), None)
 
     def route(self, provider: str) -> Route | None:
         return next((r for r in self.routes if r.provider == provider), None)
@@ -193,6 +228,7 @@ class ModelCard:
                 features_add=frozenset(Capability(c) for c in features.get("add", ())),
                 features_remove=frozenset(Capability(c) for c in features.get("remove", ())),
                 open_weight=ow,
+                benchmarks=_benchmarks_from(data.get("benchmarks"), where),
                 notes=data.get("notes", ""),
             )
         except KeyError as exc:
@@ -225,6 +261,15 @@ class ModelCard:
             out["open_weight"] = {
                 k: v for k, v in vars(self.open_weight).items() if v is not None
             }
+        if self.benchmarks:
+            out["benchmarks"] = {
+                b.name: {
+                    k: (list(v) if k == "interval" else v)
+                    for k, v in vars(b).items()
+                    if k != "name" and v is not None
+                }
+                for b in self.benchmarks
+            }
         if self.notes:
             out["notes"] = self.notes
         return out
@@ -232,9 +277,10 @@ class ModelCard:
 
 _CARD_KEYS = {
     "id", "rung", "routes", "structured_output", "context_window",
-    "features", "open_weight", "notes",
+    "features", "open_weight", "benchmarks", "notes",
 }
 _OPEN_WEIGHT_KEYS = {"family", "params_b", "quantization", "active_params_b"}
+_BENCHMARK_KEYS = {"score", "source", "date", "version", "setting", "interval"}
 
 
 def _check_keys(data: Any, allowed: set[str], where: str) -> None:
@@ -251,6 +297,42 @@ def _str(value: Any, where: str) -> str:
     if not isinstance(value, str) or not value:
         raise ModelCardError(f"{where}: expected a non-empty string")
     return value
+
+
+def _benchmarks_from(raw: Any, where: str) -> tuple[Benchmark, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, Mapping):
+        raise ModelCardError(f"{where}: 'benchmarks' must be an object keyed by benchmark name")
+    out = []
+    for name, entry in raw.items():
+        here = f"{where} benchmark {name!r}"
+        _check_keys(entry, _BENCHMARK_KEYS, here)
+        score = entry.get("score")
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            raise ModelCardError(f"{here}: 'score' must be a number")
+        interval = entry.get("interval")
+        if interval is not None:
+            ok = (
+                isinstance(interval, (list, tuple)) and len(interval) == 2
+                and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in interval)
+                and interval[0] <= score <= interval[1]
+            )
+            if not ok:
+                raise ModelCardError(f"{here}: 'interval' must be [low, high] around the score")
+            interval = (float(interval[0]), float(interval[1]))
+        out.append(
+            Benchmark(
+                name=_str(name, f"{where} benchmark name"),
+                score=float(score),
+                source=_str(entry.get("source"), f"{here} source"),
+                date=_str(entry.get("date"), f"{here} date"),
+                version=entry.get("version"),
+                setting=entry.get("setting"),
+                interval=interval,
+            )
+        )
+    return tuple(out)
 
 
 def _context_window(value: Any, where: str) -> int | None:

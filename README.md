@@ -24,7 +24,7 @@ Provider SDKs are optional extras — install only what you use:
 ```
 pip install "inferenceswitch[anthropic]"   # Anthropic (native)
 pip install "inferenceswitch[gemini]"      # Google Gemini (native)
-pip install "inferenceswitch[openai]"      # OpenAI + Mistral/DeepSeek/Groq/Ollama/LM Studio
+pip install "inferenceswitch[openai]"      # OpenAI + Mistral/DeepSeek/Groq/OpenRouter/Ollama/LM Studio
 pip install "inferenceswitch[all]"
 ```
 
@@ -83,6 +83,7 @@ no silent default provider.
 | `deepseek` | openai-compat | `DEEPSEEK_API_KEY` | |
 | `xai` | openai-compat | `XAI_API_KEY` | Grok (`grok-*` routes here) |
 | `groq` | openai-compat | `GROQ_API_KEY` | select explicitly (`groq/...`) |
+| `openrouter` | openai-compat | `OPENROUTER_API_KEY` | one key, many hosted models; select explicitly (`openrouter/z-ai/glm-5.3-flash`), best-effort JSON |
 | `ollama` | openai-compat | — | local `http://localhost:11434/v1`, best-effort JSON |
 | `lmstudio` | openai-compat | — | local `http://localhost:1234/v1`, best-effort JSON |
 
@@ -370,14 +371,62 @@ raw.messages.create(..., extra_headers={...})       # provider-specific call
 ## Model cards and choosing a model by rung
 
 Capabilities above describe a *provider*. **Model cards** describe a *model*:
-a vendor-neutral **rung** (`nano` / `small` / `mid` / `large` / `frontier`,
-provisional), how reliably it returns schema-valid JSON (`reliable` /
+a vendor-neutral **rung** (`nano` / `small` / `mid` / `large` / `frontier`),
+how reliably it returns schema-valid JSON (`reliable` /
 `best_effort` / `none`), its context window, list price per million tokens,
 per-model capability overrides, and for open-weight models the family,
 parameter count and quantization. They ship as a versioned data file
 ([`inferenceswitch/model_cards.json`](inferenceswitch/model_cards.json)); the
 placement rubric and field reference are in
 [`docs/model-cards.md`](docs/model-cards.md).
+
+### What is supported, and what is equivalent
+
+A rung is a **capability level**: a tool built for `mid` should get roughly the
+same results from any provider's `mid` model. Read a column across providers to
+see the equivalent choices; a model served by several providers is in each row.
+`*` marks a model Epoch has not scored yet, whose rung comes from an estimate or
+the Artificial Analysis index instead. Best first within a cell.
+
+<!-- model-table:start -->
+| Provider | nano | small | mid | large | frontier |
+|---|---|---|---|---|---|
+| Anthropic | – | `claude-haiku-4-5` | `claude-haiku-5-5`<br>`claude-opus-4-8`<br>`claude-sonnet-5`<br>`claude-sonnet-4-6` | `claude-fable-5-1`<br>`claude-sonnet-5-5`<br>`claude-opus-5`<br>`claude-fable-5` | `claude-opus-5-5` |
+| Google Gemini | – | `gemini-3.5-flash-lite`<br>`gemini-3.1-flash-lite` | `gemini-3.8-flash`<br>`gemini-3.5-flash`<br>`gemini-3.6-flash`<br>`gemini-3-flash` | `gemini-3.1-pro-preview`\* | – |
+| OpenAI | `gpt-4o-mini` | `gpt-5.6-luna`<br>`gpt-5.4-mini`<br>`gpt-5.4-nano`<br>`gpt-4.1`<br>`gpt-4.1-mini` | `gpt-5.6-terra`<br>`gpt-5.4`<br>`gpt-6-luna` | `gpt-6.1-sol`<br>`gpt-6-sol`<br>`gpt-5.6-sol` | `gpt-6-astra` |
+| Mistral | `ministral-3-3b`\* | `mistral-medium-3-5`<br>`mistral-small-4`\*<br>`mistral-large-3`\*<br>`ministral-3-14b`\*<br>`ministral-3-8b`\* | `mistral-large-4` | – | – |
+| DeepSeek | – | `deepseek-v4-pro` | `deepseek-flash`\* | – | – |
+| xAI | – | – | `grok-4.6`<br>`grok-4.20-non-reasoning`\* | – | – |
+| Groq | – | `qwen3.8-27b`<br>`gpt-oss-120b`<br>`gpt-oss-20b` | – | – | – |
+| OpenRouter | – | `hy3`\*<br>`nemotron-3.5-super-vl`\*<br>`muse-glimmer-30b`\*<br>`qwen3.6-27b`<br>`step-3.7-flash`\*<br>`gemma-4-31b`<br>`qwen3.6-35b-a3b`<br>`gemma-4-26b-a4b`<br>`qwen3.5-9b`<br>`nemotron-3.5-lightning`\*<br>`granite-4.2-8b`\*<br>`qwen3-30b-a3b` | `mimo-v2.6-pro`\*<br>`kimi-k3.1-pro`<br>`deepseek-v4.1-flash-1017`<br>`minimax-m3.1-flash`\*<br>`qwen3.8-2.4t-a95b`\*<br>`inkling-2-small`\*<br>`qwen3.8-flash`\*<br>`glm-5.3`<br>`deepseek-v4.1-flash`<br>`mimo-v2.6-flash`\*<br>`glm-5.3-flash`<br>`hy4`\* | – | – |
+| Ollama (local) | `qwen3-4b`\*<br>`llama3.3-70b`<br>`llama3.1-8b` | `gpt-oss-120b`<br>`qwen3-32b`<br>`gpt-oss-20b`<br>`qwen3-30b-a3b`<br>`qwen3-8b` | – | – | – |
+| LM Studio (local) | `gemma-4-e4b`\*<br>`gemma-4-e2b`\*<br>`qwen3-4b`\*<br>`llama3.3-70b`<br>`llama3.1-8b` | `gemma-4-12b-qat`\*<br>`gpt-oss-120b`<br>`qwen3-32b`<br>`gpt-oss-20b`<br>`qwen3-30b-a3b`<br>`qwen3-8b` | – | – | – |
+<!-- model-table:end -->
+
+### How a model gets its rung
+
+A rung is a **fixed threshold on a measured score**, not a vendor's tier name, so
+an established tool is never made stricter by a new generation of models: the
+thresholds are frozen and models move across them as they are re-scored. Each
+card records the benchmarks it was placed on, and is graded on the lower of up to
+three views:
+
+1. **[Epoch AI's Capabilities Index](https://epoch.ai/benchmarks/eci)** (ECI): 50+
+   benchmarks of very different difficulty stitched onto one scale, with a 95%
+   interval, so a model that tops one benchmark still gets a fair score on a harder one.
+2. **An estimated ECI**, for a model Epoch has not scored yet: its other published
+   benchmarks (GPQA, HLE, IFBench, tool use, long context and so on) mapped onto the
+   ECI scale from the models that have both, using only those that are neither at
+   their floor nor their ceiling. Its leave-one-out error is about 4 ECI points, so
+   its band is wide and a card inside it is not moved.
+3. **[Artificial Analysis's Intelligence Index](https://artificialanalysis.ai)**,
+   which covers the newest models first but leans to agentic work.
+
+The chart shows the evidence for every card, in its rung's band on each scale; the
+way a rung is decided is written up in [`docs/model-cards.md`](docs/model-cards.md).
+A weekly job refreshes the scores and redraws this chart and the table above.
+
+![Every model card, grouped by rung, on the Epoch Capabilities Index and the Artificial Analysis index](docs/model-cards-chart.svg)
 
 Ask for a rung, the hard requirements and a preference, and get back whichever
 *available* model fits, with the reason:

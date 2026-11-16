@@ -28,7 +28,7 @@ def test_shipped_cards_load():
     cards = default_cards()
     assert len(cards) >= 6
     assert cards.updated
-    assert cards.get("claude-haiku-4-5").rung is Rung.MID
+    assert cards.get("claude-haiku-5-5").rung is Rung.MID
 
 
 def test_every_route_names_a_registered_provider():
@@ -160,12 +160,37 @@ def _file(*cards, fmt=1):
         _card_dict(context_window="8k"),
         _card_dict(routes={"groq": {"models": ["x"], "cost": {"input": 1, "output": 2, "cached": 1}}}),
         _card_dict(features={"add": ["telepathy"]}),
+        _card_dict(benchmarks=[{"score": 1}]),   # a list, not an object by name
+        _card_dict(benchmarks={"b": {"score": 1, "source": "s"}}),                    # no date
+        _card_dict(benchmarks={"b": {"score": "high", "source": "s", "date": "d"}}),  # not a number
+        _card_dict(benchmarks={"b": {"score": 1, "source": "s", "date": "d", "note": "x"}}),  # typo'd field
+        _card_dict(benchmarks={"b": {"score": 5, "source": "s", "date": "d", "interval": [6, 7]}}),  # score outside it
+        _card_dict(benchmarks={"b": {"score": 5, "source": "s", "date": "d", "interval": [4]}}),     # not a pair
         {"id": "x", "rung": "small"},            # missing fields
     ],
 )
 def test_malformed_cards_are_rejected(card):
     with pytest.raises(ModelCardError):
         ModelCards.from_dict(_file(card))
+
+
+def test_benchmarks_round_trip_and_stay_optional():
+    bench = {"aa_intelligence_index": {"score": 31.7, "source": "artificialanalysis.ai/models/glm-5-3",
+                                       "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
+             "hle": {"score": 42.3, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16"},
+             "epoch_eci": {"score": 157.1, "source": "epoch.ai/data/eci_scores.csv#GLM-5.3",
+                           "date": "2026-11-16", "interval": [154.9, 159.5]}}
+    cards = ModelCards.from_dict(_file(_card_dict(benchmarks=bench), _card_dict(id="y")))
+    card = cards.get("x")
+    index = card.benchmark("aa_intelligence_index")
+    assert (index.score, index.version, index.setting) == (31.7, "5.0.1", "max")
+    assert card.benchmark("hle").version is None and card.benchmark("hle").interval is None
+    assert card.benchmark("epoch_eci").interval == (154.9, 159.5)
+    assert card.benchmark("gpqa_diamond") is None
+    assert cards.get("y").benchmarks == ()
+    assert "benchmarks" not in cards.get("y").to_dict()
+    assert cards.to_dict()["cards"][0]["benchmarks"] == bench
+    assert ModelCards.from_json(json.dumps(cards.to_dict())).get("x") == card
 
 
 def test_unknown_format_is_rejected():
@@ -182,16 +207,16 @@ def test_merged_adds_and_overrides_without_touching_defaults():
     defaults = default_cards()
     mine = ModelCards.from_dict(
         _file(
-            _card_dict(id="claude-haiku-4-5", rung="small",
-                       routes={"anthropic": {"models": ["claude-haiku-4-5"]}},
+            _card_dict(id="claude-haiku-5-5", rung="large",
+                       routes={"anthropic": {"models": ["claude-haiku-5-5"]}},
                        structured_output="reliable"),
             _card_dict(id="my-model"),
         )
     )
     merged = defaults.merged(mine)
-    assert merged.get("claude-haiku-4-5").rung is Rung.SMALL
+    assert merged.get("claude-haiku-5-5").rung is Rung.LARGE
     assert "my-model" in merged
-    assert defaults.get("claude-haiku-4-5").rung is Rung.MID
+    assert defaults.get("claude-haiku-5-5").rung is Rung.MID
     assert "my-model" not in defaults
     assert len(merged) == len(defaults) + 1
     assert "my-model" not in merged.without("my-model")
