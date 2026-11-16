@@ -1388,7 +1388,7 @@
     },
     {
       "id": "gemma-4-e4b",
-      "rung": "small",
+      "rung": "nano",
       "routes": {
         "lmstudio": {"models": ["google/gemma-4-e4b"], "cost": null}
       },
@@ -1405,7 +1405,7 @@
         "tau2": {"score": 20.8, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"},
         "terminal_bench_2_1": {"score": 1.9, "source": "artificialanalysis.ai/models/gemma-4-e4b", "date": "2026-11-16"}
       },
-      "notes": "Small: Google's effective-4B Gemma 4 (8B parameters with embeddings, 4.5B active). It has no Epoch row and no index above the floor, so it is placed by its scores against qwen3-8b (small): GPQA Diamond 57.6 against 45.2, HLE 3.8 against 1.9, IFBench 44.2 against 28.6. Not nano, which is the e2b. Seen on LM Studio (2026-11-16): native tool calling, streaming (thinking arrives as reasoning_content), image input (a solid-colour PNG read correctly), thinking on by default, and reasoning_effort none leaving it empty. json_schema is accepted, but inferenceswitch sends json_object to LM Studio, which answers 400 (#25), so structured_output is none until that is fixed. No Ollama route: its tag was not checked. On a one-line sum, reasoning_effort low and high produced no reasoning tokens, so the levels are not graded."
+      "notes": "Nano, by size and on review: Google's effective-4B Gemma 4 (8B parameters with embeddings, 4.5B active), an on-device model, at the top of the nano range. By its scores it is as strong as a small model (it has no Epoch row and no index above the floor, but GPQA Diamond 57.6 is level with ministral-3-14b's 57.2 and above qwen3-8b's 45.2; IFBench 44.2 against 28.6), so a caller asking for small does not get it: select_model never picks below the requested rung. Seen on LM Studio (2026-11-16): native tool calling, streaming (thinking arrives as reasoning_content), image input (a solid-colour PNG read correctly), thinking on by default, and reasoning_effort none leaving it empty. json_schema is accepted, but inferenceswitch sends json_object to LM Studio, which answers 400 (#25), so structured_output is none until that is fixed. No Ollama route: its tag was not checked. On a one-line sum, reasoning_effort low and high produced no reasoning tokens, so the levels are not graded."
     },
     {
       "id": "gemma-4-12b-qat",

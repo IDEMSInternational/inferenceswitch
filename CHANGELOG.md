@@ -53,8 +53,9 @@ and the prices current.
   `kimi-k3.1-pro` is `mid`, a candidate for `large`: its two views split. The
   existing cards the two sources cover gain their scores too (50 with an ECI, 41
   with an Artificial Analysis page).
-- **Gemma 4 E4B and 12B (QAT) cards** on `lmstudio`, both `small` (no Epoch row;
-  placed by their scores against `qwen3-8b` and `qwen3.5-9b`), with tool calling,
+- **Gemma 4 E4B and 12B (QAT) cards** on `lmstudio`, `gemma-4-e4b` `nano` (an effective-4B on-device model, though its scores match a
+  small one, so `select_model("small")` skips it) and `gemma-4-12b-qat` `small` (no
+  Epoch row; placed by its scores against `qwen3.5-9b`), with tool calling,
   streaming thinking, image input and `reasoning_effort none` seen against a live
   LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
   card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
