@@ -133,23 +133,47 @@ def test_openrouter_is_a_keyed_provider_with_no_bare_name_routing():
 def test_every_benchmark_says_where_and_when_it_was_read():
     for card in default_cards():
         for bench in card.benchmarks:
-            assert 0 <= bench.score <= 100, (card.id, bench.name)
             assert bench.source and bench.date, (card.id, bench.name)
             assert bench.date <= default_cards().updated, (card.id, bench.name)
+            # An ECI is an index around 100 to 180; every other score is a percentage.
+            assert bench.score >= 0 and (bench.name == "epoch_eci" or bench.score <= 100), (card.id, bench.name)
+            if bench.interval:
+                assert bench.interval[0] <= bench.score <= bench.interval[1], (card.id, bench.name)
 
 
-def test_scores_for_one_card_come_from_one_page():
+def test_scores_for_one_card_come_from_one_page_per_source():
     for card in default_cards():
-        assert len({b.source for b in card.benchmarks}) <= 1, card.id
+        aa = {b.source for b in card.benchmarks if b.source.startswith("artificialanalysis.ai/")}
+        epoch = {b.source for b in card.benchmarks if b.source.startswith("epoch.ai/")}
+        assert len(aa) <= 1 and len(epoch) <= 1, card.id
+        assert len(aa) + len(epoch) == len({b.source for b in card.benchmarks}), card.id
 
 
-def test_open_weight_cards_sit_where_the_index_bands_put_them_or_are_listed():
+@pytest.mark.parametrize("score,rung", [(125.0, "small"), (151.9, "small"), (152.0, "mid"),
+                                        (161.4, "mid"), (163.0, "large"), (168.0, "frontier")])
+def test_eci_rung_edges(score, rung):
+    assert sweep.suggest_rung_eci(score) == rung
+
+
+def test_a_card_is_placed_on_the_lower_of_its_two_views():
+    g = sweep.grade({
+        "epoch_eci": {"score": 152.6, "interval": [150.6, 154.8]},
+        "aa_intelligence_index": {"score": 20.1},
+    })
+    assert g["views"] == {"eci": "mid", "aa": "small"}
+    assert (g["suggested"], g["agree"], g["borderline"]) == ("small", False, True)
+    # The AA index at its floor has no view, so the ECI alone speaks.
+    only = sweep.grade({"epoch_eci": {"score": 140.0}, "aa_intelligence_index": {"score": 3.8}})
+    assert only["views"] == {"eci": "small"} and only["agree"]
+    assert sweep.grade({})["suggested"] is None
+
+
+def test_open_weight_cards_sit_where_their_scores_put_them_or_are_listed():
     off = {}
     for card in default_cards():
-        index = card.benchmark("aa_intelligence_index")
-        if card.open_weight is None or index is None:
+        if card.open_weight is None:
             continue
-        suggested = sweep.suggest_rung(index.score)
-        if suggested is not None and suggested != card.rung.value:
-            off[card.id] = suggested
-    assert set(off) == set(sweep.OFF_BAND), off
+        g = sweep.grade(json.loads(json.dumps(card.to_dict().get("benchmarks"))) or None)
+        if g["suggested"] is not None and g["suggested"] != card.rung.value:
+            off[card.id] = g["suggested"]
+    assert set(off) == set(sweep.REVIEWED), off

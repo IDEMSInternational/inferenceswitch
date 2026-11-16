@@ -48,25 +48,61 @@ How to place a model:
 Parameter count is a starting point, not a measure: GLM-5.3 has 753B parameters
 and scores like a `mid` model, and a dense 31B Gemma 4 scores below Haiku-class
 work. For open-weight models the card therefore records published scores
-(`benchmarks`), and the rung is checked against the **Artificial Analysis
-Intelligence Index** (v5), an independent score that is re-run by the evaluator
-rather than taken from the vendor. Read off the reference models:
+(`benchmarks`) and the rung is checked against them.
 
-| Index | Rung | Reference models on it |
-|---|---|---|
-| under 12 | no suggestion | gpt-oss-120b 3.8, Mistral Small 4 4.3: the index cannot tell them apart; parameters and HLE decide |
-| 12 to 26 | `small` | Gemini 3.5 Flash-Lite 11.7, GPT-5.6 Luna 23.8, Qwen3.8 27B 20.1 |
-| 26 to 40 | `mid` | GPT-6 Luna 27.9, Gemini 3.8 Flash 30.8, GPT-5.6 Terra 32.3, Haiku 5.5 36.5 |
-| 40 to 55 | `large` | GPT-6 Sol 44.2, Kimi K3.1 Pro 46.5, Sonnet 5.5 54.5 |
-| 55 and up | `frontier` | GPT-6 Astra 56.9, Opus 5.5 59.1 |
+**Never one benchmark.** Each benchmark is a sigmoid in capability: it separates
+models only in its middle, sits at its floor for models below it and at its
+ceiling for models above. GSM8K is saturated by every current model, GPQA
+Diamond is above 90% for many of them, and Artificial Analysis's index is at
+its floor (3 to 6) for anything that is not agentic. A model that tops one
+benchmark still gets a fair score on a harder one, so a single benchmark
+mis-places both ends. The card is graded on two independent views, each
+combining many benchmarks:
 
-The bands are for **open-weight** cards only. A vendor's own tiers overlap on
-them (Opus 5 scores 44.2 and is `frontier`; Mistral Large 4 scores 26.1 and is
-`large`), and rule 1 above places those by tier. Where an open-weight model has
-no index (Artificial Analysis stops re-running older models) place it by HLE and
-size against the same references, and say so in `notes`. The bands only prompt a
-second look: `tools/sweep.py` lists a card that sits off its band, and a card
-that stays off it is written down in `OFF_BAND` there with the reason.
+- **Epoch Capabilities Index (ECI)**, from [Epoch AI](https://epoch.ai/benchmarks/eci)
+  (CC-BY 4.0). One scale stitched from 50+ benchmarks of very different
+  difficulty (GPQA Diamond, FrontierMath, SimpleQA, ARC-AGI, Terminal-Bench,
+  OSWorld, ProofBench and others, fit jointly so that each benchmark's
+  difficulty is estimated rather than assumed), with a 95% interval. It is the
+  broad, general view, but covers a model only once Epoch has results for it,
+  weeks after release, and from a different subset of benchmarks for each model.
+- **Artificial Analysis Intelligence Index (v5.0.1)**, which averages nine
+  evaluations: AA-Briefcase, AutomationBench-AA, Terminal-Bench 4.0,
+  FrontierCode-AA 2.0, AA-Omniscience, GDP.pdf, HLE-Diamond, CritPt (hard
+  subset) and Terminal-Bench-Science. It covers the newest models first, but is
+  weighted to agentic, coding and professional-task work, where the rubric above
+  places a model on general reasoning and instruction following. Where it is at
+  its floor it gives no view.
+
+The two are recorded as `epoch_eci` and `aa_intelligence_index`, next to the
+single benchmarks Artificial Analysis publishes (`hle`, `gpqa_diamond`,
+`ifbench` and others), which are kept for a reviewer to read and are not used to
+place a card. **The lower of the two views places a card** (an index that is not
+published, or at its floor, has no view). That is the under-claim rule: placing
+a model too low costs a consumer a dearer model, placing it too high gives them
+a wrong answer. A card whose two views differ, or whose ECI interval crosses a
+rung's edge, is a close call and says so in its `notes`.
+
+The edges are the midpoints between the medians of the current generation of
+reference models in the rubric table (the tiers of Claude, Gemini, GPT and
+Mistral on the table below, mostly released since spring 2026):
+
+| Rung | ECI from | AA index from | Reference models (ECI, then AA index) |
+|---|---|---|---|
+| `small` | below 152 | 12 | Gemini 3.5 Flash-Lite 145.6 / 11.7, GPT-5.4 nano 146.4, GPT-5.6 Luna 156.7 / 23.8 |
+| `mid` | 152 | 26 | Haiku 5.5 160.4 / 36.5, GPT-5.6 Terra 160.7 / 32.3, Gemini 3.8 Flash 158.8 / 30.8, GPT-6 Luna 156.4 / 27.9 |
+| `large` | 163 | 40 | Sonnet 5.5 166.6 / 54.5, GPT-6 Sol 163.8 / 44.2, GPT-6.1 Sol 168.5 / 54.6 |
+| `frontier` | 168 | 55 | GPT-6 Astra 169.0 / 56.9, Opus 5.5 168.5 / 59.1, Fable 5.2 173.4 |
+
+The edges are for **open-weight** cards only. A vendor's own tiers overlap on
+them (Opus 4.8 scores below Haiku 5.5 on ECI; Opus 5 scores 44.2 on the index),
+and rule 1 above places those by tier. A model of an older generation is
+compared with the current references and lands lower than the vendor tier it
+would once have matched (gpt-oss-120b is 140 on ECI against Haiku 4.5's 143),
+which is the rubric's "move down if clearly weaker, for example an older
+generation". `tools/sweep.py` lists an open-weight card that sits off the rung
+its scores suggest, and a card that stays off it is written down in `REVIEWED`
+there with the reason.
 
 Selection never picks a model **below** the requested rung. By default it may
 pick one above (`allow_higher=False` asks for the exact rung), preferring the
@@ -110,18 +146,23 @@ mechanism inferenceswitch does not enforce.
   its provider (Haiku 4.5 accepts `temperature`; the Anthropic default does
   not claim it).
 - **`benchmarks`**: published scores for the model, an object keyed by
-  benchmark name, each `{"score", "source", "date"}` and optionally `version`
-  and `setting`. Scores are on the benchmark's own 0 to 100 scale. `source` is
+  benchmark name, each `{"score", "source", "date"}` and optionally `version`,
+  `setting` and `interval`. A score is on the benchmark's own scale (a percentage
+  for most; the ECI is an index that is not bounded by 100). `interval` is the
+  source's 95% interval `[low, high]` where it publishes one (the ECI does).
+  `source` is
   who measured it (`artificialanalysis.ai/models/<slug>` for a page there, or a
   vendor's name for a score from its own model card, which is not comparable
   with an independent one); `date` is when it was read; `version` is the index
   or benchmark version, because an index is re-based when its parts change and
   scores from different versions do not compare; `setting` is how the model
   was run (`max` effort). They are evidence for `rung`; selection does not read
-  them. The sweep records `aa_intelligence_index`, `gpqa_diamond`, `hle`,
-  `scicode`, `aa_lcr`, `ifbench`, `tau2`, `terminal_bench_2_1` and
-  `livecodebench` where Artificial Analysis publishes them, from one page per
-  card.
+  them. The sweep records `epoch_eci` (source
+  `epoch.ai/data/eci_scores.csv#<model>`) where Epoch has a row for the model,
+  and `aa_intelligence_index`, `gpqa_diamond`, `hle`, `scicode`, `aa_lcr`,
+  `ifbench`, `tau2`, `terminal_bench_2_1` and `livecodebench` where Artificial
+  Analysis publishes them, from one page there. Epoch AI's data is used under
+  CC-BY 4.0.
 - **`open_weight`**: `family`, `params_b`, `quantization` and optionally
   `active_params_b`. A different quantization of the same weights is a separate
   card (e.g. `qwen3-8b-q8`), since it can change both quality and memory.
@@ -145,6 +186,7 @@ mechanism inferenceswitch does not enforce.
       "features": {"add": [], "remove": []},
       "open_weight": {"family": "qwen3", "params_b": 8, "quantization": "Q4_K_M"},
       "benchmarks": {
+        "epoch_eci": {"score": 157.1, "source": "epoch.ai/data/eci_scores.csv#GLM-5.3", "date": "2026-11-16", "interval": [154.9, 159.5]},
         "aa_intelligence_index": {"score": 31.7, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16", "version": "5.0.1", "setting": "max"}
       },
       "notes": "Roughly a rung below Haiku on general reasoning."
@@ -185,10 +227,10 @@ in code; a card with the same `id` replaces the shipped one.
   at least before each release. Bump `updated` when you do.
 - **A weekly sweep does the looking up.** `.github/workflows/sweep.yml` runs
   `tools/sweep.py` (standard library only, no keys, no model calls) every
-  Monday. It reads OpenRouter's public catalog and Artificial Analysis's model
-  pages, and
-  - **rewrites** the `openrouter` route prices and the `benchmarks` of cards
-    that name an Artificial Analysis page, then opens a pull request if the file
+  Monday. It reads OpenRouter's public catalog, Epoch AI's ECI data and
+  Artificial Analysis's model pages, and
+  - **rewrites** the `openrouter` route prices and the `benchmarks` (ECI, and
+    Artificial Analysis for cards that name a page there), then opens a pull request if the file
     changed (after the test suite passes on it);
   - **reports**, in one standing issue refreshed each week, what only a person
     can decide: open models from the last 120 days with no card yet, other

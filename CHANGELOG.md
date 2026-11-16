@@ -14,7 +14,8 @@ and the prices current.
 
 - **`qwen3.8-27b` moves from `mid` to `small`**: 20.1 on the Artificial Analysis
   index (GPT-5.6 Luna, `small`, is 23.8; the `mid` references start at 27.9) and
-  HLE 33.9. `select_model("mid")` no longer returns it.
+  152.6 on the Epoch Capabilities Index, on the `mid` edge with its interval
+  across it. `select_model("mid")` no longer returns it.
 
 ### Added
 
@@ -23,8 +24,11 @@ and the prices current.
   `openrouter/z-ai/glm-5.3-flash`. Answers the question #29 left open: a
   gateway with one key and a fixed `base_url` is a provider of its own.
 - **`ModelCard.benchmarks`** (`Benchmark`, `ModelCard.benchmark(name)`): published
-  scores for a model, each with its source, date and version, as evidence for
-  its rung. Optional; selection does not read them. Format stays `1`: a card file
+  scores for a model, each with its source, date, version and (where the source
+  gives one) 95% interval, as evidence for its rung. A card is placed on two
+  independent views, Epoch AI's Capabilities Index and Artificial Analysis's
+  index, and on the lower of them; no single benchmark places it (see
+  "Benchmarks as evidence" in `docs/model-cards.md`). Optional; selection does not read them. Format stays `1`: a card file
   without the field loads as before, and an older inferenceswitch rejects one
   with it, since unknown fields are rejected.
 - **24 model cards**: `qwen3-30b-a3b` (Ollama, LM Studio, OpenRouter; thinking on
@@ -34,14 +38,15 @@ and the prices current.
   `qwen3.8-2.4t-a95b`, `qwen3.6-35b-a3b`, `qwen3.6-27b`, `qwen3.5-9b`,
   `nemotron-3.5-lightning`, `nemotron-3.5-super-vl`, `gemma-4-31b`,
   `gemma-4-26b-a4b`, `step-3.7-flash`, `hy3`, `hy4`, `inkling-2-small`,
-  `granite-4.2-8b` and `muse-glimmer-30b`, each placed by the new
-  "Benchmarks as evidence" bands in `docs/model-cards.md`, with scores read from
-  Artificial Analysis. The other 41 cards that Artificial Analysis lists gain
-  their scores too.
+  `granite-4.2-8b` and `muse-glimmer-30b`, each placed on those two views.
+  `kimi-k3.1-pro` is `mid`, a candidate for `large`: its two views split. The
+  existing cards the two sources cover gain their scores too (50 with an ECI, 41
+  with an Artificial Analysis page).
 - **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
-  refreshes `openrouter` route prices and benchmark scores in a pull request, and
+  refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
+  Analysis) in a pull request, and
   keeps one issue of what needs a person (new open models, prices OpenRouter lists
-  differently from a card, cards off their index band). Standard library only; no
+  differently from a card, cards whose scores suggest another rung). Standard library only; no
   keys and no model calls.
 
 ## [0.12.0] — 2026-11-11

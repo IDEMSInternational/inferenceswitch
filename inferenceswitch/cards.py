@@ -145,7 +145,8 @@ class OpenWeight:
 class Benchmark:
     """One published score for a model: evidence for its rung, not part of it.
 
-    Scores are on the benchmark's own 0-100 scale. ``source`` and ``date`` say
+    A score is on the benchmark's own scale (a percentage for most, an index
+    that is not bounded by 100 for Epoch's). ``source`` and ``date`` say
     who measured it and when, because the same benchmark run by the vendor and
     by an independent evaluator is not the same number; ``version`` is the
     benchmark's version where it has one (an index is re-based when its parts
@@ -162,6 +163,10 @@ class Benchmark:
     version: str | None = None
     #: How the model was run, where that matters (``"max effort"``).
     setting: str | None = None
+    #: The source's own 95% interval around ``score`` (low, high), where it
+    #: publishes one. A score near a rung's edge with an interval across it is
+    #: not evidence for either side.
+    interval: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -258,7 +263,11 @@ class ModelCard:
             }
         if self.benchmarks:
             out["benchmarks"] = {
-                b.name: {k: v for k, v in vars(b).items() if k != "name" and v is not None}
+                b.name: {
+                    k: (list(v) if k == "interval" else v)
+                    for k, v in vars(b).items()
+                    if k != "name" and v is not None
+                }
                 for b in self.benchmarks
             }
         if self.notes:
@@ -271,7 +280,7 @@ _CARD_KEYS = {
     "features", "open_weight", "benchmarks", "notes",
 }
 _OPEN_WEIGHT_KEYS = {"family", "params_b", "quantization", "active_params_b"}
-_BENCHMARK_KEYS = {"score", "source", "date", "version", "setting"}
+_BENCHMARK_KEYS = {"score", "source", "date", "version", "setting", "interval"}
 
 
 def _check_keys(data: Any, allowed: set[str], where: str) -> None:
@@ -302,6 +311,16 @@ def _benchmarks_from(raw: Any, where: str) -> tuple[Benchmark, ...]:
         score = entry.get("score")
         if isinstance(score, bool) or not isinstance(score, (int, float)):
             raise ModelCardError(f"{here}: 'score' must be a number")
+        interval = entry.get("interval")
+        if interval is not None:
+            ok = (
+                isinstance(interval, (list, tuple)) and len(interval) == 2
+                and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in interval)
+                and interval[0] <= score <= interval[1]
+            )
+            if not ok:
+                raise ModelCardError(f"{here}: 'interval' must be [low, high] around the score")
+            interval = (float(interval[0]), float(interval[1]))
         out.append(
             Benchmark(
                 name=_str(name, f"{where} benchmark name"),
@@ -310,6 +329,7 @@ def _benchmarks_from(raw: Any, where: str) -> tuple[Benchmark, ...]:
                 date=_str(entry.get("date"), f"{here} date"),
                 version=entry.get("version"),
                 setting=entry.get("setting"),
+                interval=interval,
             )
         )
     return tuple(out)

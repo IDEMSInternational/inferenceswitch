@@ -15,10 +15,13 @@ key:
   cross-check: where a model has one first-party price (Anthropic, OpenAI)
   OpenRouter repeats it, but it can show a blended or introductory price where
   the vendor's own list says otherwise. A difference is reported, never applied.
+* **Epoch AI's Capabilities Index** (``https://epoch.ai/data/eci_scores.csv``,
+  CC-BY 4.0, credit Epoch AI): one score stitched from 50+ benchmarks of very
+  different difficulty, with a 95% interval. The main view of a model's rung.
 * **Artificial Analysis** (``https://artificialanalysis.ai/models/<slug>``): an
   independent Intelligence Index and benchmark scores, read from the data the
-  model's page embeds. A page that changes shape is reported as unreadable; it
-  never fails the run.
+  model's page embeds. It covers the newest models before Epoch does. A page
+  that changes shape is reported as unreadable; it never fails the run.
 
 Commands::
 
@@ -27,9 +30,10 @@ Commands::
     python tools/sweep.py report --cards PATH # a card file other than the shipped one
     python tools/sweep.py report --out report.md --findings count.txt
 
-``update`` changes only what a machine can know: ``openrouter`` route prices
-and the ``benchmarks`` of cards that already name an Artificial Analysis page
-in their ``source``. Rungs, notes, feature flags and other providers' prices
+``update`` changes only what a machine can know: ``openrouter`` route prices,
+the Artificial Analysis ``benchmarks`` of cards that already name a page in their
+``source``, and the ``epoch_eci`` of cards whose id or Artificial Analysis name
+matches a row in Epoch's data. Rungs, notes, feature flags and other providers' prices
 stay a person's call; the report suggests, a reviewer decides.
 """
 from __future__ import annotations
@@ -214,32 +218,129 @@ def endpoint_price(model_id: str) -> dict | None:
     return cost
 
 
-#: Where each rung starts on the Artificial Analysis Intelligence Index (v5), read
-#: off the reference models in ``docs/model-cards.md``: Gemini 3.5 Flash-Lite
-#: 11.7 and GPT-5.6 Luna 23.8 (small); GPT-6 Luna 27.9, Gemini 3.8 Flash 30.8,
-#: GPT-5.6 Terra 32.3 and Haiku 5.5 36.5 (mid); GPT-6 Sol 44.2 and Sonnet 5.5
-#: 54.5 (large); GPT-6 Astra 56.9 and Opus 5.5 59.1 (frontier). A vendor's tiers
-#: overlap on it (Opus 5 scores 44.2), so it places open-weight models only.
-#: Below the first edge the index cannot tell models apart (gpt-oss-120b 3.8,
-#: Gemma 4 31B 4.4), so there is no suggestion and parameters decide.
-RUNG_EDGES = (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))
+#: Rung placement is read from two independent views of a model, because each
+#: benchmark is a sigmoid in capability: it separates models only where it is
+#: neither at its floor nor at its ceiling, and a model that tops one benchmark
+#: still gets a fair score on a harder one (Epoch's point in building the ECI).
+#:
+#: * Epoch Capabilities Index (ECI): one scale stitched from 50+ benchmarks of
+#:   very different difficulty, with a 95% interval. Broad and general, so it is
+#:   the main view, but it covers the models Epoch has results for, which lags
+#:   releases by weeks.
+#: * Artificial Analysis Intelligence Index (v5): nine agentic, coding and
+#:   professional-task evaluations. Covers the newest models, leans to agentic
+#:   work, and sits at its floor for models that are not agentic (gpt-oss-120b
+#:   3.8, Gemma 4 31B 4.4), where it gives no view.
+#:
+#: Each view's edges are the midpoints between the medians of the reference
+#: models in ``docs/model-cards.md`` released in the current generation.
+#: ECI (small): Gemini 3.5 Flash-Lite 145.6, GPT-5.4 nano 146.4, Gemini 3.1
+#: Flash-Lite 145.0, GPT-5.6 Luna 156.7. (mid): Haiku 5.5 160.4, GPT-5.6 Terra
+#: 160.7, Gemini 3.8 Flash 158.8, GPT-6 Luna 156.4, Gemini 3.5 Flash 155.3.
+#: (large): Sonnet 5.5 166.6, GPT-6 Sol 163.8, GPT-6.1 Sol 168.5. (frontier):
+#: GPT-6 Astra 169.0, Opus 5.5 168.5, Fable 5.2 173.4.
+#: AA index (small): Gemini 3.5 Flash-Lite 11.7, GPT-5.6 Luna 23.8. (mid): GPT-6
+#: Luna 27.9, Gemini 3.8 Flash 30.8, GPT-5.6 Terra 32.3, Haiku 5.5 36.5.
+#: (large): GPT-6 Sol 44.2, Sonnet 5.5 54.5. (frontier): GPT-6 Astra 56.9, Opus 5.5 59.1.
+#: A vendor's tiers overlap on both (Opus 5 scores 44.2 on the AA index and Opus
+#: 4.8 is below Haiku 5.5 on ECI), so the views place open-weight models only.
+#: ECI starts at ``small``: below its first edge a model is ``small`` or
+#: ``nano``, which the scale does not separate.
+ECI = "epoch_eci"
+ECI_EDGES = (("mid", 152.0), ("large", 163.0), ("frontier", 168.0))
+AA_EDGES = (("small", 12.0), ("mid", 26.0), ("large", 40.0), ("frontier", 55.0))
+ECI_CSV = "https://epoch.ai/data/eci_scores.csv"
+ECI_SOURCE = "epoch.ai/data/eci_scores.csv#{model}"
 
 
-#: Open-weight cards whose rung is not the one the bands suggest, and why. The
-#: report leaves them out of its suggestions, and a test fails for any other
-#: card that sits off its band, so a new exception has to be written here.
-OFF_BAND = {
-    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
-}
-
-
-def suggest_rung(score: float) -> str | None:
-    """The rung ``RUNG_EDGES`` puts an index score on; ``None`` below the first."""
-    rung = None
-    for name, edge in RUNG_EDGES:
+def _rung_of(score: float, edges, floor: str | None) -> str | None:
+    rung = floor
+    for name, edge in edges:
         if score >= edge:
             rung = name
     return rung
+
+
+def suggest_rung(score: float) -> str | None:
+    """The rung the AA index puts a score on; ``None`` below its first edge."""
+    return _rung_of(score, AA_EDGES, None)
+
+
+def suggest_rung_eci(score: float) -> str:
+    """The rung the ECI puts a score on (``small`` below the ``mid`` edge)."""
+    return _rung_of(score, ECI_EDGES, "small")
+
+
+def grade(benchmarks: dict | None) -> dict:
+    """What a card's recorded scores say about its rung.
+
+    ``views`` maps each view that has a say (``eci``, ``aa``) to the rung it
+    suggests; ``suggested`` is the lower of them (the under-claim rule: a
+    consumer pays more for a model placed too low, and gets a wrong answer from
+    one placed too high); ``borderline`` is true when the ECI interval crosses
+    an edge, so that view could as well say the rung next to it; ``agree`` is
+    false when the views differ. ``suggested`` is ``None`` when neither speaks.
+    """
+    b = benchmarks or {}
+    views: dict[str, str] = {}
+    borderline = False
+    eci = b.get(ECI)
+    if eci:
+        views["eci"] = suggest_rung_eci(eci["score"])
+        low, high = eci.get("interval") or (eci["score"], eci["score"])
+        borderline = suggest_rung_eci(low) != suggest_rung_eci(high)
+    idx = b.get(INDEX)
+    if idx and suggest_rung(idx["score"]):
+        views["aa"] = suggest_rung(idx["score"])
+    suggested = min(views.values(), key=RUNGS.index) if views else None
+    return {"views": views, "suggested": suggested, "borderline": borderline,
+            "agree": len(set(views.values())) <= 1}
+
+
+#: Open-weight cards whose rung is not the one their scores suggest, and why. The
+#: report leaves them out of its table, and a test fails for any other open-weight
+#: card that sits off its suggestion, so a new exception has to be written here.
+REVIEWED = {
+    "mistral-large-4": "placed by its vendor's tier (Mistral Large is a large anchor), rule 1",
+    "gpt-oss-120b": "ECI suggests small (an older generation than the current references; "
+                    "Haiku 4.5 and GPT-4.1, mid, score 143 and 136 on it); left on mid for the team to move",
+    "qwen3-32b": "ECI suggests small (older generation, as gpt-oss-120b); left on mid for the team to move",
+    "llama3.3-70b": "ECI suggests small (older generation, level with GPT-4o mini); "
+                    "left on mid for the team to move",
+}
+
+
+def fetch_eci() -> dict[str, dict]:
+    """Epoch's ECI rows (CC-BY 4.0, https://epoch.ai/benchmarks/eci) by model name."""
+    import csv
+    import io
+    try:
+        text = _get(ECI_CSV)
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return {}
+    return {r["Model"]: r for r in csv.DictReader(io.StringIO(text)) if r.get("eci")}
+
+
+def eci_entry(row: dict, today: str) -> dict:
+    return {
+        "score": round(float(row["eci"]), 1),
+        "source": ECI_SOURCE.format(model=row["Model"]),
+        "date": today,
+        "interval": [round(float(row["eci_ci_low"]), 1), round(float(row["eci_ci_high"]), 1)],
+    }
+
+
+def eci_row_for(card: dict, rows: dict[str, dict], aa_name: str | None = None) -> dict | None:
+    """The ECI row for a card: the one its recorded source names, or else the one
+    whose normalised name equals the card's id or its Artificial Analysis name."""
+    for bench in (card.get("benchmarks") or {}).values():
+        m = re.match(r"epoch\.ai/data/eci_scores\.csv#(.+)$", bench.get("source", ""))
+        if m:
+            return rows.get(m.group(1))
+    wanted = {norm(card["id"])}
+    if aa_name:
+        wanted.add(norm(re.sub(r"\(.*?\)", "", aa_name)))
+    return next((r for name, r in rows.items() if norm(name) in wanted), None)
 
 
 # ── the report ──────────────────────────────────────────────────────────────
@@ -326,20 +427,23 @@ def report(cards_path: Path, *, use_aa: bool = True) -> str:
     if not fresh:
         lines += ["None.", ""]
     else:
-        lines += ["| OpenRouter id | released | context | USD in / out | image | AA page |", "|---|---|---|---|---|---|"]
+        lines += ["| OpenRouter id | released | context | USD in / out | image | ECI | AA page |",
+                  "|---|---|---|---|---|---|---|"]
         slugs = _aa_slug_index() if use_aa else {}
+        eci_rows = {norm(k): r for k, r in fetch_eci().items()} if use_aa else {}
         for m in fresh:
             price = price_of(m)
             page = slugs.get(norm(m["id"]))
+            eci = eci_rows.get(norm(m["id"]))
             lines.append(
                 f"| `{m['id']}` | {dt.date.fromtimestamp(m['created'])} | {m['context_length']} | "
                 f"{price[0]} / {price[1]} | {'yes' if 'image' in m['architecture']['input_modalities'] else 'no'} | "
+                f"{round(float(eci['eci']), 1) if eci else '-'} | "
                 f"{('`' + page + '`') if page else '-'} |"
             )
         lines.append("")
 
-    if use_aa:
-        lines += aa_section(cards, today)
+    lines += rung_section(cards)
     return "\n".join(lines) + "\n"
 
 
@@ -353,37 +457,35 @@ def _aa_slug_index() -> dict[str, str]:
     return {norm(s): s for s in slugs}
 
 
-def aa_section(cards: list[dict], today: dt.date) -> list[str]:
-    lines = ["## Benchmarks and rungs (Artificial Analysis)", ""]
-    lines += ["Rung suggestions for open-weight cards use these starting points on the index: "
-              + ", ".join(f"`{r}` from {e}" for r, e in RUNG_EDGES)
-              + ". A suggestion is a prompt to look again, not a decision.", ""]
-    rows, unreadable = [], []
+def rung_section(cards: list[dict]) -> list[str]:
+    """Open-weight cards whose recorded scores suggest another rung."""
+    lines = ["## Rungs against the scores", "",
+             "Open-weight cards only. Each card is graded on two views, the Epoch Capabilities "
+             "Index and the Artificial Analysis index, and placed on the lower when they differ. "
+             "A suggestion prompts a look; it is not a decision. Edges: ECI "
+             + ", ".join(f"`{r}` from {e:g}" for r, e in ECI_EDGES)
+             + "; index " + ", ".join(f"`{r}` from {e:g}" for r, e in AA_EDGES) + ".", ""]
+    rows, soft = [], []
     for card in cards:
-        slug = aa_slug(card)
-        if not slug:
+        if not card.get("open_weight") or card["id"] in REVIEWED:
             continue
-        aa = fetch_aa(slug)
-        time.sleep(1)  # be polite: one page a second
-        if aa is None:
-            unreadable.append(card["id"])
+        g = grade(card.get("benchmarks"))
+        if g["suggested"] is None:
             continue
-        fresh = benchmarks_from(aa, today.isoformat()).get(INDEX)
-        old = (card.get("benchmarks") or {}).get(INDEX)
-        if fresh is None:
-            continue
-        moved = old is None or abs(fresh["score"] - old["score"]) >= 0.5 or fresh.get("version") != old.get("version")
-        suggestion = suggest_rung(fresh["score"]) if card.get("open_weight") else None
-        if card["id"] in OFF_BAND:
-            suggestion = None
-        flag = "" if suggestion in (None, card["rung"]) else f" **suggest `{suggestion}`**"
-        if moved or flag:
-            was = f"{old['score']} (v{old.get('version')})" if old else "-"
-            rows.append(f"| `{card['id']}` | `{card['rung']}`{flag} | {was} | {fresh['score']} (v{fresh.get('version')}) |")
-    lines += ["| card | rung | recorded index | now |", "|---|---|---|---|", *(rows or ["| none changed | | | |"]), ""]
-    if unreadable:
-        lines += ["Pages that could not be read (the site may have changed): "
-                  + ", ".join(f"`{c}`" for c in unreadable) + ".", ""]
+        if g["suggested"] != card["rung"]:
+            b = card.get("benchmarks") or {}
+            eci, idx = b.get(ECI), b.get(INDEX)
+            eci_txt = f"{eci['score']} [{eci['interval'][0]}, {eci['interval'][1]}]" if eci else "-"
+            views = ", ".join(f"{k} {v}" for k, v in g["views"].items())
+            rows.append(f"| `{card['id']}` | `{card['rung']}` | {eci_txt} | {idx['score'] if idx else '-'} | "
+                        f"**suggest `{g['suggested']}`** ({views}) |")
+        elif not g["agree"] or g["borderline"]:
+            soft.append(card["id"])
+    lines += ["| card | rung | ECI [95%] | AA index | |", "|---|---|---|---|---|",
+              *(rows or ["| none | | | | |"]), ""]
+    if soft:
+        lines += ["Close calls, not counted as findings (the two views differ, or the ECI "
+                  "interval crosses an edge): " + ", ".join(f"`{c}`" for c in soft) + ".", ""]
     return lines
 
 
@@ -437,10 +539,12 @@ def dump_cards(data: dict) -> str:
 
 
 def update(cards_path: Path) -> list[str]:
-    """Refresh ``openrouter`` prices and the ``benchmarks`` of cards that name an
-    Artificial Analysis page. Returns what changed, one line each."""
+    """Refresh ``openrouter`` prices and ``benchmarks``: the Artificial Analysis
+    scores of cards that name a page there, and the Epoch ECI of cards Epoch
+    has a row for. Returns what changed, one line each."""
     data = load_cards(cards_path)
     catalog = fetch_openrouter()
+    eci_rows = fetch_eci()
     today = dt.date.today().isoformat()
     changes = []
     for card in data["cards"]:
@@ -454,19 +558,35 @@ def update(cards_path: Path) -> list[str]:
                 if cost is not None and route.get("cost") != cost:
                     changes.append(f"{card['id']}: openrouter price {route.get('cost')} -> {cost}")
                     route["cost"] = cost
+        old = card.get("benchmarks") or {}
+        epoch_old = {k: v for k, v in old.items() if v["source"].startswith("epoch.ai/")}
+        aa_old = {k: v for k, v in old.items() if v["source"].startswith("artificialanalysis.ai/")}
+        other = {k: v for k, v in old.items() if k not in epoch_old and k not in aa_old}
+        aa_new, aa_name = aa_old, None
         slug = aa_slug(card)
         if slug:
             aa = fetch_aa(slug)
             time.sleep(1)
             if aa is None:
                 changes.append(f"{card['id']}: Artificial Analysis page {slug} unreadable, scores kept")
-                continue
-            fresh = benchmarks_from(aa, today)
-            old = card.get("benchmarks") or {}
-            if {k: (v["score"], v.get("version")) for k, v in fresh.items()} != \
-                    {k: (v["score"], v.get("version")) for k, v in old.items()}:
-                changes.append(f"{card['id']}: benchmarks refreshed")
-                card["benchmarks"] = fresh
+            else:
+                aa_name = aa["record"].get("name")
+                aa_new = benchmarks_from(aa, today)
+        epoch_new = epoch_old
+        row = eci_row_for(card, eci_rows, aa_name) if eci_rows else None
+        if row is not None:
+            epoch_new = {ECI: eci_entry(row, today)}
+        elif epoch_old and eci_rows:
+            changes.append(f"{card['id']}: no longer in Epoch's ECI data, score kept")
+
+        def key(entries: dict):
+            return {k: (v["score"], v.get("version"), tuple(v.get("interval") or ())) for k, v in entries.items()}
+
+        if key(aa_new) != key(aa_old) or key(epoch_new) != key(epoch_old):
+            changes.append(f"{card['id']}: benchmarks refreshed")
+            card["benchmarks"] = {**epoch_new, **aa_new, **other}
+            if not card["benchmarks"]:
+                del card["benchmarks"]
     if changes:
         data["updated"] = today
         cards_path.write_text(dump_cards(data), encoding="utf-8", newline="\n")

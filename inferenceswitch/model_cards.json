@@ -12,6 +12,7 @@
       "context_window": 200000,
       "features": {"add": ["sampling_params"]},
       "benchmarks": {
+        "epoch_eci": {"score": 142.8, "source": "epoch.ai/data/eci_scores.csv#Claude Haiku 4.5", "date": "2026-11-16", "interval": [141.1, 144.5]},
         "gpqa_diamond": {"score": 64.6, "source": "artificialanalysis.ai/models/claude-4-5-haiku", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 4.2, "source": "artificialanalysis.ai/models/claude-4-5-haiku", "date": "2026-11-16", "setting": "non-reasoning"},
         "aa_lcr": {"score": 49.7, "source": "artificialanalysis.ai/models/claude-4-5-haiku", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -31,6 +32,7 @@
       "context_window": 1000000,
       "features": {"add": ["sampling_params"]},
       "benchmarks": {
+        "epoch_eci": {"score": 152.9, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 4.6", "date": "2026-11-16", "interval": [151.2, 154.7]},
         "gpqa_diamond": {"score": 79.9, "source": "artificialanalysis.ai/models/claude-sonnet-4-6", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 13.3, "source": "artificialanalysis.ai/models/claude-sonnet-4-6", "date": "2026-11-16", "setting": "non-reasoning"},
         "aa_lcr": {"score": 68.3, "source": "artificialanalysis.ai/models/claude-sonnet-4-6", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -48,6 +50,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 159.9, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 4.8", "date": "2026-11-16", "interval": [157.9, 162.2]},
         "gpqa_diamond": {"score": 92.0, "source": "artificialanalysis.ai/models/claude-opus-4-8", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 48.7, "source": "artificialanalysis.ai/models/claude-opus-4-8", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 54.4, "source": "artificialanalysis.ai/models/claude-opus-4-8", "date": "2026-11-16", "setting": "max"},
@@ -67,6 +70,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 160.4, "source": "epoch.ai/data/eci_scores.csv#Claude Haiku 5.5", "date": "2026-11-16", "interval": [158.3, 162.9]},
         "aa_intelligence_index": {"score": 36.5, "source": "artificialanalysis.ai/models/claude-haiku-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 44.4, "source": "artificialanalysis.ai/models/claude-haiku-5-5", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 55.0, "source": "artificialanalysis.ai/models/claude-haiku-5-5", "date": "2026-11-16", "setting": "max"},
@@ -83,6 +87,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 156.9, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 5", "date": "2026-11-16", "interval": [154.8, 159.2]},
         "gpqa_diamond": {"score": 91.1, "source": "artificialanalysis.ai/models/claude-sonnet-5", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 41.3, "source": "artificialanalysis.ai/models/claude-sonnet-5", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 54.3, "source": "artificialanalysis.ai/models/claude-sonnet-5", "date": "2026-11-16", "setting": "max"},
@@ -99,6 +104,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 166.6, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 5.5", "date": "2026-11-16", "interval": [163.8, 169.6]},
         "aa_intelligence_index": {"score": 54.5, "source": "artificialanalysis.ai/models/claude-sonnet-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 55.0, "source": "artificialanalysis.ai/models/claude-sonnet-5-5", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 61.0, "source": "artificialanalysis.ai/models/claude-sonnet-5-5", "date": "2026-11-16", "setting": "max"},
@@ -115,6 +121,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 164.7, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 5", "date": "2026-11-16", "interval": [162.1, 167.5]},
         "aa_intelligence_index": {"score": 44.2, "source": "artificialanalysis.ai/models/claude-opus-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 93.2, "source": "artificialanalysis.ai/models/claude-opus-5", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 54.9, "source": "artificialanalysis.ai/models/claude-opus-5", "date": "2026-11-16", "setting": "max"},
@@ -132,6 +139,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 168.5, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 5.5", "date": "2026-11-16", "interval": [165.6, 171.8]},
         "aa_intelligence_index": {"score": 59.1, "source": "artificialanalysis.ai/models/claude-opus-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 61.4, "source": "artificialanalysis.ai/models/claude-opus-5-5", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 66.9, "source": "artificialanalysis.ai/models/claude-opus-5-5", "date": "2026-11-16", "setting": "max"},
@@ -148,6 +156,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 164.1, "source": "epoch.ai/data/eci_scores.csv#Claude Fable 5", "date": "2026-11-16", "interval": [161.7, 166.8]},
         "gpqa_diamond": {"score": 92.6, "source": "artificialanalysis.ai/models/claude-fable-5", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 55.5, "source": "artificialanalysis.ai/models/claude-fable-5", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 61.0, "source": "artificialanalysis.ai/models/claude-fable-5", "date": "2026-11-16", "setting": "max"},
@@ -167,6 +176,7 @@
       "structured_output": "reliable",
       "context_window": 1000000,
       "benchmarks": {
+        "epoch_eci": {"score": 167.0, "source": "epoch.ai/data/eci_scores.csv#Claude Fable 5.1", "date": "2026-11-16", "interval": [164.2, 170.1]},
         "aa_intelligence_index": {"score": 49.2, "source": "artificialanalysis.ai/models/claude-fable-5-1", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 93.7, "source": "artificialanalysis.ai/models/claude-fable-5-1", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 59.1, "source": "artificialanalysis.ai/models/claude-fable-5-1", "date": "2026-11-16", "setting": "max"},
@@ -184,6 +194,9 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "benchmarks": {
+        "epoch_eci": {"score": 152.3, "source": "epoch.ai/data/eci_scores.csv#Gemini 3 Flash", "date": "2026-11-16", "interval": [150.8, 154.0]}
+      },
       "notes": "Preview, labelled legacy by Google. Replacement: gemini-3.6-flash."
     },
     {
@@ -195,6 +208,7 @@
       "structured_output": "reliable",
       "context_window": 1048576,
       "benchmarks": {
+        "epoch_eci": {"score": 155.3, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.5 Flash", "date": "2026-11-16", "interval": [153.5, 157.3]},
         "gpqa_diamond": {"score": 92.2, "source": "artificialanalysis.ai/models/gemini-3-5-flash", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 42.7, "source": "artificialanalysis.ai/models/gemini-3-5-flash", "date": "2026-11-16", "setting": "high"},
         "scicode": {"score": 53.9, "source": "artificialanalysis.ai/models/gemini-3-5-flash", "date": "2026-11-16", "setting": "high"},
@@ -232,6 +246,7 @@
       "context_window": 32768,
       "open_weight": {"family": "qwen3", "params_b": 8, "quantization": "Q4_K_M"},
       "benchmarks": {
+        "epoch_eci": {"score": 132.1, "source": "epoch.ai/data/eci_scores.csv#Qwen3-8B", "date": "2026-11-16", "interval": [128.9, 135.0]},
         "gpqa_diamond": {"score": 45.2, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 1.9, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 28.6, "source": "artificialanalysis.ai/models/qwen3-8b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -251,6 +266,7 @@
       "context_window": 32768,
       "open_weight": {"family": "qwen3", "params_b": 32, "quantization": "Q4_K_M"},
       "benchmarks": {
+        "epoch_eci": {"score": 136.9, "source": "epoch.ai/data/eci_scores.csv#Qwen3-32B", "date": "2026-11-16", "interval": [134.4, 139.3]},
         "gpqa_diamond": {"score": 53.5, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 4.1, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 31.5, "source": "artificialanalysis.ai/models/qwen3-32b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -268,6 +284,9 @@
       "structured_output": "best_effort",
       "context_window": 131072,
       "open_weight": {"family": "llama3.1", "params_b": 8, "quantization": "Q4_K_M"},
+      "benchmarks": {
+        "epoch_eci": {"score": 111.1, "source": "epoch.ai/data/eci_scores.csv#Llama 3.1-8B", "date": "2026-11-16", "interval": [105.5, 116.2]}
+      },
       "notes": "Lower end of small."
     },
     {
@@ -281,6 +300,7 @@
       "context_window": 131072,
       "open_weight": {"family": "llama3.3", "params_b": 70, "quantization": "Q4_K_M"},
       "benchmarks": {
+        "epoch_eci": {"score": 126.1, "source": "epoch.ai/data/eci_scores.csv#Llama 3.3 70B", "date": "2026-11-16", "interval": [123.1, 129.0]},
         "gpqa_diamond": {"score": 49.8, "source": "artificialanalysis.ai/models/llama-3-3-instruct-70b", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 3.6, "source": "artificialanalysis.ai/models/llama-3-3-instruct-70b", "date": "2026-11-16", "setting": "non-reasoning"},
         "aa_lcr": {"score": 15.7, "source": "artificialanalysis.ai/models/llama-3-3-instruct-70b", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -300,6 +320,7 @@
       "structured_output": "reliable",
       "context_window": 1050000,
       "benchmarks": {
+        "epoch_eci": {"score": 169.0, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Astra", "date": "2026-11-16", "interval": [166.1, 172.3]},
         "aa_intelligence_index": {"score": 56.9, "source": "artificialanalysis.ai/models/gpt-6-astra", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 96.1, "source": "artificialanalysis.ai/models/gpt-6-astra", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 54.7, "source": "artificialanalysis.ai/models/gpt-6-astra", "date": "2026-11-16", "setting": "max"},
@@ -319,6 +340,7 @@
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
+        "epoch_eci": {"score": 168.5, "source": "epoch.ai/data/eci_scores.csv#GPT-6.1 Sol", "date": "2026-11-16", "interval": [165.5, 171.8]},
         "aa_intelligence_index": {"score": 54.6, "source": "artificialanalysis.ai/models/gpt-6-1-sol", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 52.9, "source": "artificialanalysis.ai/models/gpt-6-1-sol", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 54.2, "source": "artificialanalysis.ai/models/gpt-6-1-sol", "date": "2026-11-16", "setting": "max"},
@@ -336,6 +358,7 @@
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
+        "epoch_eci": {"score": 163.8, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Sol", "date": "2026-11-16", "interval": [161.3, 166.4]},
         "aa_intelligence_index": {"score": 44.2, "source": "artificialanalysis.ai/models/gpt-6-sol", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 47.9, "source": "artificialanalysis.ai/models/gpt-6-sol", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 57.6, "source": "artificialanalysis.ai/models/gpt-6-sol", "date": "2026-11-16", "setting": "max"},
@@ -353,6 +376,7 @@
       "context_window": 1050000,
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
+        "epoch_eci": {"score": 156.4, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Luna", "date": "2026-11-16", "interval": [154.4, 158.5]},
         "aa_intelligence_index": {"score": 27.9, "source": "artificialanalysis.ai/models/gpt-6-luna", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 38.5, "source": "artificialanalysis.ai/models/gpt-6-luna", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 54.6, "source": "artificialanalysis.ai/models/gpt-6-luna", "date": "2026-11-16", "setting": "max"},
@@ -369,6 +393,7 @@
       "structured_output": "reliable",
       "context_window": 1050000,
       "benchmarks": {
+        "epoch_eci": {"score": 163.0, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Sol", "date": "2026-11-16", "interval": [160.7, 165.5]},
         "gpqa_diamond": {"score": 94.1, "source": "artificialanalysis.ai/models/gpt-5-6-sol", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 49.5, "source": "artificialanalysis.ai/models/gpt-5-6-sol", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 57.1, "source": "artificialanalysis.ai/models/gpt-5-6-sol", "date": "2026-11-16", "setting": "max"},
@@ -388,6 +413,7 @@
       "structured_output": "reliable",
       "context_window": 1050000,
       "benchmarks": {
+        "epoch_eci": {"score": 160.7, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Terra", "date": "2026-11-16", "interval": [158.5, 163.2]},
         "aa_intelligence_index": {"score": 32.3, "source": "artificialanalysis.ai/models/gpt-5-6-terra", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 92.5, "source": "artificialanalysis.ai/models/gpt-5-6-terra", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 42.9, "source": "artificialanalysis.ai/models/gpt-5-6-terra", "date": "2026-11-16", "setting": "max"},
@@ -408,6 +434,7 @@
       "structured_output": "reliable",
       "context_window": 1050000,
       "benchmarks": {
+        "epoch_eci": {"score": 156.7, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Luna", "date": "2026-11-16", "interval": [154.8, 158.7]},
         "aa_intelligence_index": {"score": 23.8, "source": "artificialanalysis.ai/models/gpt-5-6-luna", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 91.1, "source": "artificialanalysis.ai/models/gpt-5-6-luna", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 39.5, "source": "artificialanalysis.ai/models/gpt-5-6-luna", "date": "2026-11-16", "setting": "max"},
@@ -426,6 +453,7 @@
       "structured_output": "reliable",
       "context_window": 1050000,
       "benchmarks": {
+        "epoch_eci": {"score": 157.8, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4", "date": "2026-11-16", "interval": [155.9, 159.9]},
         "gpqa_diamond": {"score": 92.0, "source": "artificialanalysis.ai/models/gpt-5-4", "date": "2026-11-16", "setting": "xhigh"},
         "hle": {"score": 43.7, "source": "artificialanalysis.ai/models/gpt-5-4", "date": "2026-11-16", "setting": "xhigh"},
         "aa_lcr": {"score": 82.0, "source": "artificialanalysis.ai/models/gpt-5-4", "date": "2026-11-16", "setting": "xhigh"},
@@ -444,6 +472,7 @@
       "structured_output": "reliable",
       "context_window": 400000,
       "benchmarks": {
+        "epoch_eci": {"score": 149.3, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4 Mini", "date": "2026-11-16", "interval": [147.7, 151.1]},
         "gpqa_diamond": {"score": 87.5, "source": "artificialanalysis.ai/models/gpt-5-4-mini", "date": "2026-11-16", "setting": "xhigh"},
         "hle": {"score": 28.1, "source": "artificialanalysis.ai/models/gpt-5-4-mini", "date": "2026-11-16", "setting": "xhigh"},
         "scicode": {"score": 52.1, "source": "artificialanalysis.ai/models/gpt-5-4-mini", "date": "2026-11-16", "setting": "xhigh"},
@@ -463,6 +492,7 @@
       "structured_output": "reliable",
       "context_window": 400000,
       "benchmarks": {
+        "epoch_eci": {"score": 146.4, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4 Nano", "date": "2026-11-16", "interval": [144.7, 148.1]},
         "gpqa_diamond": {"score": 81.7, "source": "artificialanalysis.ai/models/gpt-5-4-nano", "date": "2026-11-16", "setting": "xhigh"},
         "hle": {"score": 28.3, "source": "artificialanalysis.ai/models/gpt-5-4-nano", "date": "2026-11-16", "setting": "xhigh"},
         "scicode": {"score": 47.2, "source": "artificialanalysis.ai/models/gpt-5-4-nano", "date": "2026-11-16", "setting": "xhigh"},
@@ -482,6 +512,9 @@
       "structured_output": "reliable",
       "context_window": 1047576,
       "features": {"add": [], "remove": ["reasoning_effort"]},
+      "benchmarks": {
+        "epoch_eci": {"score": 136.2, "source": "epoch.ai/data/eci_scores.csv#GPT-4.1", "date": "2026-11-16", "interval": [134.1, 138.0]}
+      },
       "notes": "Legacy. Lower end of mid. Not a reasoning model: accepts temperature, rejects reasoning_effort."
     },
     {
@@ -493,6 +526,9 @@
       "structured_output": "reliable",
       "context_window": 1047576,
       "features": {"add": [], "remove": ["reasoning_effort"]},
+      "benchmarks": {
+        "epoch_eci": {"score": 134.2, "source": "epoch.ai/data/eci_scores.csv#GPT-4.1 mini", "date": "2026-11-16", "interval": [131.9, 136.3]}
+      },
       "notes": "Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
     },
     {
@@ -504,6 +540,9 @@
       "structured_output": "reliable",
       "context_window": 128000,
       "features": {"add": [], "remove": ["reasoning_effort"]},
+      "benchmarks": {
+        "epoch_eci": {"score": 123.9, "source": "epoch.ai/data/eci_scores.csv#GPT-4o mini", "date": "2026-11-16", "interval": [120.5, 126.9]}
+      },
       "notes": "Legacy. Not a reasoning model: accepts temperature, rejects reasoning_effort."
     },
     {
@@ -518,6 +557,7 @@
       "context_window": 131072,
       "open_weight": {"family": "gpt-oss", "params_b": 120, "active_params_b": 5.1, "quantization": "MXFP4"},
       "benchmarks": {
+        "epoch_eci": {"score": 140.2, "source": "epoch.ai/data/eci_scores.csv#gpt-oss-120b", "date": "2026-11-16", "interval": [138.2, 142.1]},
         "aa_intelligence_index": {"score": 3.8, "source": "artificialanalysis.ai/models/gpt-oss-120b", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
         "gpqa_diamond": {"score": 78.2, "source": "artificialanalysis.ai/models/gpt-oss-120b", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 19.6, "source": "artificialanalysis.ai/models/gpt-oss-120b", "date": "2026-11-16", "setting": "high"},
@@ -542,6 +582,7 @@
       "context_window": 131072,
       "open_weight": {"family": "gpt-oss", "params_b": 20, "active_params_b": 3.6, "quantization": "MXFP4"},
       "benchmarks": {
+        "epoch_eci": {"score": 135.0, "source": "epoch.ai/data/eci_scores.csv#gpt-oss-20b", "date": "2026-11-16", "interval": [132.3, 137.5]},
         "gpqa_diamond": {"score": 68.8, "source": "artificialanalysis.ai/models/gpt-oss-20b", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 11.0, "source": "artificialanalysis.ai/models/gpt-oss-20b", "date": "2026-11-16", "setting": "high"},
         "scicode": {"score": 38.9, "source": "artificialanalysis.ai/models/gpt-oss-20b", "date": "2026-11-16", "setting": "high"},
@@ -564,6 +605,7 @@
       "features": {"add": ["vision"], "remove": []},
       "open_weight": {"family": "qwen3.8", "params_b": 27},
       "benchmarks": {
+        "epoch_eci": {"score": 152.6, "source": "epoch.ai/data/eci_scores.csv#Qwen 3.8 27B", "date": "2026-11-16", "interval": [150.6, 154.8]},
         "aa_intelligence_index": {"score": 20.1, "source": "artificialanalysis.ai/models/qwen3-8-27b", "date": "2026-11-16", "version": "5.0.1", "setting": "xhigh"},
         "gpqa_diamond": {"score": 90.5, "source": "artificialanalysis.ai/models/qwen3-8-27b", "date": "2026-11-16", "setting": "xhigh"},
         "hle": {"score": 33.9, "source": "artificialanalysis.ai/models/qwen3-8-27b", "date": "2026-11-16", "setting": "xhigh"},
@@ -582,6 +624,7 @@
       "structured_output": "reliable",
       "context_window": 1048576,
       "benchmarks": {
+        "epoch_eci": {"score": 158.8, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.8 Flash", "date": "2026-11-16", "interval": [156.8, 160.9]},
         "aa_intelligence_index": {"score": 30.8, "source": "artificialanalysis.ai/models/gemini-3-8-flash", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
         "gpqa_diamond": {"score": 95.3, "source": "artificialanalysis.ai/models/gemini-3-8-flash", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 47.8, "source": "artificialanalysis.ai/models/gemini-3-8-flash", "date": "2026-11-16", "setting": "high"},
@@ -600,6 +643,7 @@
       "structured_output": "reliable",
       "context_window": 1048576,
       "benchmarks": {
+        "epoch_eci": {"score": 155.2, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.6 Flash", "date": "2026-11-16", "interval": [153.4, 157.2]},
         "gpqa_diamond": {"score": 92.8, "source": "artificialanalysis.ai/models/gemini-3-6-flash", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 40.8, "source": "artificialanalysis.ai/models/gemini-3-6-flash", "date": "2026-11-16", "setting": "high"},
         "scicode": {"score": 53.4, "source": "artificialanalysis.ai/models/gemini-3-6-flash", "date": "2026-11-16", "setting": "high"},
@@ -617,6 +661,7 @@
       "structured_output": "reliable",
       "context_window": 1048576,
       "benchmarks": {
+        "epoch_eci": {"score": 145.6, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.5 Flash-Lite", "date": "2026-11-16", "interval": [144.0, 147.3]},
         "aa_intelligence_index": {"score": 11.7, "source": "artificialanalysis.ai/models/gemini-3-5-flash-lite", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
         "gpqa_diamond": {"score": 83.8, "source": "artificialanalysis.ai/models/gemini-3-5-flash-lite", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 18.8, "source": "artificialanalysis.ai/models/gemini-3-5-flash-lite", "date": "2026-11-16", "setting": "high"},
@@ -633,7 +678,10 @@
         "gemini": {"models": ["gemini-3.1-flash-lite"], "cost": {"input": 0.25, "output": 1.5}}
       },
       "structured_output": "reliable",
-      "context_window": 1048576
+      "context_window": 1048576,
+      "benchmarks": {
+        "epoch_eci": {"score": 145.0, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.1 Flash-Lite", "date": "2026-11-16", "interval": [142.8, 147.2]}
+      }
     },
     {
       "id": "gemini-3.1-pro-preview",
@@ -664,6 +712,7 @@
       "context_window": 1000000,
       "open_weight": {"family": "mistral-large", "params_b": 1050, "active_params_b": 52},
       "benchmarks": {
+        "epoch_eci": {"score": 154.6, "source": "epoch.ai/data/eci_scores.csv#Mistral Large 4", "date": "2026-11-16", "interval": [151.8, 157.5]},
         "aa_intelligence_index": {"score": 26.1, "source": "artificialanalysis.ai/models/mistral-large-4", "date": "2026-11-16", "version": "5.0.1", "setting": "high"}
       },
       "notes": "Public preview since 2026-10-06; id not confirmed against /v1/models. List price (launch discount ends ~2026-10-20). inferenceswitch sends json_schema without strict, so best_effort."
@@ -698,6 +747,7 @@
       "structured_output": "best_effort",
       "context_window": 256000,
       "benchmarks": {
+        "epoch_eci": {"score": 141.6, "source": "epoch.ai/data/eci_scores.csv#Mistral Medium 3.5", "date": "2026-11-16", "interval": [138.4, 144.6]},
         "aa_intelligence_index": {"score": 4.6, "source": "artificialanalysis.ai/models/mistral-medium-3-5", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
         "gpqa_diamond": {"score": 74.8, "source": "artificialanalysis.ai/models/mistral-medium-3-5", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 13.8, "source": "artificialanalysis.ai/models/mistral-medium-3-5", "date": "2026-11-16", "setting": "high"},
@@ -812,6 +862,9 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "benchmarks": {
+        "epoch_eci": {"score": 150.2, "source": "epoch.ai/data/eci_scores.csv#DeepSeek-V4-Pro", "date": "2026-11-16", "interval": [148.4, 152.0]}
+      },
       "notes": "Lower end of large. Thinking on by default. Peak price shown; off-peak is half. DeepSeek offers json_object only, so best_effort."
     },
     {
@@ -823,6 +876,7 @@
       "structured_output": "best_effort",
       "context_window": null,
       "benchmarks": {
+        "epoch_eci": {"score": 157.8, "source": "epoch.ai/data/eci_scores.csv#Grok 4.6", "date": "2026-11-16", "interval": [155.8, 159.9]},
         "gpqa_diamond": {"score": 94.9, "source": "artificialanalysis.ai/models/grok-4-6", "date": "2026-11-16", "setting": "high"},
         "hle": {"score": 42.9, "source": "artificialanalysis.ai/models/grok-4-6", "date": "2026-11-16", "setting": "high"},
         "scicode": {"score": 56.5, "source": "artificialanalysis.ai/models/grok-4-6", "date": "2026-11-16", "setting": "high"},
@@ -872,6 +926,7 @@
       "context_window": 1000000,
       "open_weight": {"family": "glm-5", "params_b": 753, "active_params_b": 40},
       "benchmarks": {
+        "epoch_eci": {"score": 157.1, "source": "epoch.ai/data/eci_scores.csv#GLM-5.3", "date": "2026-11-16", "interval": [154.9, 159.5]},
         "aa_intelligence_index": {"score": 31.7, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 91.7, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 42.3, "source": "artificialanalysis.ai/models/glm-5-3", "date": "2026-11-16", "setting": "max"},
@@ -892,6 +947,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "glm-5", "params_b": 320, "active_params_b": 18},
       "benchmarks": {
+        "epoch_eci": {"score": 153.8, "source": "epoch.ai/data/eci_scores.csv#GLM-5.3-Flash", "date": "2026-11-16", "interval": [152.0, 155.8]},
         "aa_intelligence_index": {"score": 27.8, "source": "artificialanalysis.ai/models/glm-5-3-flash", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "gpqa_diamond": {"score": 91.2, "source": "artificialanalysis.ai/models/glm-5-3-flash", "date": "2026-11-16", "setting": "max"},
         "hle": {"score": 39.9, "source": "artificialanalysis.ai/models/glm-5-3-flash", "date": "2026-11-16", "setting": "max"},
@@ -957,7 +1013,7 @@
     },
     {
       "id": "kimi-k3.1-pro",
-      "rung": "large",
+      "rung": "mid",
       "routes": {
         "openrouter": {"models": ["moonshotai/kimi-k3.1-pro"], "cost": {"input": 2.0, "output": 10.0, "cache_read": 0.2}}
       },
@@ -966,12 +1022,13 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "kimi-k3", "params_b": 2800, "active_params_b": 104},
       "benchmarks": {
+        "epoch_eci": {"score": 161.4, "source": "epoch.ai/data/eci_scores.csv#Kimi K3.1 Pro", "date": "2026-11-16", "interval": [159.0, 164.0]},
         "aa_intelligence_index": {"score": 46.5, "source": "artificialanalysis.ai/models/kimi-k3-1-pro", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 52.5, "source": "artificialanalysis.ai/models/kimi-k3-1-pro", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 60.8, "source": "artificialanalysis.ai/models/kimi-k3-1-pro", "date": "2026-11-16", "setting": "max"},
         "aa_lcr": {"score": 86.3, "source": "artificialanalysis.ai/models/kimi-k3-1-pro", "date": "2026-11-16", "setting": "max"}
       },
-      "notes": "Lower end of large: 46.5 on the Artificial Analysis index, above GPT-6 Sol (44.2) and below Sonnet 5.5 (54.5); the highest open-weight model on it at the time. 2.8T parameters, 104B active. Kimi K3.1-Pro licence."
+      "notes": "Mid, candidate for large, because the two views split: 46.5 on the Artificial Analysis index is above GPT-6 Sol (44.2, large), while 161.4 on the Epoch Capabilities Index [159.0, 164.0] is level with Haiku 5.5 (160.4) and GPT-5.6 Terra (160.7), with the large edge (163) inside its interval. Placed on the lower under the under-claim rule; it is the strongest open-weight card here and priced like Sonnet 5.5. 2.8T parameters, 104B active. Kimi K3.1-Pro licence."
     },
     {
       "id": "deepseek-v4.1-flash",
@@ -984,6 +1041,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "deepseek-v4", "params_b": 552, "active_params_b": 16},
       "benchmarks": {
+        "epoch_eci": {"score": 156.7, "source": "epoch.ai/data/eci_scores.csv#DeepSeek V4.1 Flash", "date": "2026-11-16", "interval": [154.8, 158.8]},
         "hle": {"score": 39.2, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 51.9, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash", "date": "2026-11-16", "setting": "max"},
         "aa_lcr": {"score": 84.0, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash", "date": "2026-11-16", "setting": "max"}
@@ -1001,6 +1059,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "deepseek-v4", "params_b": 552, "active_params_b": 16},
       "benchmarks": {
+        "epoch_eci": {"score": 159.4, "source": "epoch.ai/data/eci_scores.csv#DeepSeek V4.1 Flash 1017", "date": "2026-11-16", "interval": [157.0, 162.0]},
         "aa_intelligence_index": {"score": 32.6, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash-1017", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
         "hle": {"score": 43.3, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash-1017", "date": "2026-11-16", "setting": "max"},
         "scicode": {"score": 55.9, "source": "artificialanalysis.ai/models/deepseek-v4-1-flash-1017", "date": "2026-11-16", "setting": "max"},
@@ -1057,6 +1116,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "qwen3.6", "params_b": 36, "active_params_b": 3},
       "benchmarks": {
+        "epoch_eci": {"score": 144.0, "source": "epoch.ai/data/eci_scores.csv#Qwen 3.6 35B-A3B", "date": "2026-11-16", "interval": [142.1, 145.9]},
         "gpqa_diamond": {"score": 84.1, "source": "artificialanalysis.ai/models/qwen3-6-35b-a3b", "date": "2026-11-16"},
         "hle": {"score": 22.2, "source": "artificialanalysis.ai/models/qwen3-6-35b-a3b", "date": "2026-11-16"},
         "scicode": {"score": 36.6, "source": "artificialanalysis.ai/models/qwen3-6-35b-a3b", "date": "2026-11-16"},
@@ -1078,6 +1138,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "qwen3.6", "params_b": 27.8},
       "benchmarks": {
+        "epoch_eci": {"score": 146.7, "source": "epoch.ai/data/eci_scores.csv#Qwen3.6 27B", "date": "2026-11-16", "interval": [144.5, 149.0]},
         "gpqa_diamond": {"score": 84.2, "source": "artificialanalysis.ai/models/qwen3-6-27b", "date": "2026-11-16"},
         "hle": {"score": 23.1, "source": "artificialanalysis.ai/models/qwen3-6-27b", "date": "2026-11-16"},
         "scicode": {"score": 42.8, "source": "artificialanalysis.ai/models/qwen3-6-27b", "date": "2026-11-16"},
@@ -1099,6 +1160,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "qwen3.5", "params_b": 9.7},
       "benchmarks": {
+        "epoch_eci": {"score": 139.3, "source": "epoch.ai/data/eci_scores.csv#Qwen3.5-9B", "date": "2026-11-16", "interval": [136.9, 141.6]},
         "gpqa_diamond": {"score": 80.6, "source": "artificialanalysis.ai/models/qwen3-5-9b", "date": "2026-11-16"},
         "hle": {"score": 14.9, "source": "artificialanalysis.ai/models/qwen3-5-9b", "date": "2026-11-16"},
         "scicode": {"score": 29.5, "source": "artificialanalysis.ai/models/qwen3-5-9b", "date": "2026-11-16"},
@@ -1121,6 +1183,7 @@
       "context_window": 32768,
       "open_weight": {"family": "qwen3", "params_b": 30.5, "active_params_b": 3.3, "quantization": "Q4_K_M"},
       "benchmarks": {
+        "epoch_eci": {"score": 134.1, "source": "epoch.ai/data/eci_scores.csv#Qwen3-30B-A3B", "date": "2026-11-16", "interval": [131.3, 136.8]},
         "gpqa_diamond": {"score": 51.5, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "hle": {"score": 4.6, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
         "ifbench": {"score": 31.9, "source": "artificialanalysis.ai/models/qwen3-30b-a3b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -1199,6 +1262,7 @@
       "features": {"add": ["vision"]},
       "open_weight": {"family": "gemma-4", "params_b": 25.2, "active_params_b": 3.8},
       "benchmarks": {
+        "epoch_eci": {"score": 141.6, "source": "epoch.ai/data/eci_scores.csv#Gemma 4 26B A4B", "date": "2026-11-16", "interval": [139.1, 144.1]},
         "gpqa_diamond": {"score": 79.2, "source": "artificialanalysis.ai/models/gemma-4-26b-a4b", "date": "2026-11-16"},
         "hle": {"score": 19.3, "source": "artificialanalysis.ai/models/gemma-4-26b-a4b", "date": "2026-11-16"},
         "scicode": {"score": 40.0, "source": "artificialanalysis.ai/models/gemma-4-26b-a4b", "date": "2026-11-16"},
