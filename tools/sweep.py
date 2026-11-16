@@ -29,10 +29,10 @@ Commands::
     python tools/sweep.py update              # rewrite openrouter prices and benchmarks in place
     python tools/sweep.py report --cards PATH # a card file other than the shipped one
     python tools/sweep.py report --out report.md --findings count.txt
-    python tools/sweep.py chart               # redraw docs/model-cards-chart.svg from the cards
+    python tools/sweep.py chart               # redraw docs/model-cards-chart.svg and the README table
 
-``update`` also redraws the chart the README embeds, so a sweep's pull request
-shows the cards that moved on it.
+``update`` also redraws the chart and the provider-by-rung table the README
+carries, so a sweep's pull request shows the cards that moved.
 
 ``update`` changes only what a machine can know: ``openrouter`` route prices,
 the Artificial Analysis ``benchmarks`` of cards that already name a page in their
@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import math
 import re
 import sys
 import time
@@ -55,6 +56,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CARDS_PATH = ROOT / "inferenceswitch" / "model_cards.json"
 CHART_PATH = ROOT / "docs" / "model-cards-chart.svg"
+README_PATH = ROOT / "README.md"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/models"
 AA_PAGE = "https://artificialanalysis.ai/models/{slug}"
@@ -285,38 +287,138 @@ def suggest_rung_eci(score: float) -> str:
     return _rung_of(score, ECI_EDGES, "nano")
 
 
-def grade(benchmarks: dict | None) -> dict:
+#: The individual benchmarks that can stand in for the ECI when Epoch has no row
+#: for a card. Each is a sigmoid in capability, so it is used only where it is
+#: neither at its floor nor at its ceiling (3% to 97%): a model that tops it still
+#: gets its say from a harder one.
+EST_BENCH = ("gpqa_diamond", "hle", "ifbench", "tau2", "aa_lcr", "scicode",
+             "terminal_bench_2_1", "livecodebench")
+EST_RANGE = (3.0, 97.0)
+EST_MIN_CARDS = 6
+
+
+def _logit(score: float) -> float:
+    p = score / 100
+    return math.log(p / (1 - p))
+
+
+def _fit(cards: list[dict], skip: dict | None = None) -> dict[str, tuple[float, float, float]]:
+    """Per benchmark, ECI = a + b * logit(score), fit by least squares on the cards
+    that have both, with the residual spread. A benchmark with fewer than
+    ``EST_MIN_CARDS`` such cards is left out."""
+    models = {}
+    for name in EST_BENCH:
+        xs, ys = [], []
+        for card in cards:
+            b = card.get("benchmarks") or {}
+            if card is skip or ECI not in b or name not in b:
+                continue
+            if EST_RANGE[0] < b[name]["score"] < EST_RANGE[1]:
+                xs.append(_logit(b[name]["score"]))
+                ys.append(b[ECI]["score"])
+        n = len(xs)
+        if n < EST_MIN_CARDS:
+            continue
+        mx, my = sum(xs) / n, sum(ys) / n
+        sxx = sum((x - mx) ** 2 for x in xs)
+        if sxx == 0:
+            continue
+        slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
+        icpt = my - slope * mx
+        sd = math.sqrt(sum((y - (icpt + slope * x)) ** 2 for x, y in zip(xs, ys)) / (n - 2))
+        models[name] = (icpt, slope, max(sd, 0.5))
+    return models
+
+
+def _combine(card: dict, models: dict) -> tuple[float, list[str]] | None:
+    """The benchmarks' ECI estimates for one card, weighted by inverse residual
+    variance; ``None`` when none of its benchmarks is in range."""
+    b = card.get("benchmarks") or {}
+    parts, used = [], []
+    for name, (icpt, slope, sd) in models.items():
+        if name in b and EST_RANGE[0] < b[name]["score"] < EST_RANGE[1]:
+            parts.append((icpt + slope * _logit(b[name]["score"]), 1 / sd ** 2))
+            used.append(name)
+    if not parts:
+        return None
+    return sum(e * w for e, w in parts) / sum(w for _, w in parts), used
+
+
+class Estimator:
+    """An ECI estimated from a card's other benchmarks, for cards Epoch has not
+    scored. Fit on the cards that have both, so it is re-fit with each sweep;
+    the rung edges it is read against are not. ``rmse`` is its leave-one-out
+    error on the cards that have an ECI (held out one at a time), and the 95%
+    interval it reports is 1.96 times that: a rough guide, not a guarantee."""
+
+    def __init__(self, cards: list[dict]) -> None:
+        self.models = _fit(cards)
+        errors = []
+        for card in cards:
+            eci = (card.get("benchmarks") or {}).get(ECI)
+            if not eci:
+                continue
+            got = _combine(card, _fit(cards, skip=card))
+            if got:
+                errors.append(got[0] - eci["score"])
+        self.rmse = math.sqrt(sum(e * e for e in errors) / len(errors)) if errors else None
+        self.n_checked = len(errors)
+
+    def __call__(self, card: dict) -> dict | None:
+        """``{"score", "lo", "hi", "used"}`` for a card, or ``None`` when it has no
+        usable benchmark or the estimator could not be checked."""
+        got = _combine(card, self.models)
+        if got is None or self.rmse is None:
+            return None
+        score, used = got
+        half = 1.96 * max(self.rmse, 1.0)  # a floor: the ECI itself is only good to about 2.5
+        return {"score": round(score, 1), "lo": round(score - half, 1), "hi": round(score + half, 1), "used": used}
+
+
+def grade(benchmarks: dict | None, est: dict | None = None) -> dict:
     """What a card's recorded scores say about its rung.
 
-    ``views`` maps each view that has a say (``eci``, ``aa``) to the rung it
-    suggests; ``suggested`` is the lower of them (a consumer pays more for a
-    model placed too low, and gets a wrong answer from one placed too high);
-    ``borderline`` is true when the ECI interval crosses an edge, so that view
-    could as well say the rung next to it; ``agree`` is false when the views
-    differ. ``suggested`` is ``None`` when neither speaks.
+    ``views`` maps each view that has a say (``eci``, ``est``, ``aa``) to the rung
+    it suggests. A card Epoch has scored is read from its ECI; one it has not is
+    read from ``est`` (an estimate from its other benchmarks, see
+    :class:`Estimator`), if given. ``suggested`` is the lower of the views (a
+    consumer pays more for a model placed too low, and gets a wrong answer from
+    one placed too high). ``ok`` is the set of rungs the scores do not rule out:
+    the suggestion, plus every rung an estimate's 95% interval spans, plus
+    ``nano`` when only the AA index spoke and it said ``small`` (the index cannot
+    tell them apart). ``borderline`` is true when an ECI or estimate interval
+    crosses an edge; ``agree`` is false when the views differ. Everything is
+    ``None``/empty when the card has no benchmark that speaks.
     """
     b = benchmarks or {}
     views: dict[str, str] = {}
     borderline = False
+    ok: set[str] = set()
     eci = b.get(ECI)
     if eci:
         views["eci"] = suggest_rung_eci(eci["score"])
         low, high = eci.get("interval") or (eci["score"], eci["score"])
         borderline = suggest_rung_eci(low) != suggest_rung_eci(high)
+    elif est:
+        views["est"] = suggest_rung_eci(est["score"])
+        lo_r, hi_r = suggest_rung_eci(est["lo"]), suggest_rung_eci(est["hi"])
+        borderline = lo_r != hi_r
+        ok |= {r for r in RUNGS if RUNGS.index(lo_r) <= RUNGS.index(r) <= RUNGS.index(hi_r)}
     idx = b.get(INDEX)
     if idx and suggest_rung(idx["score"], idx.get("version")):
         views["aa"] = suggest_rung(idx["score"], idx.get("version"))
     suggested = min(views.values(), key=RUNGS.index) if views else None
+    if suggested is not None:
+        ok.add(suggested)
+        if suggested == "small" and "eci" not in views and "est" not in views:
+            ok.add("nano")
     return {"views": views, "suggested": suggested, "borderline": borderline,
-            "agree": len(set(views.values())) <= 1}
+            "agree": len(set(views.values())) <= 1, "ok": ok or None}
 
 
-def settles(rung: str, suggested: str | None, eci: bool = False) -> bool:
-    """Whether a card's ``rung`` is where its scores put it. Only the ECI has a
-    ``nano`` edge: when a card has no ECI (``eci`` false) a score that says
-    ``small`` cannot tell it from ``nano``, so it settles a ``nano`` card."""
-    return (suggested is None or suggested == rung
-            or (suggested == "small" and rung == "nano" and not eci))
+def settles(rung: str, g: dict) -> bool:
+    """Whether a card's ``rung`` is one its scores do not rule out (``grade``'s ``ok``)."""
+    return g["ok"] is None or rung in g["ok"]
 
 
 def fetch_eci() -> dict[str, dict]:
@@ -468,36 +570,42 @@ def _aa_slug_index() -> dict[str, str]:
 
 def rung_section(cards: list[dict]) -> list[str]:
     """Cards whose recorded scores put them on another rung."""
+    est = Estimator(cards)
     lines = ["## Rungs against the scores", "",
-             "Every card is graded on two views, the Epoch Capabilities Index and the Artificial "
-             "Analysis index, and placed on the lower when they differ. The rung thresholds are "
-             "frozen (see `tools/sweep.py`); a card changes rung when its scores do. A suggestion "
-             "prompts a look and a decision: it is never applied by the sweep. Edges: ECI "
+             "Every card is graded on up to three views and placed on the lower: the Epoch "
+             "Capabilities Index (ECI), or for a card Epoch has not scored an ECI estimated from "
+             "its other benchmarks"
+             + (f" (leave-one-out error {est.rmse:.1f} ECI points over {est.n_checked} cards)" if est.rmse else "")
+             + ", and the Artificial Analysis index. The rung thresholds are frozen (see "
+             "`tools/sweep.py`); a card changes rung when its scores do. A suggestion prompts a look "
+             "and a decision: it is never applied by the sweep. Edges: ECI "
              + ", ".join(f"`{r}` from {e:g}" for r, e in ECI_EDGES)
              + "; index v5.0.1 " + ", ".join(f"`{r}` from {e:g}" for r, e in AA_EDGES["5.0.1"]) + ".", ""]
-    rows, soft, unmeasured = [], [], []
+    rows, soft, bare = [], [], []
     for card in cards:
-        g = grade(card.get("benchmarks"))
+        b = card.get("benchmarks") or {}
+        e = None if ECI in b else est(card)
+        g = grade(b, e)
         if g["suggested"] is None:
-            unmeasured.append(card["id"])
+            bare.append(card["id"])
             continue
-        if not settles(card["rung"], g["suggested"], "eci" in g["views"]):
-            b = card.get("benchmarks") or {}
+        if not settles(card["rung"], g):
             eci, idx = b.get(ECI), b.get(INDEX)
-            eci_txt = f"{eci['score']} [{eci['interval'][0]}, {eci['interval'][1]}]" if eci else "-"
+            eci_txt = (f"{eci['score']} [{eci['interval'][0]}, {eci['interval'][1]}]" if eci
+                       else f"~{e['score']} [{e['lo']}, {e['hi']}]" if e else "-")
             views = ", ".join(f"{k} {v}" for k, v in g["views"].items())
             rows.append(f"| `{card['id']}` | `{card['rung']}` | {eci_txt} | {idx['score'] if idx else '-'} | "
                         f"**suggest `{g['suggested']}`** ({views}) |")
         elif not g["agree"] or g["borderline"]:
             soft.append(card["id"])
-    lines += ["| card | rung | ECI [95%] | AA index | |", "|---|---|---|---|---|",
+    lines += ["| card | rung | ECI [95%] (~ estimated) | AA index | |", "|---|---|---|---|---|",
               *(rows or ["| none | | | | |"]), ""]
     if soft:
-        lines += ["Close calls, not counted as findings (the two views differ, or the ECI "
-                  "interval crosses an edge): " + ", ".join(f"`{c}`" for c in soft) + ".", ""]
-    if unmeasured:
-        lines += ["No view from either source, so placed by size or judgement until scored: "
-                  + ", ".join(f"`{c}`" for c in unmeasured) + ".", ""]
+        lines += ["Close calls, not counted as findings (the views differ, or an interval crosses an "
+                  "edge): " + ", ".join(f"`{c}`" for c in soft) + ".", ""]
+    if bare:
+        lines += ["No benchmark recorded that speaks, so placed by size or judgement: "
+                  + ", ".join(f"`{c}`" for c in bare) + ".", ""]
     return lines
 
 
@@ -509,7 +617,7 @@ _CHART_STYLE = """<style>
 .small{--c:#8EBCEB}.mid{--c:#3E8FDD}.large{--c:#1F6BC0}.frontier{--c:#0B4EA2}
 .dot{fill:var(--c)}.ring{fill:none;stroke:var(--c);stroke-width:2}.bar{stroke:var(--c);stroke-opacity:.55}
 .band{fill:var(--c);fill-opacity:.13}.rule{stroke:#59636e;stroke-opacity:.35}
-.nano{--c:#B7C4D6}.floor{fill:#59636e;fill-opacity:.55}
+.nano{--c:#B7C4D6}.floor{fill:#59636e;fill-opacity:.55}.estbar{stroke:var(--c);stroke-opacity:.55;stroke-dasharray:3 2}
 @media (prefers-color-scheme:dark){.bg{fill:#0d1117}.t{fill:#e6edf3}.m{fill:#9198a1}.g{stroke:#9198a1;stroke-opacity:.25}.e{stroke:#9198a1}
 .z1{fill:#9198a1;fill-opacity:.05}.z2{fill:#9198a1;fill-opacity:.12}
 .nano{--c:#4A5A70}.small{--c:#3F78B8}.mid{--c:#5C9BE0}.large{--c:#8FBDF2}.frontier{--c:#C7E0FF}}
@@ -526,22 +634,26 @@ def render_chart(data: dict) -> str:
     different rung from the one it carries (the lower view wins). Written by
     ``update`` and ``chart``, embedded in the README. Deterministic: the same
     cards give the same bytes, so a sweep's diff is the cards that moved."""
+    est = Estimator(data["cards"])
     groups: dict[str, list] = {r: [] for r in RUNGS}
     for card in data["cards"]:
         b = card.get("benchmarks") or {}
         eci, idx = b.get(ECI), b.get(INDEX)
+        guess = None if eci else est(card)
         low, high = (eci.get("interval") or (eci["score"], eci["score"])) if eci else (None, None)
         groups[card["rung"]].append({
             "id": card["id"], "open": bool(card.get("open_weight")),
             "eci": eci["score"] if eci else None, "lo": low, "hi": high,
             "aa": idx["score"] if idx else None, "aa_v": idx.get("version") if idx else None,
+            "est": guess,
         })
     for rows in groups.values():
-        rows.sort(key=lambda r: (r["eci"] is None, -(r["eci"] or r["aa"] or 0), r["id"]))
+        rows.sort(key=lambda r: (r["eci"] is None, -(r["eci"] or (r["est"] or {}).get("score") or 0), r["id"]))
     n_all = sum(len(rows) for rows in groups.values())
     n_eci = sum(1 for rows in groups.values() for r in rows if r["eci"] is not None)
     n_aa = sum(1 for rows in groups.values() for r in rows if r["aa"] is not None)
-    n_neither = sum(1 for rows in groups.values() for r in rows if r["eci"] is None and r["aa"] is None)
+    n_est = sum(1 for rows in groups.values() for r in rows if r["eci"] is None and r["est"])
+    n_neither = sum(1 for rows in groups.values() for r in rows if r["eci"] is None and not r["est"] and r["aa"] is None)
 
     width, label_right = 900, 178
     e_l, e_r, a_l, a_r = 196, 566, 616, 860
@@ -549,7 +661,7 @@ def render_chart(data: dict) -> str:
     e_lo, e_hi, a_lo, a_hi = 100.0, 180.0, 0.0, 62.0
     order = [r for r in reversed(RUNGS) if groups[r]]
     plot_h = sum(hh + len(groups[r]) * rh + 6 for r in order)
-    height = top + plot_h + 124
+    height = top + plot_h + 138
 
     def ex(v: float) -> float:
         return round(e_l + (v - e_lo) / (e_hi - e_lo) * (e_r - e_l), 1)
@@ -572,7 +684,8 @@ def render_chart(data: dict) -> str:
         f'role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">',
         "<title>All model cards by rung, on the Epoch Capabilities Index and the Artificial Analysis index</title>",
         f"<desc>{n_all} model cards grouped by rung. {n_eci} have an Epoch Capabilities Index score (left, with its "
-        f"95% interval) and {n_aa} have an Artificial Analysis index score (right), each shown inside the rung's band.</desc>",
+        f"95% interval) and {n_aa} have an Artificial Analysis index score (right), each shown inside the rung's band; "
+        "cards without an Epoch score show an ECI estimated from their other benchmarks.</desc>",
         _CHART_STYLE,
         f'<rect class="bg" width="{width}" height="{height}"/>',
         f'<text class="t" x="{round((e_l + e_r) / 2, 1)}" y="{top - 32}" text-anchor="middle" font-size="12" font-weight="600">Epoch Capabilities Index</text>',
@@ -606,6 +719,10 @@ def render_chart(data: dict) -> str:
             if r["eci"] is not None:
                 e_view = suggest_rung_eci(r["eci"])
                 title = f"{cid}: ECI {r['eci']} [{r['lo']}, {r['hi']}], {e_view} on this view, rung {rung}, {kind}"
+            elif r["est"]:
+                e_view = suggest_rung_eci(r["est"]["score"])
+                title = (f"{cid}: no Epoch score; ECI estimated at {r['est']['score']} [{r['est']['lo']}, {r['est']['hi']}] "
+                         f"from {', '.join(r['est']['used'])}; rung {rung}, {kind}")
             else:
                 e_view = None
                 title = f"{cid}: no Epoch score yet, rung {rung}, {kind}"
@@ -617,6 +734,18 @@ def render_chart(data: dict) -> str:
                 out.append(f'<circle class="{"dot" if r["open"] else "ring"}" cx="{ex(r["eci"])}" cy="{cy}" r="{4.5 if r["open"] else 3.8}"/>')
                 if disagrees(e_view, rung, False):
                     out.append(f'<circle cx="{ex(r["eci"])}" cy="{cy}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
+            elif r["est"]:
+                g_est = r["est"]
+                lo_r, hi_r = suggest_rung_eci(g_est["lo"]), suggest_rung_eci(g_est["hi"])
+                inside = RUNGS.index(lo_r) <= RUNGS.index(rung) <= RUNGS.index(hi_r)
+                x0, x1 = ex(max(g_est["lo"], e_lo)), ex(min(g_est["hi"], e_hi))
+                out.append(f'<line class="estbar" x1="{x0}" x2="{x1}" y1="{cy}" y2="{cy}" stroke-width="2" stroke-linecap="round"/>')
+                cx = ex(g_est["score"])
+                out.append(f'<rect class="{"dot" if r["open"] else "ring"}" x="{round(cx - 3.8, 1)}" y="{round(cy - 3.8, 1)}" width="7.6" height="7.6" transform="rotate(45 {cx} {cy})"/>')
+                if not inside:
+                    out.append(f'<circle cx="{cx}" cy="{cy}" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>')
+            elif r["aa"] is None:
+                out.append(f'<text class="m" x="{e_l + 8}" y="{round(cy + 4, 1)}" font-size="11">no benchmarks recorded</text>')
             else:
                 out.append(f'<text class="m" x="{e_l + 8}" y="{round(cy + 4, 1)}" font-size="11">no Epoch score yet</text>')
             if r["aa"] is not None and r["aa_v"] in AA_EDGES:
@@ -637,16 +766,75 @@ def render_chart(data: dict) -> str:
         out.append(f'<line class="e" x1="{ax(e)}" x2="{ax(e)}" y1="{top}" y2="{round(y, 1)}" stroke-width="1" stroke-dasharray="4 3"/>')
         out.append(f'<text class="t" x="{ax(e)}" y="{round(y + 14, 1)}" text-anchor="middle" font-size="11">{e:g}</text>')
     notes = [
-        "Each card sits in its rung's band on both scales; dashed lines are the rung edges. A card is placed on the lower of its two views.",
+        "Each card sits in its rung's band on both scales; dashed lines are the rung edges. A card is placed on the lower of its views.",
         "Dot: open weights. Ring: hosted only. Orange ring: this view puts the card on a different rung from the one it carries.",
-        "Small grey dot: the index is at its floor (under 12), so it gives no view. The index cannot tell nano from small, so its nano band spans both.",
-        "ECI with 95% interval: Epoch AI (CC-BY 4.0). Index: Artificial Analysis. Grey words mean that source has no score for the card yet.",
-        f"{n_eci} of {n_all} cards have an Epoch score, {n_aa} an index score, {n_neither} neither (placed by size or judgement). Cards updated {data['updated']}.",
+        "Diamond with a dashed bar: no Epoch score, so the ECI is estimated from the card's other benchmarks (HLE, GPQA, IFBench and so on),",
+        f"with a 95% interval of about plus or minus {1.96 * max(est.rmse or 0, 1.0):.0f} from leave-one-out error. Hover a row for the benchmarks used.",
+        "Small grey dot: the index is at its floor (under 12), so it gives no view. The index cannot tell nano from small.",
+        "ECI with 95% interval: Epoch AI (CC-BY 4.0). Index: Artificial Analysis. Grey words: that source has nothing for the card yet.",
+        f"{n_eci} of {n_all} cards have an Epoch score, {n_est} an estimate from other benchmarks, {n_aa} an index score, "
+        f"{n_neither} nothing recorded (placed by size or judgement). Cards updated {data['updated']}.",
     ]
     for i, line in enumerate(notes):
         out.append(f'<text class="m" x="28" y="{round(y + 36 + i * 14, 1)}" font-size="11">{line}</text>')
     out.append("</svg>")
     return "\n".join(out) + "\n"
+
+
+_PROVIDER_LABELS = {
+    "anthropic": "Anthropic", "gemini": "Google Gemini", "openai": "OpenAI", "mistral": "Mistral",
+    "deepseek": "DeepSeek", "xai": "xAI", "groq": "Groq", "openrouter": "OpenRouter",
+    "ollama": "Ollama (local)", "lmstudio": "LM Studio (local)",
+}
+TABLE_START, TABLE_END = "<!-- model-table:start -->", "<!-- model-table:end -->"
+
+
+def render_table(data: dict) -> str:
+    """Provider by rung: the model cards each provider serves, on the rung they
+    are placed on, best first. A model served by several providers is in each
+    row, so a column reads as the equivalent choices across providers. ``*`` marks
+    a card Epoch has not scored (its rung comes from an estimate or the index)."""
+    cards = data["cards"]
+    est = Estimator(cards)
+    score: dict[str, float] = {}
+    star: set[str] = set()
+    for card in cards:
+        eci = (card.get("benchmarks") or {}).get(ECI)
+        if eci:
+            score[card["id"]] = eci["score"]
+        else:
+            star.add(card["id"])
+            guess = est(card)
+            if guess:
+                score[card["id"]] = guess["score"]
+    providers: list[str] = []
+    for card in cards:
+        for p in card["routes"]:
+            if p not in providers:
+                providers.append(p)
+    known = [p for p in _PROVIDER_LABELS if p in providers]
+    providers = known + sorted(p for p in providers if p not in _PROVIDER_LABELS)
+    lines = ["| Provider | " + " | ".join(RUNGS) + " |", "|---|" + "---|" * len(RUNGS)]
+    for p in providers:
+        cells = []
+        for rung in RUNGS:
+            mine = [c for c in cards if p in c["routes"] and c["rung"] == rung]
+            mine.sort(key=lambda c: (c["id"] not in score, -score.get(c["id"], 0), c["id"]))
+            cells.append("<br>".join(f"`{c['id']}`" + ("\\*" if c["id"] in star else "") for c in mine) or "–")
+        lines.append(f"| {_PROVIDER_LABELS.get(p, p)} | " + " | ".join(cells) + " |")
+    return "\n".join(lines) + "\n"
+
+
+def write_table(cards_path: Path, readme_path: Path) -> bool:
+    """Regenerate the README's provider-by-rung table between its markers;
+    ``True`` when the README changed."""
+    text = readme_path.read_text(encoding="utf-8")
+    a, b = text.index(TABLE_START) + len(TABLE_START), text.index(TABLE_END)
+    new = text[:a] + "\n" + render_table(load_cards(cards_path)) + text[b:]
+    if new == text:
+        return False
+    readme_path.write_text(new, encoding="utf-8", newline="\n")
+    return True
 
 
 def write_chart(cards_path: Path, chart_path: Path) -> bool:
@@ -656,6 +844,16 @@ def write_chart(cards_path: Path, chart_path: Path) -> bool:
         return False
     chart_path.write_text(svg, encoding="utf-8", newline="\n")
     return True
+
+
+def write_outputs(cards_path: Path) -> list[str]:
+    """Redraw the chart and the README table; the names of what changed."""
+    changed = []
+    if write_chart(cards_path, CHART_PATH):
+        changed.append(str(CHART_PATH.relative_to(ROOT)))
+    if write_table(cards_path, README_PATH):
+        changed.append(str(README_PATH.relative_to(ROOT)))
+    return changed
 
 
 # ── updating the card file ──────────────────────────────────────────────────
@@ -759,8 +957,9 @@ def update(cards_path: Path) -> list[str]:
     if changes:
         data["updated"] = today
         cards_path.write_text(dump_cards(data), encoding="utf-8", newline="\n")
-    if cards_path == CARDS_PATH and write_chart(cards_path, CHART_PATH):
-        changes.append(f"chart redrawn: {CHART_PATH.relative_to(ROOT)}")
+    if cards_path == CARDS_PATH:
+        for name in write_outputs(cards_path):
+            changes.append(f"redrawn: {name}")
     return changes
 
 
@@ -785,7 +984,8 @@ def main(argv: list[str] | None = None) -> int:
             count = sum(1 for line in text.splitlines() if line.startswith(("- `", "| `")))
             args.findings.write_text(f"{count}\n", encoding="utf-8")
     elif args.command == "chart":
-        print("Chart redrawn." if write_chart(args.cards, CHART_PATH) else "Chart unchanged.")
+        changed = write_outputs(args.cards)
+        print("Redrawn: " + ", ".join(changed) if changed else "Chart and README table unchanged.")
     else:
         changes = update(args.cards)
         print("\n".join(changes) if changes else "Nothing changed.")

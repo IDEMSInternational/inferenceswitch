@@ -41,18 +41,22 @@ How to place a model:
    tier name (Haiku, Flash, Sonnet, Opus, "Luna") is not evidence. Haiku 4.5 is
    `small`, Opus 4.8 is `mid` and Mistral Large 4 is `mid` on their scores, and
    their cards say they were moved.
-2. **Unmeasured models** (no Epoch row, and no Artificial Analysis score above
-   its floor) are placed by judgement until they are scored: open-weight ones
-   from the parameter-count column, moved **down** a rung if they look clearly
-   weaker (an older generation, say), hosted ones by what their vendor says the
-   model is. Say in `notes` that the card is unmeasured; the sweep lists those
-   cards. When unsure, place lower: under-claiming costs a consumer a more
-   expensive model, over-claiming costs them a wrong answer. There will always
-   be open models nobody scores; the rung is a best effort, not an exact figure.
-3. **Mixture-of-experts models** are placed by their scores, or when unmeasured
+2. **Models Epoch has not scored** are placed on an ECI **estimated from their other
+   benchmarks** (below), and on the Artificial Analysis index if it speaks. A card
+   inside the estimate's wide band is not moved. Mark such a card in `notes` if
+   its rung rests on little (a few benchmarks, or an estimate near an edge).
+3. **Models with no benchmark that speaks** (none recorded, or all at their floor or
+   ceiling) are placed by judgement until they are scored: open-weight ones from the
+   parameter-count column, moved **down** a rung if they look clearly weaker (an
+   older generation, say), hosted ones by what their vendor says the model is. Say
+   in `notes` that the card is unmeasured; the sweep lists those cards. When
+   unsure, place lower: under-claiming costs a consumer a more expensive model,
+   over-claiming costs them a wrong answer. There will always be open models nobody
+   scores; the rung is a best effort, not an exact figure.
+4. **Mixture-of-experts models** are placed by their scores, or when unmeasured
    by quality using total parameters as the starting point; record
    `active_params_b` too.
-4. Use `notes` for anything a reviewer should know: "candidate for large if
+5. Use `notes` for anything a reviewer should know: "candidate for large if
    evals support it", memory needed locally.
 
 ### Benchmarks as evidence
@@ -68,8 +72,8 @@ ceiling for models above. GSM8K is saturated by every current model, GPQA
 Diamond is above 90% for many of them, and Artificial Analysis's index is at
 its floor (3 to 6) for anything that is not agentic. A model that tops one
 benchmark still gets a fair score on a harder one, so a single benchmark
-mis-places both ends. The card is graded on two independent views, each
-combining many benchmarks:
+mis-places both ends. The card is graded on up to three views, each combining
+many benchmarks:
 
 - **Epoch Capabilities Index (ECI)**, from [Epoch AI](https://epoch.ai/benchmarks/eci)
   (CC-BY 4.0). One scale stitched from 50+ benchmarks of very different
@@ -88,15 +92,30 @@ combining many benchmarks:
   fixed per version (`AA_EDGES` in `tools/sweep.py`): a score from a version with
   no edges has no view until a person adds them.
 
-The two are recorded as `epoch_eci` and `aa_intelligence_index`, next to the
-single benchmarks Artificial Analysis publishes (`hle`, `gpqa_diamond`,
-`ifbench` and others), which are kept for a reviewer to read and are not used to
-place a card. **The lower of the two views places a card** (a view that is not
-published, or at its floor, has no say). That is the under-claim rule. A card
-whose two views differ, or whose ECI interval crosses a rung's edge, is a close
-call: the sweep lists it, and it may say so in its `notes`. A card with only one
-view, because the newest models are not in Epoch's data yet, is placed on that
-one and picks up the other when it appears.
+- **An ECI estimated from the card's other benchmarks**, for a model Epoch has not
+  scored. For each of GPQA Diamond, HLE, IFBench, tau2, AA-LCR, SciCode,
+  Terminal-Bench 2.1 and LiveCodeBench, the sweep fits `ECI = a + b * logit(score)`
+  by least squares on the cards that have both (a sigmoid in capability is a line in
+  logit space), and uses a benchmark only where the card's score is between 3% and
+  97%, so a floored or saturated one says nothing. A card's estimate is the average
+  of the benchmarks it has, weighted by how well each tracks the ECI. Leaving each
+  scored card out in turn, the estimate misses its real ECI by about 4 points (RMSE),
+  so the band it carries is 1.96 times that, about plus or minus 7; a card inside the
+  band is not moved. It is re-fit with each sweep, but the edges it is read against
+  never move. The estimate is computed, not recorded: the benchmarks it comes from
+  are on the card.
+
+The ECI and Artificial Analysis index are recorded as `epoch_eci` and
+`aa_intelligence_index`, next to the individual benchmarks Artificial Analysis
+publishes (`hle`, `gpqa_diamond`, `ifbench` and others), which are used only through
+the estimate above and are otherwise kept for a reviewer to read. **The lower of the
+views places a card** (a view that is not published, or at its floor, has no say).
+That is the under-claim rule. A card whose views differ, or whose interval crosses a
+rung's edge, is a close call: the sweep lists it, and it may say so in its `notes`.
+A card with only one view is placed on that one and picks up the others when they
+appear. The README's chart shows, for every card, the evidence in its rung's band on
+both scales (an estimate as a diamond with a dashed bar), and its table lists the
+cards by provider and rung.
 
 The edges (ECI `small` 130, `mid` 152, `large` 163, `frontier` 168; index
 v5.0.1 `small` 12, `mid` 26, `large` 40, `frontier` 55) sit between the medians of
@@ -236,8 +255,9 @@ in code; a card with the same `id` replaces the shipped one.
   Artificial Analysis's model pages, and
   - **rewrites** the `openrouter` route prices and the `benchmarks` (ECI, and
     Artificial Analysis for cards that name a page there), **redraws the chart**
-    the README embeds (`docs/model-cards-chart.svg`, from the same data; a test
-    fails if it is stale), then opens a pull request if the file
+    the README embeds (`docs/model-cards-chart.svg`) **and the README's
+    provider-by-rung table**, from the same data (a test fails if either is
+    stale), then opens a pull request if the file
     changed (after the test suite passes on it);
   - **reports**, in one standing issue refreshed each week, what only a person
     can decide: open models from the last 120 days with no card yet, other

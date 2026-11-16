@@ -26,6 +26,8 @@ and the prices current.
     `gpt-oss-120b`, `llama3.3-70b`, `mistral-medium-3-5`, `qwen3-32b`
   - `qwen3.8-27b` goes from `mid` to `small` too (before it was moved, 20.1 on
     the Artificial Analysis index and 152.6 on the ECI).
+  - `mistral-large-3` goes from `large` to `small`: it has no Epoch score, but its
+    other benchmarks estimate an ECI of about 135 [127, 142].
   - the `small` edge at 130 puts `llama3.3-70b`, `gpt-4o-mini` and `llama3.1-8b`
     on `nano`: a rung is capability, so a 70B model that scores like GPT-4o mini
     is `nano`.
@@ -63,12 +65,21 @@ and the prices current.
   LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
   card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
   quantization-aware build.
+- **A provider-by-rung table in the README**, generated from the cards: each
+  provider's models on the rung they are placed on, best first, so a column reads
+  as the equivalent choices across providers. Redrawn by each sweep; a test fails
+  if it is stale.
+- **An ECI estimated from a card's other benchmarks**, for the models Epoch has not
+  scored (HLE, GPQA, IFBench, tool use and so on mapped onto the ECI scale from the
+  cards that have both, ignoring any benchmark at its floor or ceiling; leave-one-out
+  error about 4 ECI points, so the band is wide and a card inside it is not moved).
+  The README explains how a rung is decided.
 - **`docs/model-cards-chart.svg`**, the chart in the README: every card, grouped
-  by rung, against both views its rung is read from: the Epoch Capabilities Index
-  (a dot with its 95% interval) and the Artificial Analysis index (a dot), each in
-  the rung's band on that scale, so a card Epoch has not scored yet still shows
-  where it stands. Redrawn by `python tools/sweep.py chart` and by each weekly
-  sweep. A test fails if it is stale.
+  by rung, against the evidence its rung is read from: the Epoch Capabilities Index
+  (a dot with its 95% interval, or for a card Epoch has not scored a diamond with a
+  dashed bar at its estimated ECI) and the Artificial Analysis index (a dot), each in
+  the rung's band on that scale. Redrawn by `python tools/sweep.py chart` and by each
+  weekly sweep. A test fails if it is stale.
 - **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
   refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
   Analysis) in a pull request, and

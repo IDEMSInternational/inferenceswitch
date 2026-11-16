@@ -172,12 +172,15 @@ def test_a_card_is_placed_on_the_lower_of_its_two_views():
 def test_every_card_sits_on_the_rung_its_scores_put_it_on():
     # Rungs are capability levels, not a vendor's tier names, so a card whose
     # scores say another rung is wrong until it is moved (or re-scored). A card
-    # with no score is placed by size or judgement and is not tested.
+    # with no benchmark that speaks is placed by size or judgement and is not tested.
+    cards = [c.to_dict() for c in default_cards()]
+    est = sweep.Estimator(cards)
     off = {}
-    for card in default_cards():
-        g = sweep.grade(card.to_dict().get("benchmarks"))
-        if not sweep.settles(card.rung.value, g["suggested"], "eci" in g["views"]):
-            off[card.id] = (card.rung.value, g["suggested"])
+    for c in cards:
+        b = c.get("benchmarks")
+        g = sweep.grade(b, None if "epoch_eci" in (b or {}) else est(c))
+        if not sweep.settles(c["rung"], g):
+            off[c["id"]] = (c["rung"], g["suggested"], sorted(g["ok"] or []))
     assert not off, off
 
 
@@ -195,11 +198,104 @@ def test_an_index_from_a_version_with_no_edges_has_no_view():
     assert g["suggested"] is None
 
 
-def test_a_score_that_says_small_settles_a_nano_card_only_without_an_eci():
+def test_a_score_that_says_small_settles_a_nano_card_only_without_an_eci_or_estimate():
     # The AA index has no nano edge, so it cannot tell small from nano; the ECI can.
-    assert sweep.settles("nano", "small") and not sweep.settles("nano", "mid")
-    assert not sweep.settles("nano", "small", eci=True)
-    assert sweep.settles("mid", None)
+    index_only = sweep.grade({"aa_intelligence_index": {"score": 20.0, "version": "5.0.1"}})
+    assert sweep.settles("nano", index_only) and sweep.settles("small", index_only)
+    assert not sweep.settles("mid", index_only)
+    assert not sweep.settles("nano", sweep.grade({"epoch_eci": {"score": 140.0}}))
+    assert sweep.settles("mid", sweep.grade({}))  # nothing speaks: not ruled out
+
+
+def _synthetic_cards():
+    """Fifty cards whose HLE and GPQA follow a known sigmoid of their ECI, so the
+    estimator has something exact to recover, plus one card with no ECI."""
+    import math
+
+    cards = []
+    for i in range(50):
+        eci = 125.0 + i * 1.0
+
+        def score(shift, k, eci=eci):
+            return 100 / (1 + math.exp(-(eci - shift) / k))
+
+        cards.append({"id": f"c{i}", "rung": "mid", "benchmarks": {
+            "epoch_eci": {"score": eci, "source": "s", "date": "d", "interval": [eci - 2, eci + 2]},
+            "hle": {"score": score(160, 8), "source": "s", "date": "d"},
+            "gpqa_diamond": {"score": score(140, 10), "source": "s", "date": "d"},
+        }})
+    target = 150.0
+    cards.append({"id": "x", "rung": "mid", "benchmarks": {
+        "hle": {"score": 100 / (1 + math.exp(-(target - 160) / 8)), "source": "s", "date": "d"},
+        "gpqa_diamond": {"score": 100 / (1 + math.exp(-(target - 140) / 10)), "source": "s", "date": "d"},
+    }})
+    return cards
+
+
+def test_the_estimator_recovers_an_eci_from_other_benchmarks_and_reports_its_error():
+    cards = _synthetic_cards()
+    est = sweep.Estimator(cards)
+    got = est(cards[-1])
+    assert abs(got["score"] - 150.0) < 1.0
+    assert got["lo"] < got["score"] < got["hi"]
+    assert set(got["used"]) == {"hle", "gpqa_diamond"}
+    assert est.rmse is not None and est.rmse < 1.0 and est.n_checked == 50
+
+
+def test_a_benchmark_at_its_floor_or_ceiling_is_not_used():
+    cards = _synthetic_cards()
+    est = sweep.Estimator(cards)
+    saturated = {"id": "y", "rung": "mid", "benchmarks": {
+        "hle": {"score": 99.0, "source": "s", "date": "d"}, "gpqa_diamond": {"score": 1.0, "source": "s", "date": "d"}}}
+    assert est(saturated) is None
+    assert est({"id": "z", "rung": "mid"}) is None
+
+
+def test_an_estimate_leaves_a_card_inside_its_interval_where_it_is():
+    est = {"score": 131.0, "lo": 124.0, "hi": 138.0, "used": ["hle"]}  # spans nano and small
+    g = sweep.grade({}, est)
+    assert g["views"] == {"est": "small"} and g["borderline"]
+    assert sweep.settles("nano", g) and sweep.settles("small", g) and not sweep.settles("mid", g)
+    # An ECI, when there is one, is read instead of the estimate.
+    g = sweep.grade({"epoch_eci": {"score": 160.0, "interval": [158.0, 162.0]}}, est)
+    assert g["views"] == {"eci": "mid"}
+
+
+# ── the README table ────────────────────────────────────────────────────────
+
+README_PATH = Path(sweep.README_PATH)
+
+
+def test_the_readme_table_is_the_one_the_shipped_cards_make():
+    readme = README_PATH.read_text(encoding="utf-8")
+    a, b = readme.index(sweep.TABLE_START) + len(sweep.TABLE_START), readme.index(sweep.TABLE_END)
+    table = sweep.render_table(json.loads(CARDS_PATH.read_text(encoding="utf-8")))
+    assert readme[a:b] == "\n" + table
+
+
+def test_the_table_has_a_row_per_provider_and_a_column_per_rung_and_lists_every_route():
+    data = json.loads(CARDS_PATH.read_text(encoding="utf-8"))
+    table = sweep.render_table(data)
+    lines = table.strip().splitlines()
+    assert lines[0] == "| Provider | " + " | ".join(sweep.RUNGS) + " |"
+    for card in data["cards"]:
+        for provider in card["routes"]:
+            row = next(line for line in lines[2:] if line.startswith(f"| {sweep._PROVIDER_LABELS.get(provider, provider)} |"))
+            assert f"`{card['id']}`" in row, (provider, card["id"])
+
+
+def test_a_card_served_by_several_providers_is_in_each_row_and_unscored_ones_are_starred():
+    data = {"updated": "2026-01-01", "cards": [
+        {"id": "both", "rung": "mid", "routes": {"groq": {}, "ollama": {}},
+         "benchmarks": {"epoch_eci": {"score": 155.0, "interval": [153.0, 157.0]}}},
+        {"id": "raw", "rung": "small", "routes": {"groq": {}}},
+    ]}
+    table = sweep.render_table(data)
+    groq = next(line for line in table.splitlines() if line.startswith("| Groq"))
+    ollama = next(line for line in table.splitlines() if line.startswith("| Ollama"))
+    assert "`both`" in groq and "`both`" in ollama
+    assert "`raw`\\*" in groq and "`both`\\*" not in groq
+
 
 
 # ── the chart ───────────────────────────────────────────────────────────────
@@ -234,5 +330,5 @@ def test_the_chart_is_deterministic_and_shows_cards_with_and_without_an_eci():
     one = sweep.render_chart(data)
     assert one == sweep.render_chart(data)
     assert ">a<" in one and ">b<" in one and ">c<" in one
-    assert "AA index 20" in one and "no Epoch score yet" in one and "no index score" in one
-    assert "1 of 3 cards have an Epoch score, 1 an index score, 1 neither" in one
+    assert "AA index 20" in one and "no index score" in one and "no benchmarks recorded" in one
+    assert "1 of 3 cards have an Epoch score, 0 an estimate from other benchmarks, 1 an index score, 1 nothing recorded" in one
