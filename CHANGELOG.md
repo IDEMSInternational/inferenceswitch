@@ -5,7 +5,89 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-11-17
+
+Cards for the open models used as small steps
+([#29](https://github.com/IDEMSInternational/inferenceswitch/issues/29)), the
+benchmark scores that back their placement, and a weekly sweep that keeps both
+and the prices current.
+
+### Changed
+
+- **Rungs are capability levels, placed by measured scores, not vendor tiers.**
+  A tool built for `mid` should get roughly the same results from any provider's
+  `mid` model. The thresholds are fixed (Epoch ECI `small` 130, `mid` 152, `large`
+  163, `frontier` 168; frozen, never moved when a new generation arrives; see
+  `docs/model-cards.md`). 17 cards move, so `select_model` returns different
+  models:
+  - `frontier` to `large`: `claude-opus-5`, `claude-fable-5`, `claude-fable-5-1`;
+    `frontier` to `mid`: `claude-opus-4-8`
+  - `large` to `mid`: `claude-sonnet-4-6`, `claude-sonnet-5`, `gpt-5.4`,
+    `grok-4.6`, `mistral-large-4`; `large` to `small`: `deepseek-v4-pro`
+  - `mid` to `small`: `claude-haiku-4-5`, `gpt-5.4-mini`, `gpt-4.1`,
+    `gpt-oss-120b`, `llama3.3-70b`, `mistral-medium-3-5`, `qwen3-32b`
+  - `qwen3.8-27b` goes from `mid` to `small` too (before it was moved, 20.1 on
+    the Artificial Analysis index and 152.6 on the ECI).
+  - `mistral-large-3` goes from `large` to `small`: it has no Epoch score, but its
+    other benchmarks estimate an ECI of about 135 [127, 142].
+  - the `small` edge at 130 puts `llama3.3-70b`, `gpt-4o-mini` and `llama3.1-8b`
+    on `nano`: a rung is capability, so a 70B model that scores like GPT-4o mini
+    is `nano`.
+  Each moved card's `notes` says so. Cards with no score keep their placement.
+
 ### Added
+
+- **An `openrouter` provider** (`OPENROUTER_API_KEY`, `https://openrouter.ai/api/v1`,
+  OpenAI-compatible, structured output best effort). Selected explicitly:
+  `openrouter/z-ai/glm-5.3-flash`. Answers the question #29 left open: a
+  gateway with one key and a fixed `base_url` is a provider of its own.
+- **`ModelCard.benchmarks`** (`Benchmark`, `ModelCard.benchmark(name)`): published
+  scores for a model, each with its source, date, version and (where the source
+  gives one) 95% interval, as evidence for its rung. A card is placed on two
+  independent views, Epoch AI's Capabilities Index and Artificial Analysis's
+  index, and on the lower of them; no single benchmark places it (see
+  "Benchmarks as evidence" in `docs/model-cards.md`). Optional; selection does not read them. Format stays `1`: a card file
+  without the field loads as before, and an older inferenceswitch rejects one
+  with it, since unknown fields are rejected.
+- **24 model cards**: `qwen3-30b-a3b` (Ollama, LM Studio, OpenRouter; thinking on
+  or off only, no `reasoning_effort`), `glm-5.3`, `glm-5.3-flash`,
+  `minimax-m3.1-flash`, `mimo-v2.6-flash`, `mimo-v2.6-pro`, `kimi-k3.1-pro`,
+  `deepseek-v4.1-flash`, `deepseek-v4.1-flash-1017`, `qwen3.8-flash`,
+  `qwen3.8-2.4t-a95b`, `qwen3.6-35b-a3b`, `qwen3.6-27b`, `qwen3.5-9b`,
+  `nemotron-3.5-lightning`, `nemotron-3.5-super-vl`, `gemma-4-31b`,
+  `gemma-4-26b-a4b`, `step-3.7-flash`, `hy3`, `hy4`, `inkling-2-small`,
+  `granite-4.2-8b` and `muse-glimmer-30b`, each placed on those two views.
+  `kimi-k3.1-pro` is `mid`, a candidate for `large`: its two views split. The
+  existing cards the two sources cover gain their scores too (50 with an ECI, 41
+  with an Artificial Analysis page).
+- **Gemma 4 E4B and 12B (QAT) cards** on `lmstudio`, `gemma-4-e4b` `nano` (an effective-4B on-device model, though its scores match a
+  small one, so `select_model("small")` skips it) and `gemma-4-12b-qat` `small` (no
+  Epoch row; placed by its scores against `qwen3.5-9b`), with tool calling,
+  streaming thinking, image input and `reasoning_effort none` seen against a live
+  LM Studio (2026-11-16). Structured output is `none` for the reason on the E2B
+  card (#25). `gemma-4-12b-qat` is its own card: Google's 4-bit
+  quantization-aware build.
+- **A provider-by-rung table in the README**, generated from the cards: each
+  provider's models on the rung they are placed on, best first, so a column reads
+  as the equivalent choices across providers. Redrawn by each sweep; a test fails
+  if it is stale.
+- **An ECI estimated from a card's other benchmarks**, for the models Epoch has not
+  scored (HLE, GPQA, IFBench, tool use and so on mapped onto the ECI scale from the
+  cards that have both, ignoring any benchmark at its floor or ceiling; leave-one-out
+  error about 4 ECI points, so the band is wide and a card inside it is not moved).
+  The README explains how a rung is decided.
+- **`docs/model-cards-chart.svg`**, the chart in the README: every card, grouped
+  by rung, against the evidence its rung is read from: the Epoch Capabilities Index
+  (a dot with its 95% interval, or for a card Epoch has not scored a diamond with a
+  dashed bar at its estimated ECI) and the Artificial Analysis index (a dot), each in
+  the rung's band on that scale. Redrawn by `python tools/sweep.py chart` and by each
+  weekly sweep. A test fails if it is stale.
+- **`tools/sweep.py` and `.github/workflows/sweep.yml`**: a weekly job that
+  refreshes `openrouter` route prices and benchmark scores (Epoch ECI, Artificial
+  Analysis) in a pull request, and
+  keeps one issue of what needs a person (new open models, prices OpenRouter lists
+  differently from a card, cards whose scores suggest another rung). Standard library only; no
+  keys and no model calls.
 
 - **`Client(stream_silence={provider: seconds})`**: how long a *streamed* call to that provider
   may go without a byte before it fails with the SDK's own timeout error
@@ -17,6 +99,63 @@ All notable changes to this project are documented here. This project adheres to
   OpenAI SDKs retry a timeout twice, so a call fails after about three limits (Gemini's, after
   one)
   ([waypoint-anastom#144](https://git.idems.international/IDEMSInternational/waypoint-anastom/issues/144)).
+
+## [0.12.0] — 2026-11-11
+
+### Added
+
+- **`ProviderSpec.label`, `key_hint`, `title` and `takes_key`, and
+  `Registry.key_providers()`**: which providers take an API key, what a person
+  calls them and what their keys look like, so an application lists keys from
+  the registry instead of its own table (anastom#1324).
+
+## [0.11.0] — 2026-11-09
+
+Adds a local Gemma model and lets a model card turn on `reasoning_effort` for
+LM Studio, so an application can run its agents on a small local model
+([#24](https://github.com/IDEMSInternational/inferenceswitch/issues/24),
+decision [#26](https://github.com/IDEMSInternational/inferenceswitch/issues/26)).
+
+### Added
+
+- **A model card for `google/gemma-4-e2b`** on `lmstudio`: rung `nano` (an
+  effective-2B model), 131072-token context, native tool calling, streaming
+  with streamed thinking, image input and `reasoning_effort`, each seen against
+  a live LM Studio. Structured output is graded `none` until
+  [#25](https://github.com/IDEMSInternational/inferenceswitch/issues/25) is
+  fixed (LM Studio answers 400 to the `json_object` format inferenceswitch
+  sends it).
+- **`effort=` on LM Studio, for carded models.** The `lmstudio` provider now
+  sends `reasoning_effort`, and `Effort.NONE` sends `"none"` for Gemma (LM
+  Studio's `"minimal"` leaves its thinking on). The capability is declared by
+  the card, not the provider, so an LM Studio model with no card still raises
+  `UnsupportedCapabilityError` for `effort=`, as before. `ollama` is unchanged.
+
+## [0.10.0] — 2026-10-31
+
+Sends images to the models that read them
+([#22](https://github.com/IDEMSInternational/inferenceswitch/issues/22)), and
+adds xAI as a provider.
+
+### Added
+
+- **`Image`**, a content part of a user message: bytes or a base64 string,
+  and a media type (PNG, JPEG, GIF or WebP). `user(text, images=[...])` puts
+  images before the text. `Image.from_file(path)` guesses the type from the
+  extension.
+- **`images=`** on `generate_structured`, `generate_structured_json` and
+  `generate_text`: sent in the user turn after `cache_prefix` and before
+  `prompt`. `chat` and `run_tools` take images in their messages.
+- Each adapter sends its provider's native part: Anthropic an `image` block
+  with a `base64` source, OpenAI-compatible servers an `image_url` part with a
+  `data:` URL, Gemini `inline_data`.
+- An image sent to a model without `Capability.VISION` raises
+  `UnsupportedCapabilityError` before any request, as an image outside a user
+  message raises `InferenceSwitchError`.
+- **The `xai` provider** (OpenAI-compatible, `https://api.x.ai/v1`,
+  `XAI_API_KEY`, `grok-*` routes there), with cards for `grok-4.6` (vision,
+  `reasoning_effort` low to xhigh) and `grok-4.20-0309-non-reasoning`
+  (vision off until checked, no effort). No sampling parameters are sent.
 
 ## [0.9.0] — 2026-10-29
 
