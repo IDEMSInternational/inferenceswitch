@@ -16,13 +16,12 @@ from typing import Any
 from .. import schema as schema_mod
 from ..capabilities import StructuredMode
 from ..errors import StructuredOutputError, ToolChoiceError
-from ..schema import to_anthropic_schema
 from ..messages import (
     CacheHandle,
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StopReason,
     StreamCallback,
     StreamDelta,
@@ -35,7 +34,8 @@ from ..messages import (
     ToolUse,
     Usage,
 )
-from .base import Adapter, require_sdk, split_system
+from ..schema import to_anthropic_schema
+from .base import STREAM_READ_TIMEOUT, Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Claude line. Anthropic requires ``max_tokens``
 #: on every request, so inferenceswitch has to pick a default when the caller doesn't —
@@ -329,13 +329,6 @@ def recover_leaked_fields(result: Any) -> Any:
             except json.JSONDecodeError:
                 out[name] = text
     return out
-
-
-#: How long a stream may go without a byte before the call fails (seconds). Every call here
-#: streams, and the API sends a ping every few seconds even while a model thinks, so a gap this
-#: long means the connection is gone. The SDK's own default is ten minutes, which left a dropped
-#: connection (wifi off mid-reply) looking like a working call for that long.
-STREAM_READ_TIMEOUT = 120.0
 
 
 class AnthropicAdapter(Adapter):

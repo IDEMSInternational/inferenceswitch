@@ -51,6 +51,15 @@ def split_system(messages: list[Message], system: str | None) -> tuple[str | Non
     return combined, rest
 
 
+#: How long a *streaming* call may go without a byte before it fails (seconds). A provider
+#: streams pings or tokens every few seconds while a model works, so a gap this long means the
+#: connection is gone. The SDKs' own limits are ten minutes (Anthropic, OpenAI) or none worth
+#: the name (Gemini), which left a dropped connection (wifi off mid-reply) looking like a working
+#: call for that long. Not applied to a call that does not stream: there the same wait is the
+#: whole reply, and a long one is not a dropped connection.
+STREAM_READ_TIMEOUT = 120.0
+
+
 def require_sdk(module: str, extra: str):
     """Import a provider SDK lazily, or raise a clear install hint."""
     try:

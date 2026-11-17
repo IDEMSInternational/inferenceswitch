@@ -9,9 +9,9 @@ adding another OpenAI clone is a data change, not a code change.
 from __future__ import annotations
 
 import json
-from typing import Any
-
 from collections.abc import Mapping, Sequence
+from typing import Any
+from urllib.parse import urlparse
 
 from .. import schema as schema_mod
 from ..capabilities import Capability, StructuredMode, _for_model
@@ -19,8 +19,8 @@ from ..errors import StructuredOutputError, UnsupportedSchemaError
 from ..messages import (
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StopReason,
     StreamCallback,
     StreamDelta,
@@ -33,7 +33,7 @@ from ..messages import (
     ToolUse,
     Usage,
 )
-from .base import Adapter, require_sdk, split_system
+from .base import STREAM_READ_TIMEOUT, Adapter, require_sdk, split_system
 
 # OpenAI reasoning_effort levels. NONE and MAX are per model when the provider
 # declares "reasoning_none" / "reasoning_max" tables; without them NONE is
@@ -249,6 +249,18 @@ class OpenAICompatibleAdapter(Adapter):
         # base_url None -> the SDK's default (api.openai.com).
         return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
 
+    def _streaming_client(self) -> Any:
+        """The client for a streamed call: a stream silent for `STREAM_READ_TIMEOUT` fails
+        (the SDK's `APITimeoutError`). A server on this machine is left alone: a local model
+        can take longer than that to its first token while it reads a long prompt."""
+        host = urlparse(self.spec.base_url or "").hostname
+        with_options = getattr(self._client, "with_options", None)
+        if with_options is None or host in {"localhost", "127.0.0.1", "::1"}:
+            return self._client
+        import httpx
+
+        return with_options(timeout=httpx.Timeout(600.0, connect=5.0, read=STREAM_READ_TIMEOUT))
+
     def _create(self, on_stream: StreamCallback | None, **kwargs: Any) -> Any:
         """One ``chat.completions.create`` call. With ``on_stream`` it streams
         instead, hands each chunk's thinking and text to ``on_stream``, and
@@ -263,7 +275,7 @@ class OpenAICompatibleAdapter(Adapter):
         state = streaming.ChatCompletionStreamState()
         if self.capabilities.config.get("stream_include_usage", True):
             kwargs["stream_options"] = {"include_usage": True}
-        for chunk in self._client.chat.completions.create(**kwargs, stream=True):
+        for chunk in self._streaming_client().chat.completions.create(**kwargs, stream=True):
             state.handle_chunk(chunk)
             for delta in openai_stream_deltas(chunk):
                 on_stream(delta)

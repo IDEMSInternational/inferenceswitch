@@ -19,8 +19,8 @@ from ..messages import (
     CacheHandle,
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StopReason,
     StreamCallback,
     StreamDelta,
@@ -33,7 +33,7 @@ from ..messages import (
     ToolUse,
     Usage,
 )
-from .base import Adapter, require_sdk, split_system
+from .base import STREAM_READ_TIMEOUT, Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Gemini line, mirroring
 #: :data:`~inferenceswitch.adapters.anthropic.CLAUDE_MAX_OUTPUT_TOKENS` and for the same
@@ -333,6 +333,11 @@ class GeminiAdapter(Adapter):
         thinking = config.thinking_config or types.ThinkingConfig()
         config = config.model_copy(
             update={"thinking_config": thinking.model_copy(update={"include_thoughts": True})}
+        )
+        # A stream silent for STREAM_READ_TIMEOUT fails: the SDK reads the stream under this
+        # per-call timeout (milliseconds), and a call that does not stream keeps its own.
+        config = config.model_copy(
+            update={"http_options": types.HttpOptions(timeout=int(STREAM_READ_TIMEOUT * 1000))}
         )
         chunks: list = []
         for chunk in self._client.models.generate_content_stream(
