@@ -5,19 +5,17 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
-- **A stream that goes silent fails instead of waiting ten minutes.** A dropped connection
-  mid-reply (wifi off) left a streamed call hanging for the SDK's read timeout: ten minutes for
-  Anthropic and OpenAI, about as long for Gemini. A *streamed* call with no bytes for
-  `STREAM_READ_TIMEOUT` (120 s, in `adapters/base.py`) now raises the SDK's own timeout error
-  (`anthropic.APITimeoutError`, `openai.APITimeoutError`, `httpx.ReadTimeout` for Gemini). The
-  Anthropic and OpenAI SDKs retry a timeout twice, so the call fails after about three
-  limits (about six minutes), Gemini's after one (about two); `max_retries=0` on those
-  clients would make it two, at the price of the SDK's retry of rate limits and overloads.
-  Not applied to a call that does not stream (the wait is the whole reply), nor to a server
-  on this machine (a local model can take longer than that to its first token). Errors that
-  already failed at once (no network, refused, reset) are unchanged
+- ****: how long a *streamed* call to that provider
+  may go without a byte before it fails with the SDK's own timeout error
+  (, ,  for Gemini).
+  A provider left out, or , keeps its SDK's default (ten minutes for Anthropic and
+  OpenAI), so nothing changes for a caller that does not set it. A call that does not stream is
+  never cut short. A dropped connection mid-reply (wifi off) otherwise leaves the call pending for
+  that long; local servers can take minutes to a first token, so leave them out. The Anthropic and
+  OpenAI SDKs retry a timeout twice, so a call fails after about three limits (Gemini's, after
+  one)
   ([waypoint-anastom#144](https://git.idems.international/IDEMSInternational/waypoint-anastom/issues/144)).
 
 ## [0.9.0] — 2026-10-29
