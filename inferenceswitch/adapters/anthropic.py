@@ -331,10 +331,21 @@ def recover_leaked_fields(result: Any) -> Any:
     return out
 
 
+#: How long a stream may go without a byte before the call fails (seconds). Every call here
+#: streams, and the API sends a ping every few seconds even while a model thinks, so a gap this
+#: long means the connection is gone. The SDK's own default is ten minutes, which left a dropped
+#: connection (wifi off mid-reply) looking like a working call for that long.
+STREAM_READ_TIMEOUT = 120.0
+
+
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
-        return anthropic.Anthropic(api_key=api_key)
+        import httpx
+
+        # The SDK's other limits stay as they are (connect 5s, write and pool 600s).
+        timeout = httpx.Timeout(600.0, connect=5.0, read=STREAM_READ_TIMEOUT)
+        return anthropic.Anthropic(api_key=api_key, timeout=timeout)
 
     def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:
         """Issue one Messages request over a stream, returning the accumulated

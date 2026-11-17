@@ -5,6 +5,15 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- **A dropped connection mid-reply fails in two minutes, not ten.** The Anthropic adapter
+  streams every call, but the SDK's read timeout is ten minutes, so a connection that went
+  silent (wifi off during a reply) left the call hanging that long. A stream with no bytes for
+  `STREAM_READ_TIMEOUT` (120 s; the API pings every few seconds) now raises the SDK's
+  `APITimeoutError`. Connection errors that fail at once (no network, refused) are unchanged
+  ([waypoint-anastom#144](https://git.idems.international/IDEMSInternational/waypoint-anastom/issues/144)).
+
 Cards for the open models used as small steps
 ([#29](https://github.com/IDEMSInternational/inferenceswitch/issues/29)), the
 benchmark scores that back their placement, and a weekly sweep that keeps both
