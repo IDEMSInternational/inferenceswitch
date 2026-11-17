@@ -65,10 +65,22 @@ def require_sdk(module: str, extra: str):
 class Adapter(ABC):
     """Drives one provider kind."""
 
-    def __init__(self, spec: ProviderSpec, api_key: str, *, raw_client: Any = None) -> None:
+    def __init__(
+        self,
+        spec: ProviderSpec,
+        api_key: str,
+        *,
+        raw_client: Any = None,
+        stream_silence: float | None = None,
+    ) -> None:
         self.spec = spec
         self.capabilities = spec.capabilities
         self._api_key = api_key
+        #: Seconds a *streamed* call may go without a byte before it fails with the SDK's own
+        #: timeout error; `None` leaves the SDK's default (ten minutes for Anthropic and
+        #: OpenAI). A call that does not stream is not affected: there the wait is the whole
+        #: reply. Set per provider by `Client(stream_silence=...)`.
+        self.stream_silence = stream_silence
         # ``raw_client`` lets callers/tests inject a pre-built SDK client (mirrors
         # the dependency-injection seam used for BYOK and offline tests).
         self._client = raw_client if raw_client is not None else self._build_client(api_key)

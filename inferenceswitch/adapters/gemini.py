@@ -19,8 +19,8 @@ from ..messages import (
     CacheHandle,
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StopReason,
     StreamCallback,
     StreamDelta,
@@ -334,6 +334,14 @@ class GeminiAdapter(Adapter):
         config = config.model_copy(
             update={"thinking_config": thinking.model_copy(update={"include_thoughts": True})}
         )
+        if self.stream_silence is not None:
+            # A stream silent that long fails (`httpx.ReadTimeout`): the SDK reads the stream
+            # under this per-call timeout (milliseconds); a call that does not stream keeps its own.
+            config = config.model_copy(
+                update={
+                    "http_options": types.HttpOptions(timeout=int(self.stream_silence * 1000))
+                }
+            )
         chunks: list = []
         for chunk in self._client.models.generate_content_stream(
             model=model, contents=contents, config=config

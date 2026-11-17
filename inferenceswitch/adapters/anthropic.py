@@ -16,13 +16,12 @@ from typing import Any
 from .. import schema as schema_mod
 from ..capabilities import StructuredMode
 from ..errors import StructuredOutputError, ToolChoiceError
-from ..schema import to_anthropic_schema
 from ..messages import (
     CacheHandle,
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StopReason,
     StreamCallback,
     StreamDelta,
@@ -35,6 +34,7 @@ from ..messages import (
     ToolUse,
     Usage,
 )
+from ..schema import to_anthropic_schema
 from .base import Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Claude line. Anthropic requires ``max_tokens``
@@ -334,7 +334,13 @@ def recover_leaked_fields(result: Any) -> Any:
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
-        return anthropic.Anthropic(api_key=api_key)
+        if self.stream_silence is None:
+            return anthropic.Anthropic(api_key=api_key)
+        import httpx
+
+        # Every call here streams. The SDK's other limits stay as they are.
+        timeout = httpx.Timeout(600.0, connect=5.0, read=self.stream_silence)
+        return anthropic.Anthropic(api_key=api_key, timeout=timeout)
 
     def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:
         """Issue one Messages request over a stream, returning the accumulated
