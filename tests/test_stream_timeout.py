@@ -1,20 +1,22 @@
-"""A stream that goes silent fails in bounded time (waypoint-anastom#144), per provider.
+"""A stream that goes silent fails in bounded time when asked to (waypoint-anastom#144).
 
-Each test points the real SDK at a local server that accepts the request and then says
-nothing, with the timeout shortened to a second. The error is the SDK's own, which is what
-anastom and WayPoint already recognise as a lost connection."""
+``Client(stream_silence={provider: seconds})`` sets, per provider, how long a streamed call may
+go without a byte. Each provider is run with the setting on, against a local server that
+accepts the request and then says nothing, and with it off, where the SDK's own default
+stands. The error is the SDK's own, which anastom and WayPoint recognise as a lost connection."""
 from __future__ import annotations
 
 import socket
 import threading
 import time
+from types import SimpleNamespace
 
 import pytest
 
-from inferenceswitch.adapters import anthropic as anthropic_mod
-from inferenceswitch.adapters import base as base_mod
-from inferenceswitch.adapters import gemini as gemini_mod
-from inferenceswitch.adapters import openai_compat as openai_mod
+from inferenceswitch import Client
+from inferenceswitch.adapters.anthropic import AnthropicAdapter
+from inferenceswitch.adapters.gemini import GeminiAdapter
+from inferenceswitch.adapters.openai_compat import OpenAICompatibleAdapter
 from inferenceswitch.registry import default_registry
 
 
@@ -41,25 +43,33 @@ def silent_server():
         conn.close()
 
 
-def test_one_limit_is_shared_by_the_providers():
-    assert anthropic_mod.STREAM_READ_TIMEOUT == base_mod.STREAM_READ_TIMEOUT == 120.0
-    assert openai_mod.STREAM_READ_TIMEOUT == gemini_mod.STREAM_READ_TIMEOUT == 120.0
+def spec(name):
+    return default_registry().get(name)
 
 
-def test_anthropic_reads_with_the_stream_timeout_not_the_sdks_ten_minutes():
+def test_the_client_hands_each_provider_its_own_setting():
+    client = Client(stream_silence={"anthropic": 120.0, "ollama": None})
+    assert client._adapter(spec("anthropic"), "k").stream_silence == 120.0
+    assert client._adapter(spec("ollama"), "k").stream_silence is None
+    assert client._adapter(spec("openai"), "k").stream_silence is None
+    assert Client()._adapter(spec("anthropic"), "k").stream_silence is None
+
+
+# ── Anthropic ─────────────────────────────────────────────────────────────────
+
+
+def test_anthropic_off_keeps_the_sdks_default():
     pytest.importorskip("anthropic")
-    adapter = anthropic_mod.AnthropicAdapter.__new__(anthropic_mod.AnthropicAdapter)
-    client = adapter._build_client("sk-ant-fake")
-    assert client.timeout.read == anthropic_mod.STREAM_READ_TIMEOUT
-    assert client.timeout.connect == 5.0
+    adapter = AnthropicAdapter(spec("anthropic"), "sk-ant-fake")
+    assert adapter._client.timeout.read == 600
 
 
-def test_anthropic_silent_stream_raises(monkeypatch, silent_server):
+def test_anthropic_on_silent_stream_raises(monkeypatch, silent_server):
     anthropic = pytest.importorskip("anthropic")
-    monkeypatch.setattr(anthropic_mod, "STREAM_READ_TIMEOUT", 1.0)
     monkeypatch.setenv("ANTHROPIC_BASE_URL", silent_server)
-    adapter = anthropic_mod.AnthropicAdapter.__new__(anthropic_mod.AnthropicAdapter)
-    client = adapter._build_client("sk-ant-fake").with_options(max_retries=0)
+    adapter = AnthropicAdapter(spec("anthropic"), "sk-ant-fake", stream_silence=1.0)
+    assert adapter._client.timeout.read == 1.0
+    client = adapter._client.with_options(max_retries=0)
     messages = [{"role": "user", "content": "hi"}]
     started = time.monotonic()
     with (
@@ -70,11 +80,20 @@ def test_anthropic_silent_stream_raises(monkeypatch, silent_server):
     assert time.monotonic() - started < 10
 
 
-def test_openai_silent_stream_raises(monkeypatch, silent_server):
+# ── OpenAI-compatible ─────────────────────────────────────────────────────────
+
+
+def test_openai_off_keeps_the_sdks_default():
+    pytest.importorskip("openai")
+    adapter = OpenAICompatibleAdapter(spec("openai"), "sk-fake")
+    assert adapter._streaming_client() is adapter._client
+    assert adapter._client.timeout.read == 600
+
+
+def test_openai_on_silent_stream_raises(monkeypatch, silent_server):
     openai = pytest.importorskip("openai")
-    monkeypatch.setattr(openai_mod, "STREAM_READ_TIMEOUT", 1.0)
     monkeypatch.setenv("OPENAI_BASE_URL", silent_server + "/v1")
-    adapter = openai_mod.OpenAICompatibleAdapter(default_registry().get("openai"), "sk-fake")
+    adapter = OpenAICompatibleAdapter(spec("openai"), "sk-fake", stream_silence=1.0)
     client = adapter._streaming_client().with_options(max_retries=0)
     started = time.monotonic()
     with pytest.raises(openai.APITimeoutError):
@@ -85,21 +104,50 @@ def test_openai_silent_stream_raises(monkeypatch, silent_server):
     assert time.monotonic() - started < 10
 
 
-def test_openai_leaves_a_local_server_alone():
+def test_a_local_openai_compatible_server_takes_its_own_setting():
     pytest.importorskip("openai")
-    adapter = openai_mod.OpenAICompatibleAdapter(default_registry().get("ollama"), "x")
-    assert adapter._streaming_client() is adapter._client
+    long = OpenAICompatibleAdapter(spec("ollama"), "x", stream_silence=900.0)
+    assert long._streaming_client().timeout.read == 900.0
+    assert OpenAICompatibleAdapter(spec("ollama"), "x")._streaming_client().timeout.read == 600
 
 
-def test_gemini_silent_stream_raises(monkeypatch, silent_server):
+# ── Gemini ────────────────────────────────────────────────────────────────────
+
+
+def _fake_gemini(seen):
+    def stream(*, model, contents, config):
+        seen.append(config)
+        return iter(())
+
+    return SimpleNamespace(models=SimpleNamespace(generate_content_stream=stream))
+
+
+@pytest.mark.parametrize(("setting", "expected"), [(None, None), (1.0, 1000)])
+def test_gemini_passes_the_setting_to_a_streamed_call_only(setting, expected):
+    pytest.importorskip("google.genai")
+    from inferenceswitch.errors import InferenceSwitchError
+
+    seen: list = []
+    adapter = GeminiAdapter(
+        spec("gemini"), "x", raw_client=_fake_gemini(seen), stream_silence=setting
+    )
+    types = pytest.importorskip("google.genai").types
+    with pytest.raises(InferenceSwitchError):  # the fake stream is empty
+        adapter._generate(
+            lambda d: None, model="m", contents="hi", config=types.GenerateContentConfig()
+        )
+    options = seen[0].http_options
+    assert (options.timeout if options else None) == expected
+
+
+def test_gemini_on_silent_stream_raises(monkeypatch, silent_server):
     pytest.importorskip("google.genai")
     import httpx
 
-    monkeypatch.setattr(gemini_mod, "STREAM_READ_TIMEOUT", 1.0)
     monkeypatch.setenv("GOOGLE_GEMINI_BASE_URL", silent_server)
-    adapter = gemini_mod.GeminiAdapter(default_registry().get("gemini"), "fake")
+    adapter = GeminiAdapter(spec("gemini"), "fake", stream_silence=1.0)
+    types = pytest.importorskip("google.genai").types
     started = time.monotonic()
-    types = gemini_mod.require_sdk("google.genai", "gemini").types
     with pytest.raises(httpx.ReadTimeout):
         adapter._generate(
             lambda delta: None,

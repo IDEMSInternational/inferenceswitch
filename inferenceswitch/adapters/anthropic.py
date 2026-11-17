@@ -35,7 +35,7 @@ from ..messages import (
     Usage,
 )
 from ..schema import to_anthropic_schema
-from .base import STREAM_READ_TIMEOUT, Adapter, require_sdk, split_system
+from .base import Adapter, require_sdk, split_system
 
 #: Per-model output ceilings for the Claude line. Anthropic requires ``max_tokens``
 #: on every request, so inferenceswitch has to pick a default when the caller doesn't —
@@ -334,10 +334,12 @@ def recover_leaked_fields(result: Any) -> Any:
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
+        if self.stream_silence is None:
+            return anthropic.Anthropic(api_key=api_key)
         import httpx
 
-        # The SDK's other limits stay as they are (connect 5s, write and pool 600s).
-        timeout = httpx.Timeout(600.0, connect=5.0, read=STREAM_READ_TIMEOUT)
+        # Every call here streams. The SDK's other limits stay as they are.
+        timeout = httpx.Timeout(600.0, connect=5.0, read=self.stream_silence)
         return anthropic.Anthropic(api_key=api_key, timeout=timeout)
 
     def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:

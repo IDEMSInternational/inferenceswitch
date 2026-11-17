@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from typing import Any
-from urllib.parse import urlparse
 
 from .. import schema as schema_mod
 from ..capabilities import Capability, StructuredMode, _for_model
@@ -33,7 +32,7 @@ from ..messages import (
     ToolUse,
     Usage,
 )
-from .base import STREAM_READ_TIMEOUT, Adapter, require_sdk, split_system
+from .base import Adapter, require_sdk, split_system
 
 # OpenAI reasoning_effort levels. NONE and MAX are per model when the provider
 # declares "reasoning_none" / "reasoning_max" tables; without them NONE is
@@ -250,16 +249,14 @@ class OpenAICompatibleAdapter(Adapter):
         return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
 
     def _streaming_client(self) -> Any:
-        """The client for a streamed call: a stream silent for `STREAM_READ_TIMEOUT` fails
-        (the SDK's `APITimeoutError`). A server on this machine is left alone: a local model
-        can take longer than that to its first token while it reads a long prompt."""
-        host = urlparse(self.spec.base_url or "").hostname
+        """The client for a streamed call: with `stream_silence` set, a stream silent that
+        long fails (the SDK's `APITimeoutError`); unset, the SDK's own timeout."""
         with_options = getattr(self._client, "with_options", None)
-        if with_options is None or host in {"localhost", "127.0.0.1", "::1"}:
+        if self.stream_silence is None or with_options is None:
             return self._client
         import httpx
 
-        return with_options(timeout=httpx.Timeout(600.0, connect=5.0, read=STREAM_READ_TIMEOUT))
+        return with_options(timeout=httpx.Timeout(600.0, connect=5.0, read=self.stream_silence))
 
     def _create(self, on_stream: StreamCallback | None, **kwargs: Any) -> Any:
         """One ``chat.completions.create`` call. With ``on_stream`` it streams

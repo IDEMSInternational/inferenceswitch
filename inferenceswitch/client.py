@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import Collection, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, overload
+from typing import Any, Literal, overload
 
 from .adapters import Adapter, build_adapter
 from .capabilities import Capabilities, Capability
@@ -32,8 +32,8 @@ from .messages import (
     CacheHandle,
     Effort,
     Image,
-    Response,
     Message,
+    Response,
     StreamCallback,
     StructuredResult,
     Text,
@@ -166,12 +166,21 @@ class Client:
         *,
         cards: ModelCards | None = None,
         availability: AvailabilityCheck | Mapping[str, bool | Iterable[str]] | None = None,
+        stream_silence: Mapping[str, float | None] | None = None,
     ) -> None:
         """``cards`` replaces the shipped model cards; to add to or override
         them, pass ``default_cards().merged(...)``. ``availability`` replaces the
         default check (keys for hosted providers, a probe for local servers)
         used by :meth:`select_model`: a callable, or a mapping as for
-        :func:`~inferenceswitch.static_availability`."""
+        :func:`~inferenceswitch.static_availability`.
+
+        ``stream_silence`` maps a provider name (``"anthropic"``, ``"openai"``, ``"ollama"``,
+        ``"gemini"``, ...) to the seconds a *streamed* call to it may go without a byte before it
+        fails with that SDK's own timeout error (a lost connection looks like this). A provider
+        left out, or mapped to ``None``, keeps its SDK's default (ten minutes for Anthropic and
+        OpenAI), so a caller that does not set it sees no change. A call that does not stream
+        is never cut short by it. A local model can take minutes to a first token: leave
+        local providers out, or give them a long limit."""
         self.registry = registry or default_registry()
         self.key_provider = key_provider or env_key_provider
         self.cards = default_cards() if cards is None else cards
@@ -182,6 +191,7 @@ class Client:
         self._availability_check: AvailabilityCheck = availability
         self._availability: dict[str, ProviderAvailability] = {}
         self._adapters: dict[tuple[str, str], Adapter] = {}
+        self._stream_silence = dict(stream_silence or {})
 
     # ── resolution ────────────────────────────────────────────────────────────
 
@@ -403,7 +413,9 @@ class Client:
         cache_key = (spec.name, key)
         adapter = self._adapters.get(cache_key)
         if adapter is None:
-            adapter = build_adapter(spec, key)
+            adapter = build_adapter(
+                spec, key, stream_silence=self._stream_silence.get(spec.name)
+            )
             self._adapters[cache_key] = adapter
         return adapter
 

@@ -14,7 +14,9 @@ _ADAPTERS_BY_KIND: dict[str, type[Adapter]] = {
 }
 
 
-def build_adapter(spec: ProviderSpec, api_key: str, *, raw_client=None) -> Adapter:
+def build_adapter(
+    spec: ProviderSpec, api_key: str, *, raw_client=None, stream_silence: float | None = None
+) -> Adapter:
     try:
         cls = _ADAPTERS_BY_KIND[spec.kind]
     except KeyError:
@@ -22,7 +24,7 @@ def build_adapter(spec: ProviderSpec, api_key: str, *, raw_client=None) -> Adapt
             f"No adapter registered for provider kind {spec.kind!r} "
             f"(provider {spec.name!r})."
         ) from None
-    return cls(spec, api_key, raw_client=raw_client)
+    return cls(spec, api_key, raw_client=raw_client, stream_silence=stream_silence)
 
 
 __all__ = [
