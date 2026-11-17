@@ -7,10 +7,10 @@ All notable changes to this project are documented here. This project adheres to
 
 ### Added
 
-- ****: how long a *streamed* call to that provider
+- **`Client(stream_silence={provider: seconds})`**: how long a *streamed* call to that provider
   may go without a byte before it fails with the SDK's own timeout error
-  (, ,  for Gemini).
-  A provider left out, or , keeps its SDK's default (ten minutes for Anthropic and
+  (`anthropic.APITimeoutError`, `openai.APITimeoutError`, `httpx.ReadTimeout` for Gemini).
+  A provider left out, or `None`, keeps its SDK's default (ten minutes for Anthropic and
   OpenAI), so nothing changes for a caller that does not set it. A call that does not stream is
   never cut short. A dropped connection mid-reply (wifi off) otherwise leaves the call pending for
   that long; local servers can take minutes to a first token, so leave them out. The Anthropic and
