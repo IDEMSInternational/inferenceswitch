@@ -254,9 +254,10 @@ class OpenAICompatibleAdapter(Adapter):
         with_options = getattr(self._client, "with_options", None)
         if self.stream_silence is None or with_options is None:
             return self._client
-        import httpx
-
-        return with_options(timeout=httpx.Timeout(600.0, connect=5.0, read=self.stream_silence))
+        # The SDK's own Timeout class, not httpx's: it runs on httpx or (openai 3) httpx2 and
+        # rejects the other's.
+        openai = require_sdk("openai", "openai")
+        return with_options(timeout=openai.Timeout(600.0, connect=5.0, read=self.stream_silence))
 
     def _create(self, on_stream: StreamCallback | None, **kwargs: Any) -> Any:
         """One ``chat.completions.create`` call. With ``on_stream`` it streams

@@ -142,13 +142,12 @@ def test_gemini_passes_the_setting_to_a_streamed_call_only(setting, expected):
 
 def test_gemini_on_silent_stream_raises(monkeypatch, silent_server):
     pytest.importorskip("google.genai")
-    import httpx
-
     monkeypatch.setenv("GOOGLE_GEMINI_BASE_URL", silent_server)
     adapter = GeminiAdapter(spec("gemini"), "fake", stream_silence=1.0)
     types = pytest.importorskip("google.genai").types
     started = time.monotonic()
-    with pytest.raises(httpx.ReadTimeout):
+    # Matched by name: google-genai 3 runs on httpx2, whose ReadTimeout is not httpx's.
+    with pytest.raises(Exception) as raised:
         adapter._generate(
             lambda delta: None,
             model="gemini-3.8-flash",
@@ -156,3 +155,4 @@ def test_gemini_on_silent_stream_raises(monkeypatch, silent_server):
             config=types.GenerateContentConfig(),
         )
     assert time.monotonic() - started < 10
+    assert type(raised.value).__name__ == "ReadTimeout"
