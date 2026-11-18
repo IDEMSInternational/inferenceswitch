@@ -5,6 +5,13 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- **`stream_silence` works with the current SDKs.** It built an `httpx.Timeout`, which
+  anthropic 2 and openai 3 (they run on `httpx2`) reject with a `TypeError` the first
+  time a call is made. It now builds the SDK's own `Timeout`. Found installing 0.13.0
+  fresh for anastom; the tests had run against older SDKs.
+
 ## [0.13.0] — 2026-11-17
 
 Cards for the open models used as small steps

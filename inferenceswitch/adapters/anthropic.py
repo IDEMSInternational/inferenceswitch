@@ -336,10 +336,10 @@ class AnthropicAdapter(Adapter):
         anthropic = require_sdk("anthropic", "anthropic")
         if self.stream_silence is None:
             return anthropic.Anthropic(api_key=api_key)
-        import httpx
-
-        # Every call here streams. The SDK's other limits stay as they are.
-        timeout = httpx.Timeout(600.0, connect=5.0, read=self.stream_silence)
+        # Every call here streams. The SDK's other limits stay as they are. Its own Timeout
+        # class, not httpx's: the SDK names which HTTP library it runs on (httpx, or httpx2
+        # from anthropic 2), and rejects the other's.
+        timeout = anthropic.Timeout(600.0, connect=5.0, read=self.stream_silence)
         return anthropic.Anthropic(api_key=api_key, timeout=timeout)
 
     def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:
