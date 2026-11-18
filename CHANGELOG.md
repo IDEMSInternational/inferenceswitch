@@ -5,6 +5,8 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.13.1] — 2026-11-18
+
 ### Fixed
 
 - **`stream_silence` works with the current SDKs.** It built an `httpx.Timeout`, which
