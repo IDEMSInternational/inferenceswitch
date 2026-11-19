@@ -5,6 +5,22 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **`Text.ttl`: how long a cache breakpoint stays warm** (`"5m"` or `"1h"`, with
+  `cache=True`). On Anthropic a `"1h"` is sent as `cache_control: {"type": "ephemeral",
+  "ttl": "1h"}`; `"5m"` and None send what they always did, the API's own five
+  minutes. A host that lets the person choose the lifetime (anastom's run setting)
+  can now pass it on ([#37](https://github.com/IDEMSInternational/inferenceswitch/issues/37)).
+
+### Fixed
+
+- **A stopped OpenAI-compatible stream is closed.** When `on_stream` raised (how a
+  host ends a call at its Stop), the response stayed open and the provider kept
+  generating, and billing, until it was collected. The stream is now closed when the
+  loop ends or raises, as the Anthropic adapter's already was
+  ([#37](https://github.com/IDEMSInternational/inferenceswitch/issues/37)).
+
 ## [0.13.1] — 2026-11-18
 
 ### Fixed

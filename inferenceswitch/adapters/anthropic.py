@@ -152,6 +152,8 @@ def encode_anthropic_messages(messages: list[Message]) -> list[dict]:
                     block = {"type": "text", "text": part.text}
                     if part.cache:
                         block["cache_control"] = {"type": "ephemeral"}
+                        if part.ttl == "1h":  # five minutes is what a breakpoint gets unasked
+                            block["cache_control"]["ttl"] = "1h"
                     blocks.append(block)
             elif isinstance(part, Image):
                 blocks.append(anthropic_image_block(part))

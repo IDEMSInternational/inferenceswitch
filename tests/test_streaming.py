@@ -535,3 +535,48 @@ def test_streamed_thinking_capability():
         assert registry.get(name).capabilities.has(Capability.STREAMED_THINKING)
     for name in ("openai", "mistral"):
         assert not registry.get(name).capabilities.has(Capability.STREAMED_THINKING)
+
+
+class _ClosableStream:
+    """A provider's open response: it stays open (and the model keeps generating) until closed."""
+
+    def __init__(self, chunks):
+        self._chunks = iter(chunks)
+        self.closed = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._chunks)
+
+    def close(self):
+        self.closed = True
+
+
+def test_an_on_stream_that_raises_closes_the_openai_compatible_stream():
+    """A host's Stop raises from ``on_stream``: the request must end there, not run on (and
+    bill) until the response is collected."""
+    stream = _ClosableStream([_chunk({"reasoning": "Adding "}), _chunk({"content": "3."})])
+    fake = _FakeOpenAI([])
+    fake._create = lambda **kwargs: stream  # type: ignore[method-assign]
+    fake.chat = SimpleNamespace(completions=SimpleNamespace(create=fake._create))
+    adapter = OpenAICompatibleAdapter(default_registry().get("deepseek"), "", raw_client=fake)
+
+    def stop(delta):
+        raise RuntimeError("stopped")
+
+    with pytest.raises(RuntimeError, match="stopped"):
+        adapter.chat(model="deepseek-reasoner", messages=[user("q")], on_stream=stop)
+    assert stream.closed
+
+
+def test_a_finished_openai_compatible_stream_is_closed_too():
+    stream = _ClosableStream([_chunk({"content": "3."}, finish="stop"), _chunk(usage=USAGE)])
+    fake = _FakeOpenAI([])
+    fake.chat = SimpleNamespace(completions=SimpleNamespace(create=lambda **kw: stream))
+    adapter = OpenAICompatibleAdapter(default_registry().get("deepseek"), "", raw_client=fake)
+
+    resp = adapter.chat(model="deepseek-reasoner", messages=[user("q")], on_stream=lambda d: None)
+
+    assert resp.text == "3." and stream.closed
