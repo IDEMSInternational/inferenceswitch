@@ -328,3 +328,24 @@ def test_same_caller_code_caches_on_both_providers(monkeypatch):
 
     assert cached_tool("claude-opus-4-8") == "anthropic:ok"
     assert cached_tool("gemini-2.5-flash") == "gemini:ok"
+
+
+# ── a breakpoint's lifetime (Text.ttl) ─────────────────────────────────────────
+
+
+def test_a_one_hour_marker_asks_for_the_one_hour_cache():
+    out = encode_anthropic_messages([Message("user", [Text("big context", cache=True, ttl="1h")])])
+    assert out[0]["content"][0]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
+
+
+@pytest.mark.parametrize("ttl", [None, "5m"])
+def test_the_default_lifetime_leaves_the_payload_as_it_was(ttl):
+    out = encode_anthropic_messages([Message("user", [Text("big context", cache=True, ttl=ttl)])])
+    assert out[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+
+def test_a_lifetime_is_one_of_the_two_and_needs_a_breakpoint():
+    with pytest.raises(ValueError, match="5m"):
+        Text("x", cache=True, ttl="2h")
+    with pytest.raises(ValueError, match="cache=True"):
+        Text("x", ttl="1h")

@@ -22,6 +22,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Union
 
+#: The lifetimes an inline cache breakpoint can ask for (:attr:`Text.ttl`).
+CACHE_TTLS = ("5m", "1h")
+
 # ── content parts ─────────────────────────────────────────────────────────────
 
 
@@ -33,6 +36,18 @@ class Text:
     #: client raises :class:`UnsupportedCapabilityError` if the routed provider
     #: lacks it, so the marker never degrades to a silent no-op.
     cache: bool = False
+    #: How long a ``cache`` breakpoint stays warm: ``"5m"`` (the provider's
+    #: default, Anthropic's) or ``"1h"``. Needs ``cache``; None leaves it to the
+    #: provider. Only a ``"1h"`` is put on the wire: the default is what the API
+    #: gives a breakpoint that says nothing.
+    ttl: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.ttl is not None:
+            if self.ttl not in CACHE_TTLS:
+                raise ValueError(f"Text.ttl is one of {CACHE_TTLS}, not {self.ttl!r}.")
+            if not self.cache:
+                raise ValueError("Text.ttl is how long a cache breakpoint stays warm: set cache=True.")
 
 
 @dataclass

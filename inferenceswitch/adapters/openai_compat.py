@@ -273,10 +273,18 @@ class OpenAICompatibleAdapter(Adapter):
         state = streaming.ChatCompletionStreamState()
         if self.capabilities.config.get("stream_include_usage", True):
             kwargs["stream_options"] = {"include_usage": True}
-        for chunk in self._streaming_client().chat.completions.create(**kwargs, stream=True):
-            state.handle_chunk(chunk)
-            for delta in openai_stream_deltas(chunk):
-                on_stream(delta)
+        stream = self._streaming_client().chat.completions.create(**kwargs, stream=True)
+        try:
+            for chunk in stream:
+                state.handle_chunk(chunk)
+                for delta in openai_stream_deltas(chunk):
+                    on_stream(delta)
+        finally:
+            # An ``on_stream`` that raises (a host's Stop) must end the request, not leave
+            # the provider generating, and billing, until the stream is collected.
+            close = getattr(stream, "close", None)
+            if close is not None:
+                close()
         return state.get_final_completion()
 
     def _sampling_kwargs(self, temperature: float | None, max_tokens: int | None) -> dict:
