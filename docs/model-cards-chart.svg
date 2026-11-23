@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1482" width="900" role="img" font-family="system-ui,-apple-system,Segoe UI,sans-serif">
 <title>All model cards by rung, on the Epoch Capabilities Index and the Artificial Analysis index</title>
-<desc>76 model cards grouped by rung. 51 have an Epoch Capabilities Index score (left, with its 95% interval) and 33 have an Artificial Analysis index score (right), each shown inside the rung's band; cards without an Epoch score show an ECI estimated from their other benchmarks.</desc>
+<desc>76 model cards grouped by rung. 51 have an Epoch Capabilities Index score (left, with its 95% interval) and 34 have an Artificial Analysis index score (right), each shown inside the rung's band; cards without an Epoch score show an ECI estimated from their other benchmarks.</desc>
 <style>
 .bg{fill:#fff}.t{fill:#1f2328}.m{fill:#59636e}.g{stroke:#59636e;stroke-opacity:.25}.e{stroke:#59636e}
 .z1{fill:#59636e;fill-opacity:.04}.z2{fill:#59636e;fill-opacity:.10}
@@ -33,16 +33,16 @@
 <line class="rule" x1="28" x2="860" y1="54.0" y2="54.0" stroke-width="0.5"/>
 <text class="t" x="28" y="70.0" font-size="13" font-weight="600">frontier</text>
 <text class="m" x="86" y="70.0" font-size="11">2 cards</text></g>
-<g class="frontier"><title>gpt-6-astra: ECI 169.0 [166.1, 172.3], frontier on this view, rung frontier, hosted only; AA index 56.9</title>
+<g class="frontier"><title>gpt-6-astra: ECI 169.2 [166.4, 172.5], frontier on this view, rung frontier, hosted only; AA index 56.9</title>
 <text class="t" x="178" y="89.5" text-anchor="end" font-size="11">gpt-6-astra</text>
-<line class="bar" x1="501.7" x2="530.4" y1="85.5" y2="85.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="515.1" cy="85.5" r="3.8"/>
+<line class="bar" x1="503.1" x2="531.3" y1="85.5" y2="85.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="516.0" cy="85.5" r="3.8"/>
 <circle class="ring" cx="839.9" cy="85.5" r="3.8"/>
 </g>
-<g class="frontier"><title>claude-opus-5-5: ECI 168.5 [165.6, 171.8], frontier on this view, rung frontier, hosted only; AA index 59.1</title>
+<g class="frontier"><title>claude-opus-5-5: ECI 168.7 [165.9, 172.0], frontier on this view, rung frontier, hosted only; AA index 59.1</title>
 <text class="t" x="178" y="104.5" text-anchor="end" font-size="11">claude-opus-5-5</text>
-<line class="bar" x1="499.4" x2="528.1" y1="100.5" y2="100.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="512.8" cy="100.5" r="3.8"/>
+<line class="bar" x1="500.8" x2="529.0" y1="100.5" y2="100.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="513.7" cy="100.5" r="3.8"/>
 <circle class="ring" cx="848.6" cy="100.5" r="3.8"/>
 </g>
 <g class="large"><rect class="band" x="487.4" y="114.0" width="23.1" height="150"/>
@@ -50,52 +50,52 @@
 <line class="rule" x1="28" x2="860" y1="114.0" y2="114.0" stroke-width="0.5"/>
 <text class="t" x="28" y="130.0" font-size="13" font-weight="600">large</text>
 <text class="m" x="86" y="130.0" font-size="11">8 cards</text></g>
-<g class="large"><title>gpt-6.1-sol: ECI 168.5 [165.5, 171.8], frontier on this view, rung large, hosted only; AA index 54.6</title>
+<g class="large"><title>gpt-6.1-sol: ECI 168.6 [165.7, 171.9], frontier on this view, rung large, hosted only; AA index 54.6</title>
 <text class="t" x="178" y="149.5" text-anchor="end" font-size="11">gpt-6.1-sol</text>
-<line class="bar" x1="498.9" x2="528.1" y1="145.5" y2="145.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="512.8" cy="145.5" r="3.8"/>
-<circle cx="512.8" cy="145.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
+<line class="bar" x1="499.9" x2="528.5" y1="145.5" y2="145.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="513.3" cy="145.5" r="3.8"/>
+<circle cx="513.3" cy="145.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
 <circle class="ring" cx="830.9" cy="145.5" r="3.8"/>
 </g>
-<g class="large"><title>claude-fable-5-1: ECI 167.0 [164.2, 170.1], large on this view, rung large, hosted only; AA index 49.2</title>
+<g class="large"><title>claude-fable-5-1: ECI 167.1 [164.4, 170.1], large on this view, rung large, hosted only; AA index 49.2</title>
 <text class="t" x="178" y="164.5" text-anchor="end" font-size="11">claude-fable-5-1</text>
-<line class="bar" x1="492.9" x2="520.2" y1="160.5" y2="160.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="505.9" cy="160.5" r="3.8"/>
+<line class="bar" x1="493.9" x2="520.2" y1="160.5" y2="160.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="506.3" cy="160.5" r="3.8"/>
 <circle class="ring" cx="809.6" cy="160.5" r="3.8"/>
 </g>
-<g class="large"><title>claude-sonnet-5-5: ECI 166.6 [163.8, 169.6], large on this view, rung large, hosted only; AA index 54.5</title>
+<g class="large"><title>claude-sonnet-5-5: ECI 166.6 [163.9, 169.6], large on this view, rung large, hosted only; AA index 54.5</title>
 <text class="t" x="178" y="179.5" text-anchor="end" font-size="11">claude-sonnet-5-5</text>
-<line class="bar" x1="491.1" x2="517.9" y1="175.5" y2="175.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="491.5" x2="517.9" y1="175.5" y2="175.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="504.0" cy="175.5" r="3.8"/>
 <circle class="ring" cx="830.5" cy="175.5" r="3.8"/>
 </g>
-<g class="large"><title>claude-opus-5: ECI 164.7 [162.1, 167.5], large on this view, rung large, hosted only; AA index 44.2</title>
+<g class="large"><title>claude-opus-5: ECI 164.7 [162.3, 167.5], large on this view, rung large, hosted only; AA index 44.2</title>
 <text class="t" x="178" y="194.5" text-anchor="end" font-size="11">claude-opus-5</text>
-<line class="bar" x1="483.2" x2="508.2" y1="190.5" y2="190.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="484.1" x2="508.2" y1="190.5" y2="190.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="495.2" cy="190.5" r="3.8"/>
 <circle class="ring" cx="789.9" cy="190.5" r="3.8"/>
 </g>
-<g class="large"><title>claude-fable-5: ECI 164.1 [161.7, 166.8], large on this view, rung large, hosted only</title>
+<g class="large"><title>claude-fable-5: ECI 164.2 [161.8, 166.9], large on this view, rung large, hosted only</title>
 <text class="t" x="178" y="209.5" text-anchor="end" font-size="11">claude-fable-5</text>
-<line class="bar" x1="481.4" x2="505.0" y1="205.5" y2="205.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="492.5" cy="205.5" r="3.8"/>
+<line class="bar" x1="481.8" x2="505.4" y1="205.5" y2="205.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="492.9" cy="205.5" r="3.8"/>
 <text class="m" x="624" y="209.5" font-size="11">no index score</text>
 </g>
-<g class="large"><title>gpt-6-sol: ECI 163.8 [161.3, 166.4], large on this view, rung large, hosted only; AA index 44.2</title>
+<g class="large"><title>gpt-6-sol: ECI 163.8 [161.4, 166.6], large on this view, rung large, hosted only; AA index 44.2</title>
 <text class="t" x="178" y="224.5" text-anchor="end" font-size="11">gpt-6-sol</text>
-<line class="bar" x1="479.5" x2="503.1" y1="220.5" y2="220.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="480.0" x2="504.0" y1="220.5" y2="220.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="491.1" cy="220.5" r="3.8"/>
 <circle class="ring" cx="789.9" cy="220.5" r="3.8"/>
 </g>
-<g class="large"><title>gpt-5.6-sol: ECI 163.0 [160.7, 165.5], large on this view, rung large, hosted only</title>
+<g class="large"><title>gpt-5.6-sol: ECI 163.0 [160.7, 165.6], large on this view, rung large, hosted only</title>
 <text class="t" x="178" y="239.5" text-anchor="end" font-size="11">gpt-5.6-sol</text>
-<line class="bar" x1="476.7" x2="498.9" y1="235.5" y2="235.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="476.7" x2="499.4" y1="235.5" y2="235.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="487.4" cy="235.5" r="3.8"/>
 <text class="m" x="624" y="239.5" font-size="11">no index score</text>
 </g>
-<g class="large"><title>gemini-3.1-pro-preview: no Epoch score; ECI estimated at 157.8 [150.6, 165.0] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1; rung large, hosted only</title>
+<g class="large"><title>gemini-3.1-pro-preview: no Epoch score; ECI estimated at 157.8 [150.6, 165.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1; rung large, hosted only</title>
 <text class="t" x="178" y="254.5" text-anchor="end" font-size="11">gemini-3.1-pro-preview</text>
-<line class="estbar" x1="430.0" x2="496.6" y1="250.5" y2="250.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="430.0" x2="497.1" y1="250.5" y2="250.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="ring" x="459.5" y="246.7" width="7.6" height="7.6" transform="rotate(45 463.3 250.5)"/>
 <text class="m" x="624" y="254.5" font-size="11">no index score</text>
 </g>
@@ -104,76 +104,76 @@
 <line class="rule" x1="28" x2="860" y1="264.0" y2="264.0" stroke-width="0.5"/>
 <text class="t" x="28" y="280.0" font-size="13" font-weight="600">mid</text>
 <text class="m" x="86" y="280.0" font-size="11">27 cards</text></g>
-<g class="mid"><title>kimi-k3.1-pro: ECI 161.4 [159.0, 164.0], mid on this view, rung mid, open weights; AA index 46.5</title>
+<g class="mid"><title>kimi-k3.1-pro: ECI 161.2 [158.9, 163.7], mid on this view, rung mid, open weights; AA index 46.5</title>
 <text class="t" x="178" y="299.5" text-anchor="end" font-size="11">kimi-k3.1-pro</text>
-<line class="bar" x1="468.9" x2="492.0" y1="295.5" y2="295.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="480.0" cy="295.5" r="4.5"/>
+<line class="bar" x1="468.4" x2="490.6" y1="295.5" y2="295.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="479.0" cy="295.5" r="4.5"/>
 <circle class="dot" cx="799.0" cy="295.5" r="4.5"/>
 <circle cx="799.0" cy="295.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
 </g>
-<g class="mid"><title>gpt-5.6-terra: ECI 160.7 [158.5, 163.2], mid on this view, rung mid, hosted only; AA index 32.3</title>
+<g class="mid"><title>gpt-5.6-terra: ECI 160.8 [158.5, 163.3], mid on this view, rung mid, hosted only; AA index 32.3</title>
 <text class="t" x="178" y="314.5" text-anchor="end" font-size="11">gpt-5.6-terra</text>
-<line class="bar" x1="466.6" x2="488.3" y1="310.5" y2="310.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="476.7" cy="310.5" r="3.8"/>
+<line class="bar" x1="466.6" x2="488.8" y1="310.5" y2="310.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="477.2" cy="310.5" r="3.8"/>
 <circle class="ring" cx="743.1" cy="310.5" r="3.8"/>
 </g>
-<g class="mid"><title>claude-haiku-5-5: ECI 160.4 [158.3, 162.9], mid on this view, rung mid, hosted only; AA index 36.5</title>
+<g class="mid"><title>claude-haiku-5-5: ECI 160.3 [158.2, 162.7], mid on this view, rung mid, hosted only; AA index 36.5</title>
 <text class="t" x="178" y="329.5" text-anchor="end" font-size="11">claude-haiku-5-5</text>
-<line class="bar" x1="465.6" x2="486.9" y1="325.5" y2="325.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="475.4" cy="325.5" r="3.8"/>
+<line class="bar" x1="465.2" x2="486.0" y1="325.5" y2="325.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="474.9" cy="325.5" r="3.8"/>
 <circle class="ring" cx="759.6" cy="325.5" r="3.8"/>
 </g>
-<g class="mid"><title>claude-opus-4-8: ECI 159.9 [157.9, 162.2], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>claude-opus-4-8: ECI 159.9 [157.8, 162.2], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="344.5" text-anchor="end" font-size="11">claude-opus-4-8</text>
-<line class="bar" x1="463.8" x2="483.7" y1="340.5" y2="340.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="463.3" x2="483.7" y1="340.5" y2="340.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="473.0" cy="340.5" r="3.8"/>
 <text class="m" x="624" y="344.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>deepseek-v4.1-flash-1017: ECI 159.4 [157.0, 162.0], mid on this view, rung mid, open weights; AA index 32.6</title>
+<g class="mid"><title>deepseek-v4.1-flash-1017: ECI 159.4 [157.1, 161.9], mid on this view, rung mid, open weights; AA index 32.6</title>
 <text class="t" x="178" y="359.5" text-anchor="end" font-size="11">deepseek-v4.1-flash-1017</text>
-<line class="bar" x1="459.6" x2="482.8" y1="355.5" y2="355.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="460.1" x2="482.3" y1="355.5" y2="355.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="470.7" cy="355.5" r="4.5"/>
 <circle class="dot" cx="744.3" cy="355.5" r="4.5"/>
 </g>
-<g class="mid"><title>gemini-3.8-flash: ECI 158.8 [156.8, 160.9], mid on this view, rung mid, hosted only; AA index 30.8</title>
+<g class="mid"><title>gemini-3.8-flash: ECI 158.8 [156.8, 161.0], mid on this view, rung mid, hosted only; AA index 30.8</title>
 <text class="t" x="178" y="374.5" text-anchor="end" font-size="11">gemini-3.8-flash</text>
-<line class="bar" x1="458.7" x2="477.7" y1="370.5" y2="370.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="458.7" x2="478.1" y1="370.5" y2="370.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="468.0" cy="370.5" r="3.8"/>
 <circle class="ring" cx="737.2" cy="370.5" r="3.8"/>
 </g>
-<g class="mid"><title>gpt-5.4: ECI 157.8 [155.9, 159.9], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>gpt-5.4: ECI 157.9 [156.0, 160.0], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="389.5" text-anchor="end" font-size="11">gpt-5.4</text>
-<line class="bar" x1="454.5" x2="473.0" y1="385.5" y2="385.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="463.3" cy="385.5" r="3.8"/>
+<line class="bar" x1="455.0" x2="473.5" y1="385.5" y2="385.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="463.8" cy="385.5" r="3.8"/>
 <text class="m" x="624" y="389.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>grok-4.6: ECI 157.8 [155.8, 159.9], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>grok-4.6: ECI 157.8 [155.9, 160.0], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="404.5" text-anchor="end" font-size="11">grok-4.6</text>
-<line class="bar" x1="454.1" x2="473.0" y1="400.5" y2="400.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="454.5" x2="473.5" y1="400.5" y2="400.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="463.3" cy="400.5" r="3.8"/>
 <text class="m" x="624" y="404.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>glm-5.3: ECI 157.1 [154.9, 159.5], mid on this view, rung mid, open weights; AA index 31.7</title>
+<g class="mid"><title>glm-5.3: ECI 157.1 [155.0, 159.4], mid on this view, rung mid, open weights; AA index 31.7</title>
 <text class="t" x="178" y="419.5" text-anchor="end" font-size="11">glm-5.3</text>
-<line class="bar" x1="449.9" x2="471.2" y1="415.5" y2="415.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="450.4" x2="470.7" y1="415.5" y2="415.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="460.1" cy="415.5" r="4.5"/>
 <circle class="dot" cx="740.8" cy="415.5" r="4.5"/>
 </g>
-<g class="mid"><title>claude-sonnet-5: ECI 156.9 [154.8, 159.2], mid on this view, rung mid, hosted only</title>
-<text class="t" x="178" y="434.5" text-anchor="end" font-size="11">claude-sonnet-5</text>
-<line class="bar" x1="449.5" x2="469.8" y1="430.5" y2="430.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="459.2" cy="430.5" r="3.8"/>
+<g class="mid"><title>deepseek-v4.1-flash: ECI 157.0 [155.1, 159.2], mid on this view, rung mid, open weights</title>
+<text class="t" x="178" y="434.5" text-anchor="end" font-size="11">deepseek-v4.1-flash</text>
+<line class="bar" x1="450.8" x2="469.8" y1="430.5" y2="430.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="459.6" cy="430.5" r="4.5"/>
 <text class="m" x="624" y="434.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>deepseek-v4.1-flash: ECI 156.7 [154.8, 158.8], mid on this view, rung mid, open weights</title>
-<text class="t" x="178" y="449.5" text-anchor="end" font-size="11">deepseek-v4.1-flash</text>
-<line class="bar" x1="449.5" x2="468.0" y1="445.5" y2="445.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="458.2" cy="445.5" r="4.5"/>
+<g class="mid"><title>claude-sonnet-5: ECI 156.9 [154.9, 159.1], mid on this view, rung mid, hosted only</title>
+<text class="t" x="178" y="449.5" text-anchor="end" font-size="11">claude-sonnet-5</text>
+<line class="bar" x1="449.9" x2="469.3" y1="445.5" y2="445.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="459.2" cy="445.5" r="3.8"/>
 <text class="m" x="624" y="449.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>gpt-6-luna: ECI 156.4 [154.4, 158.5], mid on this view, rung mid, hosted only; AA index 27.9</title>
+<g class="mid"><title>gpt-6-luna: ECI 156.4 [154.6, 158.5], mid on this view, rung mid, hosted only; AA index 27.9</title>
 <text class="t" x="178" y="464.5" text-anchor="end" font-size="11">gpt-6-luna</text>
-<line class="bar" x1="447.6" x2="466.6" y1="460.5" y2="460.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="448.5" x2="466.6" y1="460.5" y2="460.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="456.9" cy="460.5" r="3.8"/>
 <circle class="ring" cx="725.8" cy="460.5" r="3.8"/>
 </g>
@@ -183,57 +183,57 @@
 <circle class="ring" cx="451.8" cy="475.5" r="3.8"/>
 <text class="m" x="624" y="479.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>gemini-3.6-flash: ECI 155.2 [153.4, 157.2], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>gemini-3.6-flash: ECI 155.2 [153.4, 157.3], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="494.5" text-anchor="end" font-size="11">gemini-3.6-flash</text>
-<line class="bar" x1="443.0" x2="460.5" y1="490.5" y2="490.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="443.0" x2="461.0" y1="490.5" y2="490.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="451.3" cy="490.5" r="3.8"/>
 <text class="m" x="624" y="494.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>mistral-large-4: ECI 154.6 [151.8, 157.5], mid on this view, rung mid, open weights; AA index 26.1</title>
+<g class="mid"><title>mistral-large-4: ECI 154.6 [151.8, 157.4], mid on this view, rung mid, open weights; AA index 26.1</title>
 <text class="t" x="178" y="509.5" text-anchor="end" font-size="11">mistral-large-4</text>
-<line class="bar" x1="435.6" x2="461.9" y1="505.5" y2="505.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="435.6" x2="461.5" y1="505.5" y2="505.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="448.5" cy="505.5" r="4.5"/>
 <circle class="dot" cx="718.7" cy="505.5" r="4.5"/>
 </g>
-<g class="mid"><title>glm-5.3-flash: ECI 153.8 [152.0, 155.8], mid on this view, rung mid, open weights; AA index 27.8</title>
+<g class="mid"><title>glm-5.3-flash: ECI 153.8 [151.9, 155.8], mid on this view, rung mid, open weights; AA index 27.8</title>
 <text class="t" x="178" y="524.5" text-anchor="end" font-size="11">glm-5.3-flash</text>
-<line class="bar" x1="436.5" x2="454.1" y1="520.5" y2="520.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="436.0" x2="454.1" y1="520.5" y2="520.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="444.8" cy="520.5" r="4.5"/>
 <circle class="dot" cx="725.4" cy="520.5" r="4.5"/>
 </g>
-<g class="mid"><title>claude-sonnet-4-6: ECI 152.9 [151.2, 154.7], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>claude-sonnet-4-6: ECI 152.8 [151.2, 154.5], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="539.5" text-anchor="end" font-size="11">claude-sonnet-4-6</text>
-<line class="bar" x1="432.8" x2="449.0" y1="535.5" y2="535.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="440.7" cy="535.5" r="3.8"/>
+<line class="bar" x1="432.8" x2="448.1" y1="535.5" y2="535.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="440.2" cy="535.5" r="3.8"/>
 <text class="m" x="624" y="539.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>gemini-3-flash: ECI 152.3 [150.8, 154.0], mid on this view, rung mid, hosted only</title>
+<g class="mid"><title>gemini-3-flash: ECI 152.3 [150.8, 154.1], mid on this view, rung mid, hosted only</title>
 <text class="t" x="178" y="554.5" text-anchor="end" font-size="11">gemini-3-flash</text>
-<line class="bar" x1="431.0" x2="445.8" y1="550.5" y2="550.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="431.0" x2="446.2" y1="550.5" y2="550.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="437.9" cy="550.5" r="3.8"/>
 <text class="m" x="624" y="554.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>mimo-v2.6-pro: no Epoch score; ECI estimated at 162.6 [155.4, 169.8] from hle, aa_lcr, scicode; rung mid, open weights; AA index 29.9</title>
+<g class="mid"><title>mimo-v2.6-pro: no Epoch score; ECI estimated at 162.6 [155.4, 169.9] from hle, aa_lcr, scicode; rung mid, open weights; AA index 29.9</title>
 <text class="t" x="178" y="569.5" text-anchor="end" font-size="11">mimo-v2.6-pro</text>
-<line class="estbar" x1="452.2" x2="518.8" y1="565.5" y2="565.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="452.2" x2="519.3" y1="565.5" y2="565.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="481.7" y="561.7" width="7.6" height="7.6" transform="rotate(45 485.5 565.5)"/>
 <circle class="dot" cx="733.7" cy="565.5" r="4.5"/>
 </g>
-<g class="mid"><title>minimax-m3.1-flash: no Epoch score; ECI estimated at 158.2 [150.9, 165.4] from hle, aa_lcr, scicode; rung mid, open weights; AA index 29.1</title>
+<g class="mid"><title>minimax-m3.1-flash: no Epoch score; ECI estimated at 158.2 [150.9, 165.5] from hle, aa_lcr, scicode; rung mid, open weights; AA index 29.1</title>
 <text class="t" x="178" y="584.5" text-anchor="end" font-size="11">minimax-m3.1-flash</text>
-<line class="estbar" x1="431.4" x2="498.5" y1="580.5" y2="580.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="431.4" x2="498.9" y1="580.5" y2="580.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="461.4" y="576.7" width="7.6" height="7.6" transform="rotate(45 465.2 580.5)"/>
 <circle class="dot" cx="730.5" cy="580.5" r="4.5"/>
 </g>
-<g class="mid"><title>qwen3.8-2.4t-a95b: no Epoch score; ECI estimated at 158.0 [150.7, 165.2] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung mid, open weights</title>
+<g class="mid"><title>qwen3.8-2.4t-a95b: no Epoch score; ECI estimated at 158.0 [150.7, 165.3] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung mid, open weights</title>
 <text class="t" x="178" y="599.5" text-anchor="end" font-size="11">qwen3.8-2.4t-a95b</text>
-<line class="estbar" x1="430.5" x2="497.5" y1="595.5" y2="595.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="430.5" x2="498.0" y1="595.5" y2="595.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="460.4" y="591.7" width="7.6" height="7.6" transform="rotate(45 464.2 595.5)"/>
 <text class="m" x="624" y="599.5" font-size="11">no index score</text>
 </g>
-<g class="mid"><title>inkling-2-small: no Epoch score; ECI estimated at 157.5 [150.3, 164.7] from hle, aa_lcr, scicode, terminal_bench_2_1; rung mid, open weights; AA index 30.6</title>
+<g class="mid"><title>inkling-2-small: no Epoch score; ECI estimated at 157.5 [150.3, 164.8] from hle, aa_lcr, scicode, terminal_bench_2_1; rung mid, open weights; AA index 30.6</title>
 <text class="t" x="178" y="614.5" text-anchor="end" font-size="11">inkling-2-small</text>
-<line class="estbar" x1="428.6" x2="495.2" y1="610.5" y2="610.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="428.6" x2="495.7" y1="610.5" y2="610.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="458.1" y="606.7" width="7.6" height="7.6" transform="rotate(45 461.9 610.5)"/>
 <circle class="dot" cx="736.4" cy="610.5" r="4.5"/>
 </g>
@@ -243,9 +243,9 @@
 <rect class="dot" x="458.1" y="621.7" width="7.6" height="7.6" transform="rotate(45 461.9 625.5)"/>
 <circle class="dot" cx="728.6" cy="625.5" r="4.5"/>
 </g>
-<g class="mid"><title>mimo-v2.6-flash: no Epoch score; ECI estimated at 154.6 [147.4, 161.8] from hle, aa_lcr, scicode; rung mid, open weights; AA index 26.7</title>
+<g class="mid"><title>mimo-v2.6-flash: no Epoch score; ECI estimated at 154.6 [147.4, 161.9] from hle, aa_lcr, scicode; rung mid, open weights; AA index 26.7</title>
 <text class="t" x="178" y="644.5" text-anchor="end" font-size="11">mimo-v2.6-flash</text>
-<line class="estbar" x1="415.2" x2="481.8" y1="640.5" y2="640.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="415.2" x2="482.3" y1="640.5" y2="640.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="444.7" y="636.7" width="7.6" height="7.6" transform="rotate(45 448.5 640.5)"/>
 <circle class="dot" cx="721.1" cy="640.5" r="4.5"/>
 </g>
@@ -269,16 +269,16 @@
 <line class="rule" x1="28" x2="860" y1="699.0" y2="699.0" stroke-width="0.5"/>
 <text class="t" x="28" y="715.0" font-size="13" font-weight="600">small</text>
 <text class="m" x="86" y="715.0" font-size="11">32 cards</text></g>
-<g class="small"><title>gpt-5.6-luna: ECI 156.7 [154.8, 158.7], mid on this view, rung small, hosted only; AA index 23.8</title>
+<g class="small"><title>gpt-5.6-luna: ECI 156.7 [154.9, 158.8], mid on this view, rung small, hosted only; AA index 23.8</title>
 <text class="t" x="178" y="734.5" text-anchor="end" font-size="11">gpt-5.6-luna</text>
-<line class="bar" x1="449.5" x2="467.5" y1="730.5" y2="730.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="449.9" x2="468.0" y1="730.5" y2="730.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="458.2" cy="730.5" r="3.8"/>
 <circle cx="458.2" cy="730.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
 <circle class="ring" cx="709.7" cy="730.5" r="3.8"/>
 </g>
-<g class="small"><title>qwen3.8-27b: ECI 152.6 [150.6, 154.8], mid on this view, rung small, open weights; AA index 20.1</title>
+<g class="small"><title>qwen3.8-27b: ECI 152.6 [150.7, 154.7], mid on this view, rung small, open weights; AA index 20.1</title>
 <text class="t" x="178" y="749.5" text-anchor="end" font-size="11">qwen3.8-27b</text>
-<line class="bar" x1="430.0" x2="449.5" y1="745.5" y2="745.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="430.5" x2="449.0" y1="745.5" y2="745.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="439.3" cy="745.5" r="4.5"/>
 <circle cx="439.3" cy="745.5" r="7.5" fill="none" stroke="#eb6834" stroke-width="1.5"/>
 <circle class="dot" cx="695.1" cy="745.5" r="4.5"/>
@@ -289,177 +289,177 @@
 <circle class="ring" cx="428.2" cy="760.5" r="3.8"/>
 <text class="m" x="624" y="764.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gpt-5.4-mini: ECI 149.3 [147.7, 151.1], small on this view, rung small, hosted only</title>
+<g class="small"><title>gpt-5.4-mini: ECI 149.4 [147.7, 151.1], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="779.5" text-anchor="end" font-size="11">gpt-5.4-mini</text>
 <line class="bar" x1="416.6" x2="432.3" y1="775.5" y2="775.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="424.0" cy="775.5" r="3.8"/>
+<circle class="ring" cx="424.5" cy="775.5" r="3.8"/>
 <text class="m" x="624" y="779.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>qwen3.6-27b: ECI 146.7 [144.5, 149.0], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3.6-27b: ECI 146.7 [144.6, 148.9], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="794.5" text-anchor="end" font-size="11">qwen3.6-27b</text>
-<line class="bar" x1="401.8" x2="422.6" y1="790.5" y2="790.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="402.3" x2="422.2" y1="790.5" y2="790.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="412.0" cy="790.5" r="4.5"/>
 <text class="m" x="624" y="794.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gpt-5.4-nano: ECI 146.4 [144.7, 148.1], small on this view, rung small, hosted only</title>
+<g class="small"><title>gpt-5.4-nano: ECI 146.4 [144.7, 148.0], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="809.5" text-anchor="end" font-size="11">gpt-5.4-nano</text>
-<line class="bar" x1="402.7" x2="418.5" y1="805.5" y2="805.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="402.7" x2="418.0" y1="805.5" y2="805.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="410.6" cy="805.5" r="3.8"/>
 <text class="m" x="624" y="809.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gemini-3.5-flash-lite: ECI 145.6 [144.0, 147.3], small on this view, rung small, hosted only; AA index 11.7</title>
+<g class="small"><title>gemini-3.5-flash-lite: ECI 145.6 [144.0, 147.2], small on this view, rung small, hosted only; AA index 11.7</title>
 <text class="t" x="178" y="824.5" text-anchor="end" font-size="11">gemini-3.5-flash-lite</text>
-<line class="bar" x1="399.5" x2="414.8" y1="820.5" y2="820.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="399.5" x2="414.3" y1="820.5" y2="820.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="406.9" cy="820.5" r="3.8"/>
 <circle class="floor" cx="662.0" cy="820.5" r="3.6"/>
 </g>
-<g class="small"><title>gemini-3.1-flash-lite: ECI 145.0 [142.8, 147.2], small on this view, rung small, hosted only</title>
+<g class="small"><title>gemini-3.1-flash-lite: ECI 145.0 [142.8, 147.1], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="839.5" text-anchor="end" font-size="11">gemini-3.1-flash-lite</text>
-<line class="bar" x1="394.0" x2="414.3" y1="835.5" y2="835.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="394.0" x2="413.8" y1="835.5" y2="835.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="404.1" cy="835.5" r="3.8"/>
 <text class="m" x="624" y="839.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gemma-4-31b: ECI 144.3 [141.7, 146.8], small on this view, rung small, open weights; AA index 4.4</title>
+<g class="small"><title>gemma-4-31b: ECI 144.1 [141.7, 146.6], small on this view, rung small, open weights; AA index 4.4</title>
 <text class="t" x="178" y="854.5" text-anchor="end" font-size="11">gemma-4-31b</text>
-<line class="bar" x1="388.9" x2="412.5" y1="850.5" y2="850.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="400.9" cy="850.5" r="4.5"/>
+<line class="bar" x1="388.9" x2="411.5" y1="850.5" y2="850.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="400.0" cy="850.5" r="4.5"/>
 <circle class="floor" cx="633.3" cy="850.5" r="3.6"/>
 </g>
-<g class="small"><title>qwen3.6-35b-a3b: ECI 144.0 [142.1, 145.9], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3.6-35b-a3b: ECI 144.1 [142.2, 145.9], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="869.5" text-anchor="end" font-size="11">qwen3.6-35b-a3b</text>
-<line class="bar" x1="390.7" x2="408.3" y1="865.5" y2="865.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="399.5" cy="865.5" r="4.5"/>
+<line class="bar" x1="391.2" x2="408.3" y1="865.5" y2="865.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="400.0" cy="865.5" r="4.5"/>
 <text class="m" x="624" y="869.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>claude-haiku-4-5: ECI 142.8 [141.1, 144.5], small on this view, rung small, hosted only</title>
+<g class="small"><title>claude-haiku-4-5: ECI 142.7 [141.0, 144.4], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="884.5" text-anchor="end" font-size="11">claude-haiku-4-5</text>
-<line class="bar" x1="386.1" x2="401.8" y1="880.5" y2="880.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="394.0" cy="880.5" r="3.8"/>
+<line class="bar" x1="385.6" x2="401.4" y1="880.5" y2="880.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="393.5" cy="880.5" r="3.8"/>
 <text class="m" x="624" y="884.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gemma-4-26b-a4b: ECI 141.6 [139.1, 144.1], small on this view, rung small, open weights</title>
+<g class="small"><title>gemma-4-26b-a4b: ECI 141.6 [139.1, 143.9], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="899.5" text-anchor="end" font-size="11">gemma-4-26b-a4b</text>
-<line class="bar" x1="376.8" x2="400.0" y1="895.5" y2="895.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="376.8" x2="399.0" y1="895.5" y2="895.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="388.4" cy="895.5" r="4.5"/>
 <text class="m" x="624" y="899.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>mistral-medium-3-5: ECI 141.6 [138.4, 144.6], small on this view, rung small, hosted only; AA index 4.6</title>
+<g class="small"><title>mistral-medium-3-5: ECI 141.6 [138.3, 144.7], small on this view, rung small, hosted only; AA index 4.6</title>
 <text class="t" x="178" y="914.5" text-anchor="end" font-size="11">mistral-medium-3-5</text>
-<line class="bar" x1="373.6" x2="402.3" y1="910.5" y2="910.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="373.1" x2="402.7" y1="910.5" y2="910.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="388.4" cy="910.5" r="3.8"/>
 <circle class="floor" cx="634.1" cy="910.5" r="3.6"/>
 </g>
-<g class="small"><title>gpt-oss-120b: ECI 140.2 [138.2, 142.1], small on this view, rung small, open weights; AA index 3.8</title>
+<g class="small"><title>gpt-oss-120b: ECI 140.2 [138.3, 142.0], small on this view, rung small, open weights; AA index 3.8</title>
 <text class="t" x="178" y="929.5" text-anchor="end" font-size="11">gpt-oss-120b</text>
-<line class="bar" x1="372.7" x2="390.7" y1="925.5" y2="925.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="373.1" x2="390.2" y1="925.5" y2="925.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="381.9" cy="925.5" r="4.5"/>
 <circle class="floor" cx="631.0" cy="925.5" r="3.6"/>
 </g>
-<g class="small"><title>qwen3.5-9b: ECI 139.3 [136.9, 141.6], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3.5-9b: ECI 139.5 [137.3, 141.7], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="944.5" text-anchor="end" font-size="11">qwen3.5-9b</text>
-<line class="bar" x1="366.7" x2="388.4" y1="940.5" y2="940.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="377.8" cy="940.5" r="4.5"/>
+<line class="bar" x1="368.5" x2="388.9" y1="940.5" y2="940.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="378.7" cy="940.5" r="4.5"/>
 <text class="m" x="624" y="944.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>qwen3-32b: ECI 136.9 [134.4, 139.3], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3-32b: ECI 136.8 [134.4, 139.1], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="959.5" text-anchor="end" font-size="11">qwen3-32b</text>
-<line class="bar" x1="355.1" x2="377.8" y1="955.5" y2="955.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="366.7" cy="955.5" r="4.5"/>
+<line class="bar" x1="355.1" x2="376.8" y1="955.5" y2="955.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="366.2" cy="955.5" r="4.5"/>
 <text class="m" x="624" y="959.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gpt-4.1: ECI 136.2 [134.1, 138.0], small on this view, rung small, hosted only</title>
+<g class="small"><title>gpt-4.1: ECI 136.1 [134.2, 138.0], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="974.5" text-anchor="end" font-size="11">gpt-4.1</text>
-<line class="bar" x1="353.7" x2="371.8" y1="970.5" y2="970.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="363.4" cy="970.5" r="3.8"/>
+<line class="bar" x1="354.2" x2="371.8" y1="970.5" y2="970.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="363.0" cy="970.5" r="3.8"/>
 <text class="m" x="624" y="974.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gpt-oss-20b: ECI 135.0 [132.3, 137.5], small on this view, rung small, open weights</title>
+<g class="small"><title>gpt-oss-20b: ECI 134.9 [132.3, 137.3], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="989.5" text-anchor="end" font-size="11">gpt-oss-20b</text>
-<line class="bar" x1="345.4" x2="369.4" y1="985.5" y2="985.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="357.9" cy="985.5" r="4.5"/>
+<line class="bar" x1="345.4" x2="368.5" y1="985.5" y2="985.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="357.4" cy="985.5" r="4.5"/>
 <text class="m" x="624" y="989.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gpt-4.1-mini: ECI 134.2 [131.9, 136.3], small on this view, rung small, hosted only</title>
+<g class="small"><title>gpt-4.1-mini: ECI 134.2 [132.1, 136.2], small on this view, rung small, hosted only</title>
 <text class="t" x="178" y="1004.5" text-anchor="end" font-size="11">gpt-4.1-mini</text>
-<line class="bar" x1="343.5" x2="363.9" y1="1000.5" y2="1000.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="344.5" x2="363.4" y1="1000.5" y2="1000.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="ring" cx="354.2" cy="1000.5" r="3.8"/>
 <text class="m" x="624" y="1004.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>qwen3-30b-a3b: ECI 134.1 [131.3, 136.8], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3-30b-a3b: ECI 134.2 [131.3, 136.7], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="1019.5" text-anchor="end" font-size="11">qwen3-30b-a3b</text>
-<line class="bar" x1="340.8" x2="366.2" y1="1015.5" y2="1015.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="353.7" cy="1015.5" r="4.5"/>
+<line class="bar" x1="340.8" x2="365.7" y1="1015.5" y2="1015.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="354.2" cy="1015.5" r="4.5"/>
 <text class="m" x="624" y="1019.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>qwen3-8b: ECI 132.1 [128.9, 135.0], small on this view, rung small, open weights</title>
+<g class="small"><title>qwen3-8b: ECI 132.1 [128.9, 134.9], small on this view, rung small, open weights</title>
 <text class="t" x="178" y="1034.5" text-anchor="end" font-size="11">qwen3-8b</text>
-<line class="bar" x1="329.7" x2="357.9" y1="1030.5" y2="1030.5" stroke-width="2" stroke-linecap="round"/>
+<line class="bar" x1="329.7" x2="357.4" y1="1030.5" y2="1030.5" stroke-width="2" stroke-linecap="round"/>
 <circle class="dot" cx="344.5" cy="1030.5" r="4.5"/>
 <text class="m" x="624" y="1034.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>hy3: no Epoch score; ECI estimated at 152.7 [145.5, 160.0] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights</title>
+<g class="small"><title>hy3: no Epoch score; ECI estimated at 152.8 [145.5, 160.0] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights</title>
 <text class="t" x="178" y="1049.5" text-anchor="end" font-size="11">hy3</text>
 <line class="estbar" x1="406.4" x2="473.5" y1="1045.5" y2="1045.5" stroke-width="2" stroke-linecap="round"/>
-<rect class="dot" x="435.9" y="1041.7" width="7.6" height="7.6" transform="rotate(45 439.7 1045.5)"/>
+<rect class="dot" x="436.4" y="1041.7" width="7.6" height="7.6" transform="rotate(45 440.2 1045.5)"/>
 <text class="m" x="624" y="1049.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>nemotron-3.5-super-vl: no Epoch score; ECI estimated at 151.8 [144.6, 159.0] from hle, aa_lcr, scicode; rung small, open weights; AA index 13.6</title>
+<g class="small"><title>nemotron-3.5-super-vl: no Epoch score; ECI estimated at 151.8 [144.6, 159.1] from hle, aa_lcr, scicode; rung small, open weights; AA index 13.6</title>
 <text class="t" x="178" y="1064.5" text-anchor="end" font-size="11">nemotron-3.5-super-vl</text>
-<line class="estbar" x1="402.3" x2="468.9" y1="1060.5" y2="1060.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="402.3" x2="469.3" y1="1060.5" y2="1060.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="431.8" y="1056.7" width="7.6" height="7.6" transform="rotate(45 435.6 1060.5)"/>
 <circle class="dot" cx="669.5" cy="1060.5" r="4.5"/>
 </g>
-<g class="small"><title>muse-glimmer-30b: no Epoch score; ECI estimated at 148.9 [141.7, 156.1] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 6.3</title>
+<g class="small"><title>muse-glimmer-30b: no Epoch score; ECI estimated at 148.9 [141.7, 156.2] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 6.3</title>
 <text class="t" x="178" y="1079.5" text-anchor="end" font-size="11">muse-glimmer-30b</text>
-<line class="estbar" x1="388.9" x2="455.5" y1="1075.5" y2="1075.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="388.9" x2="455.9" y1="1075.5" y2="1075.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="418.4" y="1071.7" width="7.6" height="7.6" transform="rotate(45 422.2 1075.5)"/>
 <circle class="floor" cx="640.8" cy="1075.5" r="3.6"/>
 </g>
-<g class="small"><title>step-3.7-flash: no Epoch score; ECI estimated at 146.3 [139.1, 153.6] from gpqa_diamond, hle, ifbench, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights</title>
+<g class="small"><title>step-3.7-flash: no Epoch score; ECI estimated at 146.4 [139.1, 153.6] from gpqa_diamond, hle, ifbench, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights</title>
 <text class="t" x="178" y="1094.5" text-anchor="end" font-size="11">step-3.7-flash</text>
 <line class="estbar" x1="376.8" x2="443.9" y1="1090.5" y2="1090.5" stroke-width="2" stroke-linecap="round"/>
-<rect class="dot" x="406.3" y="1086.7" width="7.6" height="7.6" transform="rotate(45 410.1 1090.5)"/>
+<rect class="dot" x="406.8" y="1086.7" width="7.6" height="7.6" transform="rotate(45 410.6 1090.5)"/>
 <text class="m" x="624" y="1094.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>gemma-4-12b-qat: no Epoch score; ECI estimated at 141.9 [134.6, 149.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, terminal_bench_2_1; rung small, open weights</title>
+<g class="small"><title>gemma-4-12b-qat: no Epoch score; ECI estimated at 141.9 [134.6, 149.2] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, terminal_bench_2_1; rung small, open weights</title>
 <text class="t" x="178" y="1109.5" text-anchor="end" font-size="11">gemma-4-12b-qat</text>
-<line class="estbar" x1="356.0" x2="423.1" y1="1105.5" y2="1105.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="356.0" x2="423.5" y1="1105.5" y2="1105.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="386.0" y="1101.7" width="7.6" height="7.6" transform="rotate(45 389.8 1105.5)"/>
 <text class="m" x="624" y="1109.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>mistral-small-4: no Epoch score; ECI estimated at 139.7 [132.5, 146.9] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 4.3</title>
+<g class="small"><title>mistral-small-4: no Epoch score; ECI estimated at 139.7 [132.5, 147.0] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 4.3</title>
 <text class="t" x="178" y="1124.5" text-anchor="end" font-size="11">mistral-small-4</text>
-<line class="estbar" x1="346.3" x2="412.9" y1="1120.5" y2="1120.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="346.3" x2="413.4" y1="1120.5" y2="1120.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="375.8" y="1116.7" width="7.6" height="7.6" transform="rotate(45 379.6 1120.5)"/>
 <circle class="floor" cx="632.9" cy="1120.5" r="3.6"/>
 </g>
-<g class="small"><title>nemotron-3.5-lightning: no Epoch score; ECI estimated at 139.2 [132.0, 146.4] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 5.5</title>
+<g class="small"><title>nemotron-3.5-lightning: no Epoch score; ECI estimated at 139.2 [132.0, 146.5] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 5.5</title>
 <text class="t" x="178" y="1139.5" text-anchor="end" font-size="11">nemotron-3.5-lightning</text>
-<line class="estbar" x1="344.0" x2="410.6" y1="1135.5" y2="1135.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="344.0" x2="411.1" y1="1135.5" y2="1135.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="373.5" y="1131.7" width="7.6" height="7.6" transform="rotate(45 377.3 1135.5)"/>
 <circle class="floor" cx="637.6" cy="1135.5" r="3.6"/>
 </g>
-<g class="small"><title>granite-4.2-8b: no Epoch score; ECI estimated at 136.2 [129.0, 143.4] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 5.1</title>
+<g class="small"><title>granite-4.2-8b: no Epoch score; ECI estimated at 136.2 [129.0, 143.5] from gpqa_diamond, hle, aa_lcr, scicode, terminal_bench_2_1; rung small, open weights; AA index 5.1</title>
 <text class="t" x="178" y="1154.5" text-anchor="end" font-size="11">granite-4.2-8b</text>
-<line class="estbar" x1="330.1" x2="396.7" y1="1150.5" y2="1150.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="330.1" x2="397.2" y1="1150.5" y2="1150.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="359.6" y="1146.7" width="7.6" height="7.6" transform="rotate(45 363.4 1150.5)"/>
 <circle class="floor" cx="636.1" cy="1150.5" r="3.6"/>
 </g>
-<g class="small"><title>mistral-large-3: no Epoch score; ECI estimated at 134.6 [127.4, 141.8] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
+<g class="small"><title>mistral-large-3: no Epoch score; ECI estimated at 134.6 [127.3, 141.8] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
 <text class="t" x="178" y="1169.5" text-anchor="end" font-size="11">mistral-large-3</text>
-<line class="estbar" x1="322.7" x2="389.3" y1="1165.5" y2="1165.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="322.3" x2="389.3" y1="1165.5" y2="1165.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="352.2" y="1161.7" width="7.6" height="7.6" transform="rotate(45 356.0 1165.5)"/>
 <text class="m" x="624" y="1169.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>ministral-3-14b: no Epoch score; ECI estimated at 130.5 [123.3, 137.7] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
+<g class="small"><title>ministral-3-14b: no Epoch score; ECI estimated at 130.5 [123.3, 137.8] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
 <text class="t" x="178" y="1184.5" text-anchor="end" font-size="11">ministral-3-14b</text>
-<line class="estbar" x1="303.8" x2="370.4" y1="1180.5" y2="1180.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="303.8" x2="370.8" y1="1180.5" y2="1180.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="333.3" y="1176.7" width="7.6" height="7.6" transform="rotate(45 337.1 1180.5)"/>
 <text class="m" x="624" y="1184.5" font-size="11">no index score</text>
 </g>
-<g class="small"><title>ministral-3-8b: no Epoch score; ECI estimated at 126.9 [119.6, 134.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
+<g class="small"><title>ministral-3-8b: no Epoch score; ECI estimated at 126.9 [119.7, 134.2] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, terminal_bench_2_1, livecodebench; rung small, open weights</title>
 <text class="t" x="178" y="1199.5" text-anchor="end" font-size="11">ministral-3-8b</text>
-<line class="estbar" x1="286.6" x2="353.7" y1="1195.5" y2="1195.5" stroke-width="2" stroke-linecap="round"/>
+<line class="estbar" x1="287.1" x2="354.2" y1="1195.5" y2="1195.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="316.6" y="1191.7" width="7.6" height="7.6" transform="rotate(45 320.4 1195.5)"/>
 <text class="m" x="624" y="1199.5" font-size="11">no index score</text>
 </g>
@@ -468,29 +468,29 @@
 <line class="rule" x1="28" x2="860" y1="1209.0" y2="1209.0" stroke-width="0.5"/>
 <text class="t" x="28" y="1225.0" font-size="13" font-weight="600">nano</text>
 <text class="m" x="86" y="1225.0" font-size="11">7 cards</text></g>
-<g class="nano"><title>llama3.3-70b: ECI 126.1 [123.1, 129.0], nano on this view, rung nano, open weights</title>
+<g class="nano"><title>llama3.3-70b: ECI 126.2 [123.0, 129.0], nano on this view, rung nano, open weights</title>
 <text class="t" x="178" y="1244.5" text-anchor="end" font-size="11">llama3.3-70b</text>
-<line class="bar" x1="302.8" x2="330.1" y1="1240.5" y2="1240.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="316.7" cy="1240.5" r="4.5"/>
+<line class="bar" x1="302.4" x2="330.1" y1="1240.5" y2="1240.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="317.2" cy="1240.5" r="4.5"/>
 <text class="m" x="624" y="1244.5" font-size="11">no index score</text>
 </g>
-<g class="nano"><title>gpt-4o-mini: ECI 123.9 [120.5, 126.9], nano on this view, rung nano, hosted only</title>
+<g class="nano"><title>gpt-4o-mini: ECI 123.8 [120.5, 126.8], nano on this view, rung nano, hosted only</title>
 <text class="t" x="178" y="1259.5" text-anchor="end" font-size="11">gpt-4o-mini</text>
-<line class="bar" x1="290.8" x2="320.4" y1="1255.5" y2="1255.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="ring" cx="306.5" cy="1255.5" r="3.8"/>
+<line class="bar" x1="290.8" x2="319.9" y1="1255.5" y2="1255.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="ring" cx="306.1" cy="1255.5" r="3.8"/>
 <text class="m" x="624" y="1259.5" font-size="11">no index score</text>
 </g>
-<g class="nano"><title>llama3.1-8b: ECI 111.1 [105.5, 116.2], nano on this view, rung nano, open weights</title>
+<g class="nano"><title>llama3.1-8b: ECI 110.9 [105.1, 115.9], nano on this view, rung nano, open weights</title>
 <text class="t" x="178" y="1274.5" text-anchor="end" font-size="11">llama3.1-8b</text>
-<line class="bar" x1="221.4" x2="270.9" y1="1270.5" y2="1270.5" stroke-width="2" stroke-linecap="round"/>
-<circle class="dot" cx="247.3" cy="1270.5" r="4.5"/>
+<line class="bar" x1="219.6" x2="269.5" y1="1270.5" y2="1270.5" stroke-width="2" stroke-linecap="round"/>
+<circle class="dot" cx="246.4" cy="1270.5" r="4.5"/>
 <text class="m" x="624" y="1274.5" font-size="11">no index score</text>
 </g>
-<g class="nano"><title>gemma-4-e4b: no Epoch score; ECI estimated at 130.9 [123.6, 138.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode; rung nano, open weights</title>
+<g class="nano"><title>gemma-4-e4b: no Epoch score; ECI estimated at 130.9 [123.6, 138.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode; rung nano, open weights; AA index 4.8</title>
 <text class="t" x="178" y="1289.5" text-anchor="end" font-size="11">gemma-4-e4b</text>
 <line class="estbar" x1="305.1" x2="372.2" y1="1285.5" y2="1285.5" stroke-width="2" stroke-linecap="round"/>
 <rect class="dot" x="335.1" y="1281.7" width="7.6" height="7.6" transform="rotate(45 338.9 1285.5)"/>
-<text class="m" x="624" y="1289.5" font-size="11">no index score</text>
+<circle class="floor" cx="634.9" cy="1285.5" r="3.6"/>
 </g>
 <g class="nano"><title>gemma-4-e2b: no Epoch score; ECI estimated at 128.9 [121.6, 136.1] from gpqa_diamond, hle, ifbench, tau2, aa_lcr; rung nano, open weights</title>
 <text class="t" x="178" y="1304.5" text-anchor="end" font-size="11">gemma-4-e2b</text>
@@ -504,10 +504,10 @@
 <rect class="dot" x="323.6" y="1311.7" width="7.6" height="7.6" transform="rotate(45 327.4 1315.5)"/>
 <text class="m" x="624" y="1319.5" font-size="11">no index score</text>
 </g>
-<g class="nano"><title>ministral-3-3b: no Epoch score; ECI estimated at 125.3 [118.1, 132.5] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, livecodebench; rung nano, open weights</title>
+<g class="nano"><title>ministral-3-3b: no Epoch score; ECI estimated at 125.4 [118.1, 132.7] from gpqa_diamond, hle, ifbench, tau2, aa_lcr, scicode, livecodebench; rung nano, open weights</title>
 <text class="t" x="178" y="1334.5" text-anchor="end" font-size="11">ministral-3-3b</text>
-<line class="estbar" x1="279.7" x2="346.3" y1="1330.5" y2="1330.5" stroke-width="2" stroke-linecap="round"/>
-<rect class="dot" x="309.2" y="1326.7" width="7.6" height="7.6" transform="rotate(45 313.0 1330.5)"/>
+<line class="estbar" x1="279.7" x2="347.2" y1="1330.5" y2="1330.5" stroke-width="2" stroke-linecap="round"/>
+<rect class="dot" x="309.7" y="1326.7" width="7.6" height="7.6" transform="rotate(45 313.5 1330.5)"/>
 <text class="m" x="624" y="1334.5" font-size="11">no index score</text>
 </g>
 <line class="e" x1="334.8" x2="334.8" y1="54" y2="1344.0" stroke-width="1" stroke-dasharray="4 3"/>
@@ -532,5 +532,5 @@
 <text class="m" x="28" y="1422.0" font-size="11">with a 95% interval of about plus or minus 7 from leave-one-out error. Hover a row for the benchmarks used.</text>
 <text class="m" x="28" y="1436.0" font-size="11">Small grey dot: the index is at its floor (under 12), so it gives no view. The index cannot tell nano from small.</text>
 <text class="m" x="28" y="1450.0" font-size="11">ECI with 95% interval: Epoch AI (CC-BY 4.0). Index: Artificial Analysis. Grey words: that source has nothing for the card yet.</text>
-<text class="m" x="28" y="1464.0" font-size="11">51 of 76 cards have an Epoch score, 22 an estimate from other benchmarks, 33 an index score, 2 nothing recorded (placed by size or judgement). Cards updated 2026-11-16.</text>
+<text class="m" x="28" y="1464.0" font-size="11">51 of 76 cards have an Epoch score, 22 an estimate from other benchmarks, 34 an index score, 2 nothing recorded (placed by size or judgement). Cards updated 2026-11-23.</text>
 </svg>
