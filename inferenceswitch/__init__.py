@@ -57,6 +57,7 @@ from .messages import (
     ToolRun,
     ToolUse,
     Usage,
+    partial_usage,
     assistant,
     system,
     tool_result,
@@ -146,6 +147,7 @@ __all__ = [
     "StreamDelta",
     "StructuredResult",
     "Usage",
+    "partial_usage",
     # Per-provider output caps (default = the model's own maximum). Editing a
     # table imposes a house ceiling process-wide; a per-call max_tokens still wins.
     "CLAUDE_MAX_OUTPUT_TOKENS",

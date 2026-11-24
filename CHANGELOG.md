@@ -7,6 +7,16 @@ All notable changes to this project are documented here. This project adheres to
 
 ### Added
 
+- **A stopped streamed call hands back the usage it had reported:** `partial_usage(error)`
+  returns a `Usage` marked `partial=True` (a lower bound; a count still `None` was not
+  reported), priced as any usage through `Cost.usd`. A host ends a call at its Stop by
+  raising from `on_stream`; the usage travels on the exception. Anthropic: the prompt's
+  input, cache-read and cache-write counts from `message_start`, the output so far from
+  `message_delta`. Gemini: the last `usage_metadata` seen (running totals). OpenAI-compatible:
+  usage comes only in the last chunk, so a call stopped before it has every count `None`:
+  billed, by an unknown amount, nothing invented. `Usage.partial` is new (False by default;
+  a sum with a partial usage is partial)
+  ([#41](https://github.com/IDEMSInternational/inferenceswitch/issues/41)).
 - **`Text.ttl`: how long a cache breakpoint stays warm** (`"5m"` or `"1h"`, with
   `cache=True`). On Anthropic a `"1h"` is sent as `cache_control: {"type": "ephemeral",
   "ttl": "1h"}`; `"5m"` and None send what they always did, the API's own five

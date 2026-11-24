@@ -16,6 +16,7 @@ from typing import Any
 from .. import schema as schema_mod
 from ..errors import InferenceSwitchError, StructuredOutputError
 from ..messages import (
+    _keep_partial_usage,
     CacheHandle,
     Effort,
     Image,
@@ -343,16 +344,22 @@ class GeminiAdapter(Adapter):
                 }
             )
         chunks: list = []
-        for chunk in self._client.models.generate_content_stream(
-            model=model, contents=contents, config=config
-        ):
-            chunks.append(chunk)
-            for candidate in (getattr(chunk, "candidates", None) or [])[:1]:
-                content = getattr(candidate, "content", None)
-                for part in getattr(content, "parts", None) or []:
-                    if getattr(part, "text", None):
-                        kind = "thinking" if getattr(part, "thought", None) else "text"
-                        on_stream(StreamDelta(kind, part.text))
+        try:
+            for chunk in self._client.models.generate_content_stream(
+                model=model, contents=contents, config=config
+            ):
+                chunks.append(chunk)
+                for candidate in (getattr(chunk, "candidates", None) or [])[:1]:
+                    content = getattr(candidate, "content", None)
+                    for part in getattr(content, "parts", None) or []:
+                        if getattr(part, "text", None):
+                            kind = "thinking" if getattr(part, "thought", None) else "text"
+                            on_stream(StreamDelta(kind, part.text))
+        except BaseException as error:
+            # each chunk carries the running totals: the last one seen is what was billed so far
+            seen = next((c for c in reversed(chunks) if getattr(c, "usage_metadata", None)), None)
+            _keep_partial_usage(error, Usage() if seen is None else gemini_usage(seen))
+            raise
         if not chunks:
             raise InferenceSwitchError("Gemini's stream ended without a response.")
         return merge_gemini_chunks(chunks)

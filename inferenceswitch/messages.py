@@ -221,6 +221,11 @@ class Usage:
     cache_read_tokens: int | None = None
     cache_write_tokens: int | None = None
     reasoning_tokens: int | None = None
+    #: The counts a provider had reported when a stream was stopped, not the
+    #: call's totals: a lower bound, and a count still ``None`` was not reported
+    #: yet (an OpenAI-compatible server reports usage only in the last chunk, so
+    #: a stopped call there has none). See :func:`partial_usage`.
+    partial: bool = False
 
     def __add__(self, other: Usage) -> Usage:
         """Field-wise sum. A field stays ``None`` only if neither side reported
@@ -237,7 +242,36 @@ class Usage:
             cache_read_tokens=add(self.cache_read_tokens, other.cache_read_tokens),
             cache_write_tokens=add(self.cache_write_tokens, other.cache_write_tokens),
             reasoning_tokens=add(self.reasoning_tokens, other.reasoning_tokens),
+            partial=self.partial or other.partial,
         )
+
+
+def partial_usage(error: BaseException) -> Usage | None:
+    """What a streamed call had been billed when ``error`` ended it, or ``None``
+    when ``error`` did not come out of a streaming call.
+
+    A host that stops a call raises from its ``on_stream`` callback; the exception
+    propagates, and with it the usage the provider had reported by then, marked
+    ``partial`` (price it with :meth:`Cost.usd <inferenceswitch.cards.Cost.usd>`
+    as any other: it is a lower bound). Anthropic reports the prompt's counts
+    when the reply starts and the output as it grows, and Gemini the running
+    totals with each chunk. An OpenAI-compatible server reports usage only in
+    the last chunk, so for it the result is a ``Usage`` with every count ``None``:
+    the call was billed, and by how much is not known. The same goes for any
+    exception raised while streaming, a dropped connection included."""
+    found = getattr(error, "partial_usage", None)
+    return found if isinstance(found, Usage) else None
+
+
+def _keep_partial_usage(error: BaseException, usage: Usage) -> None:
+    """Hand ``usage`` (what a stream had reported) to whoever catches ``error``
+    (see :func:`partial_usage`). Kept off an exception that cannot take an
+    attribute."""
+    usage.partial = True
+    try:
+        error.partial_usage = usage  # type: ignore[attr-defined]
+    except AttributeError:  # pragma: no cover - an exception with no __dict__
+        pass
 
 
 @dataclass(frozen=True)
