@@ -17,6 +17,7 @@ from .. import schema as schema_mod
 from ..capabilities import StructuredMode
 from ..errors import StructuredOutputError, ToolChoiceError
 from ..messages import (
+    _keep_partial_usage,
     CacheHandle,
     Effort,
     Image,
@@ -206,6 +207,23 @@ def encode_anthropic_tool_choice(
     }[tool_choice]
 
 
+def _note_usage(seen: Usage, raw) -> None:
+    """Fold the counts a streamed event reports into ``seen``: ``message_start``
+    has the prompt's (and the output so far), ``message_delta`` the output as it
+    grows, each count the latest the provider gave."""
+    if raw is None:
+        return
+    for field, name in (
+        ("input_tokens", "input_tokens"),
+        ("output_tokens", "output_tokens"),
+        ("cache_read_tokens", "cache_read_input_tokens"),
+        ("cache_write_tokens", "cache_creation_input_tokens"),
+    ):
+        count = getattr(raw, name, None)
+        if isinstance(count, int):
+            setattr(seen, field, count)
+
+
 def anthropic_usage(raw) -> Usage:
     """The response's token counts; ``Usage()`` when it reports none."""
     usage = Usage()
@@ -363,14 +381,23 @@ class AnthropicAdapter(Adapter):
         """
         with self._client.messages.stream(**create_kwargs) as stream:
             if on_stream is not None:
-                for event in stream:
-                    if event.type != "content_block_delta":
-                        continue
-                    delta = event.delta
-                    if delta.type == "thinking_delta" and delta.thinking:
-                        on_stream(StreamDelta("thinking", delta.thinking))
-                    elif delta.type == "text_delta" and delta.text:
-                        on_stream(StreamDelta("text", delta.text))
+                seen = Usage()
+                try:
+                    for event in stream:
+                        if event.type == "message_start":
+                            _note_usage(seen, getattr(getattr(event, "message", None), "usage", None))
+                        elif event.type == "message_delta":
+                            _note_usage(seen, getattr(event, "usage", None))
+                        if event.type != "content_block_delta":
+                            continue
+                        delta = event.delta
+                        if delta.type == "thinking_delta" and delta.thinking:
+                            on_stream(StreamDelta("thinking", delta.thinking))
+                        elif delta.type == "text_delta" and delta.text:
+                            on_stream(StreamDelta("text", delta.text))
+                except BaseException as error:
+                    _keep_partial_usage(error, seen)
+                    raise
             return stream.get_final_message()
 
     def generate_structured(

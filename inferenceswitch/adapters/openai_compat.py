@@ -16,6 +16,7 @@ from .. import schema as schema_mod
 from ..capabilities import Capability, StructuredMode, _for_model
 from ..errors import StructuredOutputError, UnsupportedSchemaError
 from ..messages import (
+    _keep_partial_usage,
     Effort,
     Image,
     Message,
@@ -274,11 +275,19 @@ class OpenAICompatibleAdapter(Adapter):
         if self.capabilities.config.get("stream_include_usage", True):
             kwargs["stream_options"] = {"include_usage": True}
         stream = self._streaming_client().chat.completions.create(**kwargs, stream=True)
+        reported = Usage()
         try:
             for chunk in stream:
                 state.handle_chunk(chunk)
+                if getattr(chunk, "usage", None) is not None:
+                    reported = openai_usage(chunk)
                 for delta in openai_stream_deltas(chunk):
                     on_stream(delta)
+        except BaseException as error:
+            # usage comes in the last chunk only: stopped before it, the call was billed and
+            # its counts are not known (every count None), not invented
+            _keep_partial_usage(error, reported)
+            raise
         finally:
             # An ``on_stream`` that raises (a host's Stop) must end the request, not leave
             # the provider generating, and billing, until the stream is collected.

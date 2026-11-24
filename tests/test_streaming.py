@@ -580,3 +580,114 @@ def test_a_finished_openai_compatible_stream_is_closed_too():
     resp = adapter.chat(model="deepseek-reasoner", messages=[user("q")], on_stream=lambda d: None)
 
     assert resp.text == "3." and stream.closed
+
+
+# ── what a stopped call was billed: partial_usage ─────────────────────────────
+
+from inferenceswitch import Usage, partial_usage  # noqa: E402
+from inferenceswitch.cards import Cost  # noqa: E402
+
+
+class _Stop(Exception):
+    """A host's Stop, raised from ``on_stream``."""
+
+
+def _stop_after(n: int):
+    seen: list[StreamDelta] = []
+
+    def on_stream(delta):
+        seen.append(delta)
+        if len(seen) >= n:
+            raise _Stop()
+
+    return on_stream
+
+
+def _usage_events(output_so_far: int):
+    start = SimpleNamespace(
+        input_tokens=12, cache_read_input_tokens=100, cache_creation_input_tokens=50, output_tokens=1
+    )
+    return [
+        SimpleNamespace(type="message_start", message=SimpleNamespace(usage=start)),
+        _delta("thinking_delta", thinking="Let me "),
+        SimpleNamespace(type="message_delta", usage=SimpleNamespace(output_tokens=output_so_far)),
+        _delta("thinking_delta", thinking="add."),
+        _delta("text_delta", text="3."),
+    ]
+
+
+def test_a_stopped_anthropic_call_hands_back_the_counts_message_start_gave():
+    adapter, _ = _anthropic((_usage_events(40), THOUGHT_MESSAGE))
+    with pytest.raises(_Stop) as stopped:
+        adapter.chat(model="claude-opus-4-8", messages=[user("q")], on_stream=_stop_after(1))
+    usage = partial_usage(stopped.value)
+    # the prompt's three counts are the real ones; the output is what message_start said (1)
+    assert usage == Usage(
+        input_tokens=12, output_tokens=1, cache_read_tokens=100, cache_write_tokens=50, partial=True
+    )
+
+
+def test_a_stopped_anthropic_call_has_the_output_message_delta_reported_so_far():
+    adapter, _ = _anthropic((_usage_events(40), THOUGHT_MESSAGE))
+    with pytest.raises(_Stop) as stopped:
+        adapter.chat(model="claude-opus-4-8", messages=[user("q")], on_stream=_stop_after(2))
+    usage = partial_usage(stopped.value)
+    assert (usage.input_tokens, usage.output_tokens, usage.partial) == (12, 40, True)
+    # priced as any usage is, from the card's prices
+    usd, unpriced = Cost(input=3.0, output=15.0, cache_read=0.3, cache_write=3.75).usd(usage)
+    assert usd == pytest.approx((12 * 3 + 40 * 15 + 100 * 0.3 + 50 * 3.75) / 1e6)
+    assert unpriced == ()
+
+
+def test_a_stopped_gemini_call_hands_back_the_last_usage_metadata_seen():
+    from google.genai import types
+
+    def meta(prompt, out):
+        return types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=prompt, candidates_token_count=out, cached_content_token_count=2
+        )
+
+    adapter, _ = _gemini(
+        [
+            _gemini_chunk(types.Part(text="Adding ", thought=True), usage=meta(30, 3)),
+            _gemini_chunk(types.Part(text="1 and 2.", thought=True), usage=meta(30, 9)),
+            _gemini_chunk(types.Part(text="3."), finish="STOP", usage=meta(30, 12)),
+        ]
+    )
+    with pytest.raises(_Stop) as stopped:
+        adapter.chat(model="gemini-3.8-flash", messages=[user("q")], on_stream=_stop_after(2))
+    usage = partial_usage(stopped.value)
+    # prompt_token_count counts the cached 2 too; input_tokens is the uncached rest
+    assert (usage.input_tokens, usage.output_tokens, usage.cache_read_tokens) == (28, 9, 2)
+    assert usage.partial
+
+
+def test_a_stopped_openai_compatible_call_says_it_has_no_counts():
+    adapter, _ = _openai(
+        "deepseek",
+        [_chunk({"reasoning": "Adding "}), _chunk({"content": "3."}), _chunk(usage=USAGE)],
+    )
+    with pytest.raises(_Stop) as stopped:
+        adapter.chat(model="deepseek-reasoner", messages=[user("q")], on_stream=_stop_after(1))
+    usage = partial_usage(stopped.value)
+    assert usage == Usage(partial=True)  # billed, and not known by how much: nothing invented
+
+
+def test_an_openai_compatible_call_stopped_after_its_usage_chunk_has_the_real_counts():
+    adapter, _ = _openai(
+        "deepseek",
+        [_chunk(usage=USAGE), _chunk({"content": "3."})],
+    )
+    with pytest.raises(_Stop) as stopped:
+        adapter.chat(model="deepseek-reasoner", messages=[user("q")], on_stream=_stop_after(1))
+    usage = partial_usage(stopped.value)
+    assert (usage.input_tokens, usage.output_tokens, usage.partial) == (9, 11, True)
+
+
+def test_an_error_that_did_not_come_out_of_a_stream_has_no_partial_usage():
+    assert partial_usage(RuntimeError("no")) is None
+
+
+def test_partial_usage_survives_adding_calls_and_marks_the_sum():
+    total = Usage(input_tokens=5, output_tokens=2) + Usage(input_tokens=3, partial=True)
+    assert total.partial and total.input_tokens == 8
