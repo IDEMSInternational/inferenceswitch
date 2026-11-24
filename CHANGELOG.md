@@ -5,6 +5,11 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-11-24
+
+What a host needs to run STACK's agents on it: how long a prompt cache stays warm, and what a
+stopped call was billed.
+
 ### Added
 
 - **A stopped streamed call hands back the usage it had reported:** `partial_usage(error)`
