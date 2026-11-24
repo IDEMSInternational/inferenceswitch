@@ -5,6 +5,13 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- **The test suite runs on Python 3.10 again:** `tests/test_sdk.py` imported `tomllib`, which is stdlib
+  only from 3.11, so the `pytest (py3.10)` CI job had failed on every push since 2026-11-17. It falls
+  back to `tomli` (added to the `dev` extra for Python < 3.11); the package itself is unchanged
+  ([#44](https://github.com/IDEMSInternational/inferenceswitch/issues/44)).
+
 ## [0.14.0] — 2026-11-24
 
 What a host needs to run STACK's agents on it: how long a prompt cache stays warm, and what a
