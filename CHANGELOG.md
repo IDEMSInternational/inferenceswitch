@@ -5,6 +5,14 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Removed
+
+- **Python 3.10 support is dropped:** `requires-python` is now `>=3.11`, the 3.10 classifier is gone
+  and CI tests 3.11 and 3.12. Python 3.10 reached end of life on 2026-10-01, and the `pytest (py3.10)`
+  job had been red since 2026-11-17 because `tests/test_sdk.py` uses `tomllib`, stdlib from 3.11. A
+  3.10 install resolves to 0.14.0, the last release that supports it
+  ([#44](https://github.com/IDEMSInternational/inferenceswitch/issues/44)).
+
 ## [0.14.0] — 2026-11-24
 
 What a host needs to run STACK's agents on it: how long a prompt cache stays warm, and what a
