@@ -5,11 +5,12 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
-### Fixed
+### Removed
 
-- **The test suite runs on Python 3.10 again:** `tests/test_sdk.py` imported `tomllib`, which is stdlib
-  only from 3.11, so the `pytest (py3.10)` CI job had failed on every push since 2026-11-17. It falls
-  back to `tomli` (added to the `dev` extra for Python < 3.11); the package itself is unchanged
+- **Python 3.10 support is dropped:** `requires-python` is now `>=3.11`, the 3.10 classifier is gone
+  and CI tests 3.11 and 3.12. Python 3.10 reached end of life on 2026-10-01, and the `pytest (py3.10)`
+  job had been red since 2026-11-17 because `tests/test_sdk.py` uses `tomllib`, stdlib from 3.11. A
+  3.10 install resolves to 0.14.0, the last release that supports it
   ([#44](https://github.com/IDEMSInternational/inferenceswitch/issues/44)).
 
 ## [0.14.0] — 2026-11-24
