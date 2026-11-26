@@ -5,6 +5,10 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-11-26
+
+Pick the newest model at a rung, and Python 3.11 as the floor.
+
 ### Added
 
 - **Pick the newest model at a rung:** `prefer="newest"` (`Preference.NEWEST`) ranks the closest
