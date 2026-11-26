@@ -104,3 +104,10 @@ class NoModelAvailableError(InferenceSwitchError):
         self.selection_request = request
         self.candidates = tuple(candidates)
         self.availability = tuple(availability)
+
+
+class GatewayKeyError(InferenceSwitchError):
+    """A call to a provider routed through a :class:`~inferenceswitch.Gateway`
+    came with its own ``api_key=``, and the gateway doesn't take own keys
+    (``Gateway(own_keys=False)``, the default). Raised before anything is sent,
+    so the key never reaches the gateway."""

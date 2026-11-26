@@ -660,7 +660,7 @@ Filling in the spec:
 | Field | What to put |
 |---|---|
 | `kind` | `KIND_OPENAI` for anything OpenAI-shaped. `KIND_ANTHROPIC` / `KIND_GEMINI` only for those wire formats — a new *format* needs a new adapter, which is the one case that isn't just data. |
-| `base_url` | Required for OpenAI-compatible providers; ignored by the native ones. |
+| `base_url` | Required for OpenAI-compatible providers. Optional for the native ones, where `None` means the official address. Every adapter passes it to its SDK, so an SDK's own base-URL environment variable never applies. |
 | `api_key_env` | Env var to read. `None` + `is_local=True` for keyless local servers. Or skip env vars entirely with `key_provider=` (below). |
 | `capabilities` | Declare **fail-closed**: list a feature only where it reliably works, since `require()` trusts this. Local/uncertain servers want `StructuredMode.JSON_OBJECT_BEST_EFFORT`. |
 | `model_prefixes` | Leave empty when your model names collide with another host's (as Groq's do) — callers then select you explicitly. |
@@ -682,6 +682,51 @@ def key_provider(spec):
 
 client = Client(key_provider=key_provider)
 ```
+
+### Through a gateway (keys kept out of the process)
+
+A deployment that must not give its provider keys to the code it runs (a
+container per person, say) runs a **gateway**. The gateway holds the keys,
+accepts calls made with a token, puts the real key in and forwards each call to
+the provider unchanged. The client is given the gateway, not the keys:
+
+```python
+from inferenceswitch import Client, Gateway
+
+client = Client(gateway=Gateway(url="http://gateway:8001/relay", token=token))
+client.generate_text(model="gemini/gemini-3.8-flash", prompt="...")
+```
+
+Every hosted provider's calls then go to `<url>/<provider>` plus the path of the
+provider's own address, the same way for every adapter:
+
+| Provider | Goes to |
+|---|---|
+| `anthropic` | `http://gateway:8001/relay/anthropic/v1/messages` |
+| `gemini` | `http://gateway:8001/relay/gemini/v1…/models/<model>:generateContent` |
+| `openai` | `http://gateway:8001/relay/openai/v1/chat/completions` |
+| `mistral`, `deepseek`, … | `http://gateway:8001/relay/<provider>/v1/…` (the registry's path) |
+
+So a gateway strips `/<provider>` and forwards the rest to that provider's own
+host. The token goes where that provider's SDK puts its key (`x-api-key` or
+`Authorization: Bearer` for Anthropic, depending on the SDK version;
+`x-goog-api-key` for Gemini; `Authorization: Bearer` for the rest), and the
+request and reply are the provider's own.
+
+- **A routed provider's key is never looked up.** `key_provider` isn't called and
+  its environment variable isn't read, so no real key goes to the gateway.
+- **A person's own key** (a per-call `api_key=`) goes to the gateway as it came
+  only if the deployment allows it: `Gateway(..., own_keys=True)`. Otherwise
+  such a call raises `GatewayKeyError` before anything is sent.
+- **`providers={"gemini", ...}`** routes only those providers; the rest go
+  direct. Local servers (`ollama`, `lmstudio`) are never routed.
+- **Only the code that builds the `Client` sets a gateway.** Model strings,
+  per-call arguments and environment variables can't set or change one.
+- A routed provider counts as available to `select_model` (the gateway holds its
+  key) unless you pass your own `availability=`.
+
+The decision and the options it was chosen from are in
+[#50](https://github.com/IDEMSInternational/inferenceswitch/issues/50).
 
 ## Why not just use the OpenAI format for everything?
 

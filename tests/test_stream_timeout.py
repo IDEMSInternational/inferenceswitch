@@ -64,10 +64,11 @@ def test_anthropic_off_keeps_the_sdks_default():
     assert adapter._client.timeout.read == 600
 
 
-def test_anthropic_on_silent_stream_raises(monkeypatch, silent_server):
+def test_anthropic_on_silent_stream_raises(silent_server):
     anthropic = pytest.importorskip("anthropic")
-    monkeypatch.setenv("ANTHROPIC_BASE_URL", silent_server)
-    adapter = AnthropicAdapter(spec("anthropic"), "sk-ant-fake", stream_silence=1.0)
+    adapter = AnthropicAdapter(
+        spec("anthropic"), "sk-ant-fake", stream_silence=1.0, base_url=silent_server
+    )
     assert adapter._client.timeout.read == 1.0
     client = adapter._client.with_options(max_retries=0)
     messages = [{"role": "user", "content": "hi"}]
@@ -90,10 +91,11 @@ def test_openai_off_keeps_the_sdks_default():
     assert adapter._client.timeout.read == 600
 
 
-def test_openai_on_silent_stream_raises(monkeypatch, silent_server):
+def test_openai_on_silent_stream_raises(silent_server):
     openai = pytest.importorskip("openai")
-    monkeypatch.setenv("OPENAI_BASE_URL", silent_server + "/v1")
-    adapter = OpenAICompatibleAdapter(spec("openai"), "sk-fake", stream_silence=1.0)
+    adapter = OpenAICompatibleAdapter(
+        spec("openai"), "sk-fake", stream_silence=1.0, base_url=silent_server + "/v1"
+    )
     client = adapter._streaming_client().with_options(max_retries=0)
     started = time.monotonic()
     with pytest.raises(openai.APITimeoutError):
@@ -140,10 +142,9 @@ def test_gemini_passes_the_setting_to_a_streamed_call_only(setting, expected):
     assert (options.timeout if options else None) == expected
 
 
-def test_gemini_on_silent_stream_raises(monkeypatch, silent_server):
+def test_gemini_on_silent_stream_raises(silent_server):
     pytest.importorskip("google.genai")
-    monkeypatch.setenv("GOOGLE_GEMINI_BASE_URL", silent_server)
-    adapter = GeminiAdapter(spec("gemini"), "fake", stream_silence=1.0)
+    adapter = GeminiAdapter(spec("gemini"), "fake", stream_silence=1.0, base_url=silent_server)
     types = pytest.importorskip("google.genai").types
     started = time.monotonic()
     # Matched by name: google-genai 3 runs on httpx2, whose ReadTimeout is not httpx's.

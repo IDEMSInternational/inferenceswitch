@@ -319,7 +319,13 @@ def merge_gemini_chunks(chunks: list) -> Any:
 class GeminiAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         genai = require_sdk("google.genai", "gemini")
-        return genai.Client(api_key=api_key)
+        # Always an explicit address (the provider's, or a gateway's), never
+        # $GOOGLE_GEMINI_BASE_URL, and the Gemini API, never Vertex AI by environment.
+        return genai.Client(
+            api_key=api_key,
+            vertexai=False,
+            http_options=genai.types.HttpOptions(base_url=self.base_url),
+        )
 
     def _generate(self, on_stream: StreamCallback | None, *, model, contents, config) -> Any:
         """One ``generate_content`` call. With ``on_stream`` it streams instead,

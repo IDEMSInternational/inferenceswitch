@@ -246,8 +246,8 @@ def _join_text(message: Message) -> str:
 class OpenAICompatibleAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         openai = require_sdk("openai", "openai")
-        # base_url None -> the SDK's default (api.openai.com).
-        return openai.OpenAI(api_key=api_key, base_url=self.spec.base_url)
+        # Always an explicit address (the provider's, or a gateway's), never $OPENAI_BASE_URL.
+        return openai.OpenAI(api_key=api_key, base_url=self.base_url)
 
     def _streaming_client(self) -> Any:
         """The client for a streamed call: with `stream_silence` set, a stream silent that

@@ -64,6 +64,7 @@ from .messages import (
     user,
 )
 from .errors import (
+    GatewayKeyError,
     InferenceSwitchError,
     MissingAPIKeyError,
     MissingDependencyError,
@@ -75,6 +76,7 @@ from .errors import (
     UnsupportedCapabilityError,
     UnsupportedSchemaError,
 )
+from .gateway import Gateway
 from .registry import SDK, ProviderSpec, Registry, default_registry
 from .selection import (
     Candidate,
@@ -93,6 +95,7 @@ __all__ = [
     "ModelChoice",
     "Resolution",
     "env_key_provider",
+    "Gateway",
     "Registry",
     "ProviderSpec",
     "SDK",
@@ -121,6 +124,7 @@ __all__ = [
     "InferenceSwitchError",
     "ProviderResolutionError",
     "MissingAPIKeyError",
+    "GatewayKeyError",
     "MissingDependencyError",
     "ModelCardError",
     "NoModelAvailableError",
