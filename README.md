@@ -457,7 +457,8 @@ print(choice.explain())
   first, then the closest rung, then price. `cheapest` ranks by blended price
   (3 x input + output, / 4; local is free), then closest rung. `fastest`
   takes the closest rung, then hosted before local (local speed depends on the
-  machine), then the smaller and cheaper model. `newest` takes the closest
+  machine), then the smaller and cheaper model. In both, two hosted models
+  on the same price go to the one released later. `newest` takes the closest
   rung, then the latest release date on the card (cards with none last): with
   `providers=["anthropic"]` and `allow_higher=False` it is Anthropic's newest
   model at that rung. `client.cards.newest("mid", "anthropic")` answers the

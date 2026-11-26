@@ -46,11 +46,14 @@ class Preference(str, Enum):
 
     #: Local first, then the closest rung, then the lowest price.
     LOCAL = "local"
-    #: Lowest blended price (local counts as free), then the closest rung.
+    #: Lowest blended price (local counts as free), then the closest rung,
+    #: then, for hosted models, the latest ``released`` date: an exact tie on
+    #: list price goes to the newer model.
     CHEAPEST = "cheapest"
     #: Closest rung, then hosted before local (local throughput depends on the
     #: machine and is unknown), then fewer parameters, then the lowest price as
-    #: a proxy for the faster tier. There is no measured speed on the cards.
+    #: a proxy for the faster tier, then (hosted) the latest ``released`` date.
+    #: There is no measured speed on the cards.
     FASTEST = "fastest"
     #: Closest rung, then the latest ``released`` date (cards without one
     #: last). With ``allow_higher=False`` and one provider, that is the
@@ -464,11 +467,14 @@ def _rank_key(
     params = card.open_weight.params_b if card.open_weight else 0.0
     if request.prefer is Preference.LOCAL:
         return (not candidate.is_local, distance, cost, position)
-    if request.prefer is Preference.FASTEST:
-        return (distance, candidate.is_local, params, cost, position)
     if request.prefer is Preference.NEWEST:
         return (distance, *newest_first(card), position)
-    return (cost, distance, position)
+    # An exact tie on list price goes to the newer model. Local models all cost
+    # nothing, which is not a price tie, so among them card order still decides.
+    newer = (False, 0) if candidate.is_local else newest_first(card)
+    if request.prefer is Preference.FASTEST:
+        return (distance, candidate.is_local, params, cost, *newer, position)
+    return (cost, distance, *newer, position)
 
 
 def _describe(c: Candidate, request: SelectionRequest) -> str:
@@ -501,6 +507,18 @@ def _reason(request: SelectionRequest, winner: Candidate, runner_up: Candidate |
     text = f"Chose {_describe(winner, request)}, {rung_note}, because {basis}."
     if runner_up is not None:
         text += f" Next best: {_describe(runner_up, request)}."
+        if (
+            request.prefer in (Preference.CHEAPEST, Preference.FASTEST)
+            and not winner.is_local and not runner_up.is_local
+            and winner.blended_cost is not None
+            and winner.blended_cost == runner_up.blended_cost
+            and winner.rung is runner_up.rung
+            and winner.released and winner.released != runner_up.released
+        ):
+            text += (
+                f" They tie on price; {winner.qualified} was released later "
+                f"({winner.released} against {runner_up.released or 'no date'})."
+            )
     else:
         text += " It was the only eligible candidate."
     if request.restriction:

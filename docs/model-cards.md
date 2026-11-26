@@ -169,9 +169,11 @@ mechanism inferenceswitch does not enforce.
   release: the day its maker announced it or made it available through its API,
   from the maker's own changelog or announcement (cite it in the pull request
   that adds it). Leave it out rather than guess; a month without a day is not a
-  date. Only `prefer="newest"` and `ModelCards.newest(rung, provider)` read it:
+  date. `prefer="newest"` and `ModelCards.newest(rung, provider)` rank by it:
   the closest rung first, then the latest date, then the card's position, with
-  undated cards after every dated one. An alias that moves to new weights
+  undated cards after every dated one. `cheapest` and `fastest` use it only to
+  break an exact tie on a hosted list price (local models, all free, keep card
+  order). An alias that moves to new weights
   (`deepseek-flash`) is dated by the release its card describes. Hosted cards
   without one are listed in `UNDATED_HOSTED` in `tests/test_model_cards.py`.
 - **`features`**: `add` and `remove` lists of `Capability` values, applied to

@@ -462,3 +462,58 @@ def test_other_preferences_do_not_read_release_dates():
     sel = dated_client(anthropic=True).select_model("mid", allow_higher=False)
     assert sel.model == "anthropic/haiku-undated"  # cheapest, though undated
     assert "released" not in sel.reason
+
+
+# ── newest as the tie-breaker inside cheapest and fastest (#46, Option 1) ───
+
+
+TIED = ModelCards.from_dict({
+    "format": 1,
+    "updated": "2026-01-01",
+    "cards": [
+        _released("older", "large", "anthropic", "2026-09-28", (2.0, 10.0)),
+        _released("undated", "large", "gemini", None, (2.0, 10.0)),
+        _released("newer", "large", "openai", "2026-09-29", (2.0, 10.0)),
+        _released("dearer-newest", "large", "openai", "2026-11-01", (3.0, 15.0)),
+        _local("old-local", "large", ["old:1b"], 8, 32_768),
+        {**_local("new-local", "large", ["new:1b"], 8, 32_768), "released": "2026-11-01"},
+    ],
+})
+
+
+@pytest.mark.parametrize("prefer", ["cheapest", "fastest"])
+def test_an_exact_price_tie_goes_to_the_newer_hosted_model(prefer):
+    c = Client(cards=TIED, availability={"anthropic": True, "gemini": True, "openai": True})
+    sel = c.select_model("large", prefer=prefer)
+    assert sel.model == "openai/newer"
+    assert "They tie on price; openai/newer was released later (2026-09-29 against 2026-09-28)" in sel.reason
+    ranked = [x.card_id for x in sel.candidates if x.eligible]
+    # Tied on price: dated latest first, undated after; a newer but dearer card stays behind.
+    assert ranked == ["newer", "older", "undated", "dearer-newest"]
+
+
+def test_price_still_comes_before_newness():
+    c = Client(cards=TIED, availability={"openai": True})
+    assert c.select_model("large").model == "openai/newer"
+    assert c.select_model("large", prefer="newest").model == "openai/dearer-newest"
+
+
+@pytest.mark.parametrize("prefer", ["cheapest", "fastest"])
+def test_free_local_models_are_not_a_price_tie(prefer):
+    # Every local model costs nothing; card order decides among them, not dates.
+    c = Client(cards=TIED, availability={"ollama": ["old:1b", "new:1b"]})
+    sel = c.select_model("large", prefer=prefer)
+    assert sel.model == "ollama/old:1b"
+    assert "tie on price" not in sel.reason
+
+
+def test_shipped_cards_large_default_tie_goes_to_gpt_6_1_sol():
+    # The one default pick Option 1 changed (2026-11-26): Sonnet 5.5 and GPT-6.1
+    # Sol are both $4.00/M blended on the large rung; GPT-6.1 Sol is a day newer.
+    # Card order alone used to give Sonnet 5.5.
+    sel = Client(availability={"anthropic": True, "openai": True}).select_model("large")
+    assert sel.model == "openai/gpt-6.1-sol"
+    assert "anthropic/claude-sonnet-5-5" in sel.reason
+    assert "tie on price" in sel.reason
+    only_anthropic = Client(availability={"anthropic": True}).select_model("large")
+    assert only_anthropic.model == "anthropic/claude-sonnet-5-5"
