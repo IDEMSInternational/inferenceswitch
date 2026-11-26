@@ -5,6 +5,18 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **Pick the newest model at a rung:** `prefer="newest"` (`Preference.NEWEST`) ranks the closest
+  rung first, then the latest release date, then the card's position; cards with no date come
+  last. `select_model(rung, providers=[p], allow_higher=False, prefer="newest")` is provider
+  `p`'s newest model at that rung, and `ModelCards.newest(rung, provider)` answers the same
+  from the cards alone. Cards gain an optional `released` field (ISO date), filled in for the
+  Anthropic, OpenAI, Google, Mistral and DeepSeek cards, gpt-oss, Gemma 4 and Qwen3 from their
+  makers' changelogs and announcements; a card without it still loads. `Candidate` records
+  `released`. The sweep keeps the field (and any card field it has no layout for) when it
+  rewrites the file ([#46](https://github.com/IDEMSInternational/inferenceswitch/issues/46)).
+
 ### Removed
 
 - **Python 3.10 support is dropped:** `requires-python` is now `>=3.11`, the 3.10 classifier is gone

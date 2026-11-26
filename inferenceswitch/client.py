@@ -265,7 +265,7 @@ class Client:
         a ``structured_output`` grade at least as good as the one given, a
         context window of at least ``min_context`` tokens, and a local server
         when ``local_only``. The survivors are ranked by ``prefer``
-        (``"local"``, ``"cheapest"`` or ``"fastest"``; see
+        (``"local"``, ``"cheapest"``, ``"fastest"`` or ``"newest"``; see
         :class:`~inferenceswitch.Preference`).
 
         ``providers`` is an allow-list of registry provider names, applied to

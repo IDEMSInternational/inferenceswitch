@@ -332,3 +332,10 @@ def test_the_chart_is_deterministic_and_shows_cards_with_and_without_an_eci():
     assert ">a<" in one and ">b<" in one and ">c<" in one
     assert "AA index 20" in one and "no index score" in one and "no benchmarks recorded" in one
     assert "1 of 3 cards have an Epoch score, 0 an estimate from other benchmarks, 1 an index score, 1 nothing recorded" in one
+
+
+def test_dump_keeps_fields_it_has_no_layout_for():
+    # A card field added to the format later must survive a sweep's rewrite.
+    data = json.loads(CARDS_PATH.read_text(encoding="utf-8"))
+    data["cards"][0]["future_field"] = {"x": 1}
+    assert json.loads(sweep.dump_cards(data))["cards"][0]["future_field"] == {"x": 1}

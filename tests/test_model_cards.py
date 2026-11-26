@@ -166,6 +166,9 @@ def _file(*cards, fmt=1):
         _card_dict(benchmarks={"b": {"score": 1, "source": "s", "date": "d", "note": "x"}}),  # typo'd field
         _card_dict(benchmarks={"b": {"score": 5, "source": "s", "date": "d", "interval": [6, 7]}}),  # score outside it
         _card_dict(benchmarks={"b": {"score": 5, "source": "s", "date": "d", "interval": [4]}}),     # not a pair
+        _card_dict(released="2026-13-01"),       # not a date
+        _card_dict(released="20261101"),         # ISO, but not YYYY-MM-DD
+        _card_dict(released=2026),               # not a string
         {"id": "x", "rung": "small"},            # missing fields
     ],
 )
@@ -191,6 +194,75 @@ def test_benchmarks_round_trip_and_stay_optional():
     assert "benchmarks" not in cards.get("y").to_dict()
     assert cards.to_dict()["cards"][0]["benchmarks"] == bench
     assert ModelCards.from_json(json.dumps(cards.to_dict())).get("x") == card
+
+
+def test_released_round_trips_and_stays_optional():
+    cards = ModelCards.from_dict(_file(_card_dict(released="2026-11-03"), _card_dict(id="y")))
+    assert cards.get("x").released == "2026-11-03"
+    assert cards.get("y").released is None
+    assert "released" not in cards.get("y").to_dict()
+    assert ModelCards.from_json(json.dumps(cards.to_dict())).get("x") == cards.get("x")
+
+
+#: Hosted cards with no ``released`` date: no day-level date was found on the
+#: maker's own pages (xAI's release notes give only the month; the others are
+#: served through OpenRouter or Groq and their makers' posts were not readable
+#: or not found). Date one and take it off this list; a new hosted card comes
+#: with a date or goes on it.
+UNDATED_HOSTED = {
+    "qwen3.8-27b", "grok-4.6", "grok-4.20-non-reasoning", "glm-5.3", "glm-5.3-flash",
+    "minimax-m3.1-flash", "mimo-v2.6-flash", "mimo-v2.6-pro", "kimi-k3.1-pro",
+    "qwen3.8-flash", "qwen3.8-2.4t-a95b", "qwen3.6-35b-a3b", "qwen3.6-27b", "qwen3.5-9b",
+    "nemotron-3.5-lightning", "nemotron-3.5-super-vl", "step-3.7-flash", "hy3", "hy4",
+    "inkling-2-small", "granite-4.2-8b", "muse-glimmer-30b",
+}
+
+
+def _dated(card_id, rung, provider, released=None):
+    return _card_dict(
+        id=card_id, rung=rung, released=released,
+        routes={provider: {"models": [card_id], "cost": {"input": 1, "output": 2}}},
+    )
+
+
+def test_newest_is_the_latest_release_on_exactly_that_rung_and_provider():
+    cards = ModelCards.from_dict(_file(
+        _dated("old", "mid", "anthropic", "2025-10-01"),
+        _dated("undated", "mid", "anthropic"),
+        _dated("new", "mid", "anthropic", "2026-09-30"),
+        _dated("newer-but-large", "large", "anthropic", "2026-11-01"),
+        _dated("newer-elsewhere", "mid", "gemini", "2026-11-01"),
+    ))
+    assert cards.newest("mid", "anthropic").id == "new"
+    assert cards.newest(Rung.LARGE, "anthropic").id == "newer-but-large"
+    assert cards.newest("mid", "gemini").id == "newer-elsewhere"
+    assert cards.newest("small", "anthropic") is None
+    assert cards.newest("mid", "openai") is None
+
+
+def test_newest_puts_undated_cards_last_and_keeps_card_order_on_ties():
+    cards = ModelCards.from_dict(_file(
+        _dated("a", "mid", "anthropic"),
+        _dated("b", "mid", "anthropic"),
+    ))
+    assert cards.newest("mid", "anthropic").id == "a"  # no dates at all: first card
+    cards = cards.merged([ModelCards.from_dict(_file(_dated("c", "mid", "anthropic", "2020-01-01"))).get("c")])
+    assert cards.newest("mid", "anthropic").id == "c"  # any date beats none
+    tie = ModelCards.from_dict(_file(
+        _dated("first", "mid", "anthropic", "2026-01-01"),
+        _dated("second", "mid", "anthropic", "2026-01-01"),
+    ))
+    assert tie.newest("mid", "anthropic").id == "first"
+
+
+def test_hosted_cards_carry_release_dates():
+    # Every hosted card is dated except where no reliable date was found; a
+    # new hosted card should come with one.
+    undated = {
+        c.id for c in default_cards()
+        if c.released is None and any(r.cost is not None for r in c.routes)
+    }
+    assert undated == UNDATED_HOSTED
 
 
 def test_unknown_format_is_rejected():

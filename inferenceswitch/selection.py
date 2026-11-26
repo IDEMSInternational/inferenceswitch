@@ -29,7 +29,7 @@ from enum import Enum
 from typing import Any
 
 from .capabilities import Capability
-from .cards import ModelCard, ModelCards, Reliability, Route, Rung
+from .cards import ModelCard, ModelCards, Reliability, Route, Rung, newest_first
 from .errors import NoModelAvailableError
 from .registry import ProviderSpec, Registry
 
@@ -52,6 +52,10 @@ class Preference(str, Enum):
     #: machine and is unknown), then fewer parameters, then the lowest price as
     #: a proxy for the faster tier. There is no measured speed on the cards.
     FASTEST = "fastest"
+    #: Closest rung, then the latest ``released`` date (cards without one
+    #: last). With ``allow_higher=False`` and one provider, that is the
+    #: provider's newest model at the rung.
+    NEWEST = "newest"
 
 
 # ── availability ─────────────────────────────────────────────────────────────
@@ -217,6 +221,8 @@ class Candidate:
     excluded: tuple[str, ...] = ()
     #: 1-based position among eligible candidates; ``None`` when excluded.
     rank: int | None = None
+    #: The card's ``released`` date, ``None`` when it has none.
+    released: str | None = None
 
     @property
     def eligible(self) -> bool:
@@ -236,6 +242,7 @@ class Candidate:
             "blended_cost": self.blended_cost,
             "excluded": list(self.excluded),
             "rank": self.rank,
+            "released": self.released,
         }
 
 
@@ -377,7 +384,7 @@ def select(
 
             candidate = Candidate(
                 card.id, route.provider, model, card.rung, spec.is_local,
-                _blended_cost(spec, route), tuple(reasons),
+                _blended_cost(spec, route), tuple(reasons), released=card.released,
             )
             if reasons:
                 excluded.append(candidate)
@@ -459,15 +466,19 @@ def _rank_key(
         return (not candidate.is_local, distance, cost, position)
     if request.prefer is Preference.FASTEST:
         return (distance, candidate.is_local, params, cost, position)
+    if request.prefer is Preference.NEWEST:
+        return (distance, *newest_first(card), position)
     return (cost, distance, position)
 
 
-def _describe(c: Candidate) -> str:
+def _describe(c: Candidate, request: SelectionRequest) -> str:
     cost = (
         "local, no per-token cost" if c.is_local
         else "price unknown" if c.blended_cost is None
         else f"${c.blended_cost:.2f}/M tokens blended"
     )
+    if request.prefer is Preference.NEWEST:
+        cost += f", released {c.released}" if c.released else ", release date unknown"
     return f"{c.qualified} (rung {c.rung.value}, {cost})"
 
 
@@ -482,10 +493,14 @@ def _reason(request: SelectionRequest, winner: Candidate, runner_up: Candidate |
         Preference.CHEAPEST: "the preference is cheapest",
         Preference.FASTEST: "the preference is fastest: closest rung, hosted before "
         "local, then smaller and cheaper as a proxy for speed",
+        Preference.NEWEST: "the preference is newest: closest rung, then the latest "
+        "release date" if winner.released
+        else "the preference is newest, but no eligible model on the closest rung "
+        "has a release date",
     }[request.prefer]
-    text = f"Chose {_describe(winner)}, {rung_note}, because {basis}."
+    text = f"Chose {_describe(winner, request)}, {rung_note}, because {basis}."
     if runner_up is not None:
-        text += f" Next best: {_describe(runner_up)}."
+        text += f" Next best: {_describe(runner_up, request)}."
     else:
         text += " It was the only eligible candidate."
     if request.restriction:

@@ -440,7 +440,7 @@ choice = client.select_model(
     needs=["tool_calling"],         # Capability tokens or their string values
     structured_output="reliable",   # grade floor: reliable > best_effort > none
     min_context=32_000,
-    prefer="local",                 # "local" | "cheapest" (default) | "fastest"
+    prefer="local",                 # "local" | "cheapest" (default) | "fastest" | "newest"
 )
 choice.model        # e.g. "gemini/gemini-3.6-flash" — pass straight to chat(model=...)
 choice.reason       # why it won, and what came second
@@ -457,7 +457,11 @@ print(choice.explain())
   first, then the closest rung, then price. `cheapest` ranks by blended price
   (3 x input + output, / 4; local is free), then closest rung. `fastest`
   takes the closest rung, then hosted before local (local speed depends on the
-  machine), then the smaller and cheaper model.
+  machine), then the smaller and cheaper model. `newest` takes the closest
+  rung, then the latest release date on the card (cards with none last): with
+  `providers=["anthropic"]` and `allow_higher=False` it is Anthropic's newest
+  model at that rung. `client.cards.newest("mid", "anthropic")` answers the
+  same from the cards alone, without checking availability.
 - **Nothing fits** raises `NoModelAvailableError`, whose message names the
   unavailable providers, the models that would fit if they were available, and
   the requirements that excluded the rest.

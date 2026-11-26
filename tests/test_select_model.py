@@ -396,3 +396,69 @@ def test_without_a_restriction_nothing_changes():
     assert sel.to_dict()["request"]["providers"] is None
     assert "restricted" not in sel.reason
     assert "restricted" not in sel.explain()
+
+
+# ── newest ──────────────────────────────────────────────────────────────────
+
+
+def _released(card_id, rung, provider, released, price=(1.0, 5.0)):
+    data = _hosted(card_id, rung, provider, price, 200_000)
+    if released:
+        data["released"] = released
+    return data
+
+
+DATED = ModelCards.from_dict({
+    "format": 1,
+    "updated": "2026-01-01",
+    "cards": [
+        _released("haiku-old", "mid", "anthropic", "2025-10-15", (1.0, 5.0)),
+        _released("haiku-undated", "mid", "anthropic", None, (0.1, 0.5)),
+        _released("haiku-new", "mid", "anthropic", "2026-10-01", (0.5, 2.5)),
+        _released("sonnet-newest", "large", "anthropic", "2026-11-20", (3.0, 15.0)),
+        _released("flash-new", "mid", "gemini", "2026-11-01", (0.3, 2.5)),
+    ],
+})
+
+
+def dated_client(**availability):
+    return Client(cards=DATED, availability=availability or {"anthropic": True, "gemini": True})
+
+
+def test_newest_takes_the_latest_release_at_a_rung_from_a_provider():
+    sel = dated_client().select_model(
+        "mid", providers=["anthropic"], allow_higher=False, prefer="newest"
+    )
+    assert sel.model == "anthropic/haiku-new"
+    assert sel.card is DATED.newest("mid", "anthropic")
+    assert "preference is newest" in sel.reason
+    assert "released 2026-10-01" in sel.reason
+    ranked = [c.card_id for c in sel.candidates if c.eligible]
+    # Dated cards latest first, the undated one last.
+    assert ranked == ["haiku-new", "haiku-old", "haiku-undated"]
+    assert sel.to_dict()["candidates"][0]["released"] == "2026-10-01"
+
+
+def test_newest_prefers_the_closest_rung_over_a_newer_card_above_it():
+    sel = dated_client().select_model("mid", prefer="newest")
+    # sonnet-newest is newer but a rung up; flash-new is the newest on mid.
+    assert sel.model == "gemini/flash-new"
+    sel = dated_client(anthropic=True).select_model("small", prefer="newest")
+    assert sel.model == "anthropic/haiku-new"  # nearest rung above small is mid
+
+
+def test_newest_with_no_dates_falls_back_to_card_order_and_says_so():
+    cards = ModelCards.from_dict({
+        "format": 1, "updated": "2026-01-01",
+        "cards": [_released("a", "mid", "anthropic", None), _released("b", "mid", "anthropic", None)],
+    })
+    sel = Client(cards=cards, availability={"anthropic": True}).select_model("mid", prefer="newest")
+    assert sel.model == "anthropic/a"
+    assert "no eligible model on the closest rung has a release date" in sel.reason
+    assert "release date unknown" in sel.reason
+
+
+def test_other_preferences_do_not_read_release_dates():
+    sel = dated_client(anthropic=True).select_model("mid", allow_higher=False)
+    assert sel.model == "anthropic/haiku-undated"  # cheapest, though undated
+    assert "released" not in sel.reason

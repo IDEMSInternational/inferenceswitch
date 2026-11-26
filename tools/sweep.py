@@ -873,6 +873,12 @@ def _inline(value) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+_LAID_OUT = {
+    "id", "rung", "routes", "structured_output", "context_window", "released",
+    "features", "open_weight", "benchmarks", "notes",
+}
+
+
 def dump_cards(data: dict) -> str:
     """The card file in the layout it is kept in: one card per block, one route
     per line, one benchmark per line. Writing it back this way keeps a sweep's
@@ -888,6 +894,8 @@ def dump_cards(data: dict) -> str:
         fields.append('      "routes": {\n' + routes + "\n      }")
         fields.append(f'      "structured_output": {_inline(card["structured_output"])}')
         fields.append(f'      "context_window": {_inline(card["context_window"])}')
+        if "released" in card:
+            fields.append(f'      "released": {_inline(card["released"])}')
         if "features" in card:
             fields.append(f'      "features": {_inline(card["features"])}')
         if "open_weight" in card:
@@ -897,6 +905,9 @@ def dump_cards(data: dict) -> str:
             fields.append('      "benchmarks": {\n' + rows + "\n      }")
         if "notes" in card:
             fields.append(f'      "notes": {_inline(card["notes"])}')
+        # A field this layout does not know yet is kept, not dropped.
+        for name in sorted(card.keys() - _LAID_OUT):
+            fields.append(f'      {_inline(name)}: {_inline(card[name])}')
         lines.append(",\n".join(fields))
         lines.append("    }")
         blocks.append("\n".join(lines))
