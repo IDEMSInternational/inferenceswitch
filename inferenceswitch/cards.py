@@ -17,6 +17,7 @@ See ``docs/model-cards.md`` for the placement rubric and field reference.
 """
 from __future__ import annotations
 
+import datetime as dt
 import json
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, replace
@@ -186,6 +187,10 @@ class ModelCard:
     #: Selection does not read them.
     benchmarks: tuple[Benchmark, ...] = ()
     notes: str = ""
+    #: ISO date of the model's public release (the provider's announcement or
+    #: general availability), or ``None`` when not known. Read only by
+    #: ``Preference.NEWEST`` and :meth:`ModelCards.newest`.
+    released: str | None = None
 
     def benchmark(self, name: str) -> Benchmark | None:
         """The card's score for ``name``, if it has one."""
@@ -230,6 +235,7 @@ class ModelCard:
                 open_weight=ow,
                 benchmarks=_benchmarks_from(data.get("benchmarks"), where),
                 notes=data.get("notes", ""),
+                released=_released(data.get("released"), where),
             )
         except KeyError as exc:
             raise ModelCardError(f"{where}: missing field {exc.args[0]!r}") from None
@@ -270,6 +276,8 @@ class ModelCard:
                 }
                 for b in self.benchmarks
             }
+        if self.released is not None:
+            out["released"] = self.released
         if self.notes:
             out["notes"] = self.notes
         return out
@@ -277,7 +285,7 @@ class ModelCard:
 
 _CARD_KEYS = {
     "id", "rung", "routes", "structured_output", "context_window",
-    "features", "open_weight", "benchmarks", "notes",
+    "features", "open_weight", "benchmarks", "notes", "released",
 }
 _OPEN_WEIGHT_KEYS = {"family", "params_b", "quantization", "active_params_b"}
 _BENCHMARK_KEYS = {"score", "source", "date", "version", "setting", "interval"}
@@ -341,6 +349,18 @@ def _context_window(value: Any, where: str) -> int | None:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise ModelCardError(f"{where}: 'context_window' must be a positive integer or null")
     return value
+
+
+def _released(value: Any, where: str) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str) and len(value) == 10:
+        try:
+            dt.date.fromisoformat(value)
+            return value
+        except ValueError:
+            pass
+    raise ModelCardError(f"{where}: 'released' must be an ISO date (YYYY-MM-DD) or null")
 
 
 def _price(value: Any) -> float | None:
@@ -448,6 +468,20 @@ class ModelCards:
                 return card
         return None
 
+    def newest(self, rung: Rung | str, provider: str) -> ModelCard | None:
+        """The most recently released card on exactly ``rung`` with a route on
+        ``provider``, or ``None`` if there is none.
+
+        Reads the cards only: no availability check and no requirements (use
+        ``Client.select_model(rung, providers=[provider], allow_higher=False,
+        prefer="newest")`` for those). Cards without a ``released`` date come
+        after every dated one; ties keep the cards' order."""
+        rung = Rung(rung)
+        on_rung = [c for c in self if c.rung is rung and c.route(provider) is not None]
+        if not on_rung:
+            return None
+        return min(on_rung, key=newest_first)
+
     def __iter__(self) -> Iterator[ModelCard]:
         return iter(self._by_id.values())
 
@@ -463,6 +497,13 @@ class ModelCards:
             "updated": self.updated,
             "cards": [c.to_dict() for c in self],
         }
+
+
+def newest_first(card: ModelCard) -> tuple[bool, int]:
+    """Sort key: the latest ``released`` first, cards without a date last."""
+    if card.released is None:
+        return (True, 0)
+    return (False, -dt.date.fromisoformat(card.released).toordinal())
 
 
 @lru_cache(maxsize=1)

@@ -5,6 +5,30 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **Pick the newest model at a rung:** `prefer="newest"` (`Preference.NEWEST`) ranks the closest
+  rung first, then the latest release date, then the card's position; cards with no date come
+  last. `select_model(rung, providers=[p], allow_higher=False, prefer="newest")` is provider
+  `p`'s newest model at that rung, and `ModelCards.newest(rung, provider)` answers the same
+  from the cards alone. Cards gain an optional `released` field (ISO date), filled in for the
+  Anthropic, OpenAI, Google, Mistral and DeepSeek cards, gpt-oss, Gemma 4 and Qwen3 from their
+  makers' changelogs and announcements; a card without it still loads. `Candidate` records
+  `released`. The sweep keeps the field (and any card field it has no layout for) when it
+  rewrites the file ([#46](https://github.com/IDEMSInternational/inferenceswitch/issues/46)).
+
+### Changed
+
+- **An exact price tie goes to the newer model** under `cheapest` (the default) and `fastest`:
+  after price and rung, hosted candidates are ranked by `released` (latest first, undated last)
+  before card position, and the reason says so. Free local models are not a price tie; card order
+  still decides among them. With the shipped cards this changes one pick: `large` with no provider
+  restriction is now `openai/gpt-6.1-sol` (released 2026-09-29) rather than
+  `anthropic/claude-sonnet-5-5` (2026-09-28), both $4.00/M blended. Option 1 of the options in
+  [#47](https://github.com/IDEMSInternational/inferenceswitch/pull/47), chosen by Gabriel on
+  2026-11-26; `cheapest` stays the default
+  ([#46](https://github.com/IDEMSInternational/inferenceswitch/issues/46)).
+
 ### Removed
 
 - **Python 3.10 support is dropped:** `requires-python` is now `>=3.11`, the 3.10 classifier is gone

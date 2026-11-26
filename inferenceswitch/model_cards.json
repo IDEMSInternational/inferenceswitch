@@ -10,6 +10,7 @@
       },
       "structured_output": "reliable",
       "context_window": 200000,
+      "released": "2025-10-15",
       "features": {"add": ["sampling_params"]},
       "benchmarks": {
         "epoch_eci": {"score": 142.8, "source": "epoch.ai/data/eci_scores.csv#Claude Haiku 4.5", "date": "2026-11-16", "interval": [141.1, 144.5]},
@@ -30,6 +31,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-02-17",
       "features": {"add": ["sampling_params"]},
       "benchmarks": {
         "epoch_eci": {"score": 152.9, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 4.6", "date": "2026-11-16", "interval": [151.2, 154.7]},
@@ -49,6 +51,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-05-28",
       "benchmarks": {
         "epoch_eci": {"score": 159.9, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 4.8", "date": "2026-11-16", "interval": [157.9, 162.2]},
         "gpqa_diamond": {"score": 92.0, "source": "artificialanalysis.ai/models/claude-opus-4-8", "date": "2026-11-16", "setting": "max"},
@@ -69,6 +72,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-10-07",
       "benchmarks": {
         "epoch_eci": {"score": 160.4, "source": "epoch.ai/data/eci_scores.csv#Claude Haiku 5.5", "date": "2026-11-16", "interval": [158.3, 162.9]},
         "aa_intelligence_index": {"score": 36.5, "source": "artificialanalysis.ai/models/claude-haiku-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -86,6 +90,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-06-30",
       "benchmarks": {
         "epoch_eci": {"score": 156.9, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 5", "date": "2026-11-16", "interval": [154.8, 159.2]},
         "gpqa_diamond": {"score": 91.1, "source": "artificialanalysis.ai/models/claude-sonnet-5", "date": "2026-11-16", "setting": "max"},
@@ -104,6 +109,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-09-28",
       "benchmarks": {
         "epoch_eci": {"score": 166.6, "source": "epoch.ai/data/eci_scores.csv#Claude Sonnet 5.5", "date": "2026-11-16", "interval": [163.8, 169.6]},
         "aa_intelligence_index": {"score": 54.5, "source": "artificialanalysis.ai/models/claude-sonnet-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -121,6 +127,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-07-24",
       "benchmarks": {
         "epoch_eci": {"score": 164.7, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 5", "date": "2026-11-16", "interval": [162.1, 167.5]},
         "aa_intelligence_index": {"score": 44.2, "source": "artificialanalysis.ai/models/claude-opus-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -140,6 +147,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-09-22",
       "benchmarks": {
         "epoch_eci": {"score": 168.5, "source": "epoch.ai/data/eci_scores.csv#Claude Opus 5.5", "date": "2026-11-16", "interval": [165.6, 171.8]},
         "aa_intelligence_index": {"score": 59.1, "source": "artificialanalysis.ai/models/claude-opus-5-5", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -157,6 +165,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-06-09",
       "benchmarks": {
         "epoch_eci": {"score": 164.1, "source": "epoch.ai/data/eci_scores.csv#Claude Fable 5", "date": "2026-11-16", "interval": [161.7, 166.8]},
         "gpqa_diamond": {"score": 92.6, "source": "artificialanalysis.ai/models/claude-fable-5", "date": "2026-11-16", "setting": "max"},
@@ -177,6 +186,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1000000,
+      "released": "2026-09-01",
       "benchmarks": {
         "epoch_eci": {"score": 167.0, "source": "epoch.ai/data/eci_scores.csv#Claude Fable 5.1", "date": "2026-11-16", "interval": [164.2, 170.1]},
         "aa_intelligence_index": {"score": 49.2, "source": "artificialanalysis.ai/models/claude-fable-5-1", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -196,6 +206,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2025-12-17",
       "benchmarks": {
         "epoch_eci": {"score": 152.3, "source": "epoch.ai/data/eci_scores.csv#Gemini 3 Flash", "date": "2026-11-16", "interval": [150.8, 154.0]}
       },
@@ -209,6 +220,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-05-19",
       "benchmarks": {
         "epoch_eci": {"score": 155.3, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.5 Flash", "date": "2026-11-16", "interval": [153.5, 157.3]},
         "gpqa_diamond": {"score": 92.2, "source": "artificialanalysis.ai/models/gemini-3-5-flash", "date": "2026-11-16", "setting": "high"},
@@ -230,6 +242,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 32768,
+      "released": "2025-04-29",
       "open_weight": {"family": "qwen3", "params_b": 4, "quantization": "Q4_K_M"},
       "benchmarks": {
         "gpqa_diamond": {"score": 39.8, "source": "artificialanalysis.ai/models/qwen3-4b-instruct", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -246,6 +259,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 32768,
+      "released": "2025-04-29",
       "open_weight": {"family": "qwen3", "params_b": 8, "quantization": "Q4_K_M"},
       "benchmarks": {
         "epoch_eci": {"score": 132.1, "source": "epoch.ai/data/eci_scores.csv#Qwen3-8B", "date": "2026-11-16", "interval": [128.9, 135.0]},
@@ -266,6 +280,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 32768,
+      "released": "2025-04-29",
       "open_weight": {"family": "qwen3", "params_b": 32, "quantization": "Q4_K_M"},
       "benchmarks": {
         "epoch_eci": {"score": 136.9, "source": "epoch.ai/data/eci_scores.csv#Qwen3-32B", "date": "2026-11-16", "interval": [134.4, 139.3]},
@@ -321,6 +336,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-09-03",
       "benchmarks": {
         "epoch_eci": {"score": 169.0, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Astra", "date": "2026-11-16", "interval": [166.1, 172.3]},
         "aa_intelligence_index": {"score": 56.9, "source": "artificialanalysis.ai/models/gpt-6-astra", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -340,6 +356,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-09-29",
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
         "epoch_eci": {"score": 168.5, "source": "epoch.ai/data/eci_scores.csv#GPT-6.1 Sol", "date": "2026-11-16", "interval": [165.5, 171.8]},
@@ -358,6 +375,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-09-22",
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
         "epoch_eci": {"score": 163.8, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Sol", "date": "2026-11-16", "interval": [161.3, 166.4]},
@@ -376,6 +394,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-09-22",
       "features": {"add": [], "remove": ["tool_calling", "parallel_tool_use"]},
       "benchmarks": {
         "epoch_eci": {"score": 156.4, "source": "epoch.ai/data/eci_scores.csv#GPT-6 Luna", "date": "2026-11-16", "interval": [154.4, 158.5]},
@@ -394,6 +413,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-07-09",
       "benchmarks": {
         "epoch_eci": {"score": 163.0, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Sol", "date": "2026-11-16", "interval": [160.7, 165.5]},
         "gpqa_diamond": {"score": 94.1, "source": "artificialanalysis.ai/models/gpt-5-6-sol", "date": "2026-11-16", "setting": "max"},
@@ -414,6 +434,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-07-09",
       "benchmarks": {
         "epoch_eci": {"score": 160.7, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Terra", "date": "2026-11-16", "interval": [158.5, 163.2]},
         "aa_intelligence_index": {"score": 32.3, "source": "artificialanalysis.ai/models/gpt-5-6-terra", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -435,6 +456,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-07-09",
       "benchmarks": {
         "epoch_eci": {"score": 156.7, "source": "epoch.ai/data/eci_scores.csv#GPT-5.6 Luna", "date": "2026-11-16", "interval": [154.8, 158.7]},
         "aa_intelligence_index": {"score": 23.8, "source": "artificialanalysis.ai/models/gpt-5-6-luna", "date": "2026-11-16", "version": "5.0.1", "setting": "max"},
@@ -454,6 +476,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1050000,
+      "released": "2026-03-05",
       "benchmarks": {
         "epoch_eci": {"score": 157.8, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4", "date": "2026-11-16", "interval": [155.9, 159.9]},
         "gpqa_diamond": {"score": 92.0, "source": "artificialanalysis.ai/models/gpt-5-4", "date": "2026-11-16", "setting": "xhigh"},
@@ -473,6 +496,7 @@
       },
       "structured_output": "reliable",
       "context_window": 400000,
+      "released": "2026-03-17",
       "benchmarks": {
         "epoch_eci": {"score": 149.3, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4 Mini", "date": "2026-11-16", "interval": [147.7, 151.1]},
         "gpqa_diamond": {"score": 87.5, "source": "artificialanalysis.ai/models/gpt-5-4-mini", "date": "2026-11-16", "setting": "xhigh"},
@@ -493,6 +517,7 @@
       },
       "structured_output": "reliable",
       "context_window": 400000,
+      "released": "2026-03-17",
       "benchmarks": {
         "epoch_eci": {"score": 146.4, "source": "epoch.ai/data/eci_scores.csv#GPT-5.4 Nano", "date": "2026-11-16", "interval": [144.7, 148.1]},
         "gpqa_diamond": {"score": 81.7, "source": "artificialanalysis.ai/models/gpt-5-4-nano", "date": "2026-11-16", "setting": "xhigh"},
@@ -513,6 +538,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1047576,
+      "released": "2025-04-14",
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "benchmarks": {
         "epoch_eci": {"score": 136.2, "source": "epoch.ai/data/eci_scores.csv#GPT-4.1", "date": "2026-11-16", "interval": [134.1, 138.0]}
@@ -527,6 +553,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1047576,
+      "released": "2025-04-14",
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "benchmarks": {
         "epoch_eci": {"score": 134.2, "source": "epoch.ai/data/eci_scores.csv#GPT-4.1 mini", "date": "2026-11-16", "interval": [131.9, 136.3]}
@@ -541,6 +568,7 @@
       },
       "structured_output": "reliable",
       "context_window": 128000,
+      "released": "2024-07-18",
       "features": {"add": [], "remove": ["reasoning_effort"]},
       "benchmarks": {
         "epoch_eci": {"score": 123.9, "source": "epoch.ai/data/eci_scores.csv#GPT-4o mini", "date": "2026-11-16", "interval": [120.5, 126.9]}
@@ -557,6 +585,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 131072,
+      "released": "2025-08-05",
       "open_weight": {"family": "gpt-oss", "params_b": 120, "active_params_b": 5.1, "quantization": "MXFP4"},
       "benchmarks": {
         "epoch_eci": {"score": 140.2, "source": "epoch.ai/data/eci_scores.csv#gpt-oss-120b", "date": "2026-11-16", "interval": [138.2, 142.1]},
@@ -582,6 +611,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 131072,
+      "released": "2025-08-05",
       "open_weight": {"family": "gpt-oss", "params_b": 20, "active_params_b": 3.6, "quantization": "MXFP4"},
       "benchmarks": {
         "epoch_eci": {"score": 135.0, "source": "epoch.ai/data/eci_scores.csv#gpt-oss-20b", "date": "2026-11-16", "interval": [132.3, 137.5]},
@@ -625,6 +655,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-09-02",
       "benchmarks": {
         "epoch_eci": {"score": 158.8, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.8 Flash", "date": "2026-11-16", "interval": [156.8, 160.9]},
         "aa_intelligence_index": {"score": 30.8, "source": "artificialanalysis.ai/models/gemini-3-8-flash", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
@@ -644,6 +675,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-07-21",
       "benchmarks": {
         "epoch_eci": {"score": 155.2, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.6 Flash", "date": "2026-11-16", "interval": [153.4, 157.2]},
         "gpqa_diamond": {"score": 92.8, "source": "artificialanalysis.ai/models/gemini-3-6-flash", "date": "2026-11-16", "setting": "high"},
@@ -662,6 +694,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-07-21",
       "benchmarks": {
         "epoch_eci": {"score": 145.6, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.5 Flash-Lite", "date": "2026-11-16", "interval": [144.0, 147.3]},
         "aa_intelligence_index": {"score": 11.7, "source": "artificialanalysis.ai/models/gemini-3-5-flash-lite", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
@@ -680,6 +713,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-05-07",
       "benchmarks": {
         "epoch_eci": {"score": 145.0, "source": "epoch.ai/data/eci_scores.csv#Gemini 3.1 Flash-Lite", "date": "2026-11-16", "interval": [142.8, 147.2]}
       }
@@ -692,6 +726,7 @@
       },
       "structured_output": "reliable",
       "context_window": 1048576,
+      "released": "2026-02-19",
       "benchmarks": {
         "gpqa_diamond": {"score": 94.1, "source": "artificialanalysis.ai/models/gemini-3-1-pro-preview", "date": "2026-11-16"},
         "hle": {"score": 47.0, "source": "artificialanalysis.ai/models/gemini-3-1-pro-preview", "date": "2026-11-16"},
@@ -711,6 +746,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "released": "2026-10-06",
       "open_weight": {"family": "mistral-large", "params_b": 1050, "active_params_b": 52},
       "benchmarks": {
         "epoch_eci": {"score": 154.6, "source": "epoch.ai/data/eci_scores.csv#Mistral Large 4", "date": "2026-11-16", "interval": [151.8, 157.5]},
@@ -726,6 +762,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2025-12-02",
       "open_weight": {"family": "mistral-large", "params_b": 675, "active_params_b": 41},
       "benchmarks": {
         "gpqa_diamond": {"score": 68.0, "source": "artificialanalysis.ai/models/mistral-large-3", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -747,6 +784,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2026-04-28",
       "benchmarks": {
         "epoch_eci": {"score": 141.6, "source": "epoch.ai/data/eci_scores.csv#Mistral Medium 3.5", "date": "2026-11-16", "interval": [138.4, 144.6]},
         "aa_intelligence_index": {"score": 4.6, "source": "artificialanalysis.ai/models/mistral-medium-3-5", "date": "2026-11-16", "version": "5.0.1", "setting": "high"},
@@ -768,6 +806,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2026-03-16",
       "open_weight": {"family": "mistral-small", "params_b": 119, "active_params_b": 6.5},
       "benchmarks": {
         "aa_intelligence_index": {"score": 4.3, "source": "artificialanalysis.ai/models/mistral-small-4", "date": "2026-11-16", "version": "5.0.1"},
@@ -789,6 +828,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2025-12-02",
       "open_weight": {"family": "ministral-3", "params_b": 14},
       "benchmarks": {
         "gpqa_diamond": {"score": 57.2, "source": "artificialanalysis.ai/models/ministral-3-14b", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -810,6 +850,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2025-12-02",
       "open_weight": {"family": "ministral-3", "params_b": 8},
       "benchmarks": {
         "gpqa_diamond": {"score": 47.1, "source": "artificialanalysis.ai/models/ministral-3-8b", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -831,6 +872,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2025-12-02",
       "open_weight": {"family": "ministral-3", "params_b": 3},
       "benchmarks": {
         "gpqa_diamond": {"score": 35.8, "source": "artificialanalysis.ai/models/ministral-3-3b", "date": "2026-11-16", "setting": "non-reasoning"},
@@ -852,6 +894,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "released": "2026-09-10",
       "features": {"add": ["vision"], "remove": []},
       "notes": "Serves DeepSeek-V4.1-Flash. Thinking on by default. Peak price shown; off-peak is half. DeepSeek offers json_object only, so best_effort."
     },
@@ -863,6 +906,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "released": "2026-04-24",
       "benchmarks": {
         "epoch_eci": {"score": 150.2, "source": "epoch.ai/data/eci_scores.csv#DeepSeek-V4-Pro", "date": "2026-11-16", "interval": [148.4, 152.0]}
       },
@@ -905,6 +949,7 @@
       },
       "structured_output": "none",
       "context_window": 131072,
+      "released": "2026-04-02",
       "features": {"add": ["reasoning_effort", "streamed_thinking", "vision"], "remove": []},
       "open_weight": {"family": "gemma-4", "params_b": 2, "quantization": "Q4_K_M"},
       "benchmarks": {
@@ -1039,6 +1084,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "released": "2026-09-10",
       "features": {"add": ["vision"]},
       "open_weight": {"family": "deepseek-v4", "params_b": 552, "active_params_b": 16},
       "benchmarks": {
@@ -1057,6 +1103,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 1000000,
+      "released": "2026-10-17",
       "features": {"add": ["vision"]},
       "open_weight": {"family": "deepseek-v4", "params_b": 552, "active_params_b": 16},
       "benchmarks": {
@@ -1182,6 +1229,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 32768,
+      "released": "2025-04-29",
       "open_weight": {"family": "qwen3", "params_b": 30.5, "active_params_b": 3.3, "quantization": "Q4_K_M"},
       "benchmarks": {
         "epoch_eci": {"score": 134.1, "source": "epoch.ai/data/eci_scores.csv#Qwen3-30B-A3B", "date": "2026-11-16", "interval": [131.3, 136.8]},
@@ -1238,6 +1286,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2026-04-02",
       "features": {"add": ["vision"]},
       "open_weight": {"family": "gemma-4", "params_b": 30.7},
       "benchmarks": {
@@ -1261,6 +1310,7 @@
       },
       "structured_output": "best_effort",
       "context_window": 256000,
+      "released": "2026-04-02",
       "features": {"add": ["vision"]},
       "open_weight": {"family": "gemma-4", "params_b": 25.2, "active_params_b": 3.8},
       "benchmarks": {
@@ -1394,6 +1444,7 @@
       },
       "structured_output": "none",
       "context_window": 131072,
+      "released": "2026-04-02",
       "features": {"add": ["reasoning_effort", "streamed_thinking", "vision"], "remove": []},
       "open_weight": {"family": "gemma-4", "params_b": 4, "quantization": "Q4_K_M", "active_params_b": 4.5},
       "benchmarks": {
