@@ -5,7 +5,8 @@ no dynamic module loading, no caller-injected ``base_url`` from untrusted input.
 That static surface is most of what keeps this library's security profile small.
 
 A :class:`ProviderSpec` says: which adapter kind drives it, where its key comes
-from, (for OpenAI-compatible providers) which ``base_url`` to hit, what it can do
+from, which ``base_url`` to hit (every adapter passes it to its SDK, so an SDK's
+own base-URL environment variable never chooses where a key goes), what it can do
 (:class:`Capabilities`), and how bare model names route to it. Its :attr:`~ProviderSpec.sdk`
 says which provider SDK that adapter kind imports, and which extra installs it.
 """
@@ -19,6 +20,14 @@ from .capabilities import Capabilities, Capability, SchemaDialect, StructuredMod
 KIND_OPENAI = "openai"        # OpenAI + every OpenAI-compatible server
 KIND_ANTHROPIC = "anthropic"  # native
 KIND_GEMINI = "gemini"        # native
+
+#: Each adapter kind's official address, for a spec that names none: the address
+#: the kind's SDK would use by default, passed to it explicitly.
+OFFICIAL_BASE_URL_BY_KIND: dict[str, str] = {
+    KIND_OPENAI: "https://api.openai.com/v1",
+    KIND_ANTHROPIC: "https://api.anthropic.com",
+    KIND_GEMINI: "https://generativelanguage.googleapis.com",
+}
 
 #: Placeholder key for local servers that require *some* key string but don't
 #: authenticate (Ollama, LM Studio). Never a real secret.
@@ -56,8 +65,10 @@ class ProviderSpec:
     capabilities: Capabilities
     #: Env var holding this provider's API key. ``None`` for keyless local servers.
     api_key_env: str | None = None
-    #: Base URL for OpenAI-compatible providers. ``None`` uses the SDK default
-    #: (i.e. api.openai.com). Ignored by native adapters.
+    #: The provider's address. ``None`` means the kind's official address
+    #: (:data:`OFFICIAL_BASE_URL_BY_KIND`). Every adapter passes it to its SDK
+    #: explicitly; a :class:`~inferenceswitch.Gateway` replaces it with the
+    #: gateway's (:attr:`address` is the provider's own either way).
     base_url: str | None = None
     #: Model-name prefixes that route to this provider when no explicit provider
     #: is given (e.g. ``"claude"`` -> anthropic). Empty means the provider must be
@@ -83,6 +94,12 @@ class ProviderSpec:
     def takes_key(self) -> bool:
         """Whether a call to this provider needs an API key (a local server does not)."""
         return self.api_key_env is not None
+
+    @property
+    def address(self) -> str:
+        """Where this provider's calls go when no gateway routes them: its
+        ``base_url``, else its kind's official address."""
+        return self.base_url or OFFICIAL_BASE_URL_BY_KIND[self.kind]
 
     @property
     def sdk(self) -> SDK:
@@ -400,6 +417,7 @@ def default_registry() -> Registry:
                 kind=KIND_ANTHROPIC,
                 capabilities=_ANTHROPIC_CAPS,
                 api_key_env="ANTHROPIC_API_KEY",
+                base_url="https://api.anthropic.com",
                 label="Anthropic (Claude)",
                 key_hint="sk-ant-…",
                 model_prefixes=("claude",),
@@ -421,6 +439,7 @@ def default_registry() -> Registry:
                 kind=KIND_GEMINI,
                 capabilities=_GEMINI_CAPS,
                 api_key_env="GEMINI_API_KEY",
+                base_url="https://generativelanguage.googleapis.com",
                 label="Google (Gemini)",
                 key_hint="AIza…",
                 model_prefixes=("gemini",),
@@ -441,7 +460,7 @@ def default_registry() -> Registry:
                 api_key_env="OPENAI_API_KEY",
                 label="OpenAI",
                 key_hint="sk-…",
-                base_url=None,  # SDK default: api.openai.com
+                base_url="https://api.openai.com/v1",
                 model_prefixes=("gpt-", "o1", "o3", "o4"),
                 known_models=(
                     "gpt-6-astra",

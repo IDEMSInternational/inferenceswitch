@@ -72,10 +72,15 @@ class Adapter(ABC):
         *,
         raw_client: Any = None,
         stream_silence: float | None = None,
+        base_url: str | None = None,
     ) -> None:
         self.spec = spec
         self.capabilities = spec.capabilities
         self._api_key = api_key
+        #: Where this adapter's SDK sends calls: a gateway's address for the provider
+        #: (:meth:`Gateway.address`), else the provider's own (:attr:`ProviderSpec.address`).
+        #: Always passed to the SDK, so its own base-URL environment variable never applies.
+        self.base_url = base_url or spec.address
         #: Seconds a *streamed* call may go without a byte before it fails with the SDK's own
         #: timeout error; `None` leaves the SDK's default (ten minutes for Anthropic and
         #: OpenAI). A call that does not stream is not affected: there the wait is the whole

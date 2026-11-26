@@ -354,13 +354,15 @@ def recover_leaked_fields(result: Any) -> Any:
 class AnthropicAdapter(Adapter):
     def _build_client(self, api_key: str) -> Any:
         anthropic = require_sdk("anthropic", "anthropic")
+        # Always an explicit address (the provider's, or a gateway's), never $ANTHROPIC_BASE_URL.
+        # An explicit api_key also keeps the SDK from reading any credential from the environment.
         if self.stream_silence is None:
-            return anthropic.Anthropic(api_key=api_key)
+            return anthropic.Anthropic(api_key=api_key, base_url=self.base_url)
         # Every call here streams. The SDK's other limits stay as they are. Its own Timeout
         # class, not httpx's: the SDK names which HTTP library it runs on (httpx, or httpx2
         # from anthropic 2), and rejects the other's.
         timeout = anthropic.Timeout(600.0, connect=5.0, read=self.stream_silence)
-        return anthropic.Anthropic(api_key=api_key, timeout=timeout)
+        return anthropic.Anthropic(api_key=api_key, base_url=self.base_url, timeout=timeout)
 
     def _send(self, on_stream: StreamCallback | None = None, **create_kwargs: Any) -> Any:
         """Issue one Messages request over a stream, returning the accumulated

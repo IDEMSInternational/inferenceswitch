@@ -5,6 +5,33 @@ All notable changes to this project are documented here. This project adheres to
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-11-26
+
+A gateway route, and every adapter names its address.
+
+### Added
+
+- **Gateway route:** `Client(gateway=Gateway(url, token))` sends every hosted provider's calls
+  (or those `providers=` names) to `<url>/<provider>` plus the path of the provider's own
+  address, with the token where the key goes. It works the same way for Anthropic, Gemini and
+  every OpenAI-compatible provider. A routed provider's key is never looked up. A per-call
+  `api_key=` (a person's own key) goes through only with `own_keys=True`, and otherwise raises
+  the new `GatewayKeyError` before anything is sent. Local servers are never routed, and a
+  routed provider counts as available. For a deployment whose code must not hold provider keys
+  ([#50](https://github.com/IDEMSInternational/inferenceswitch/issues/50)).
+- `ProviderSpec.address`: the provider's `base_url`, or its kind's official address
+  (`OFFICIAL_BASE_URL_BY_KIND`).
+
+### Changed
+
+- **Every adapter names its address.** The Anthropic and Gemini adapters now honour
+  `ProviderSpec.base_url`. The registry gives `anthropic`, `gemini` and `openai` their official
+  addresses, and every adapter passes the address to its SDK. **Breaking:** the SDKs'
+  own base-URL environment variables (`ANTHROPIC_BASE_URL`, `OPENAI_BASE_URL`,
+  `GOOGLE_GEMINI_BASE_URL`) no longer redirect calls; use a `Gateway`, or a registry entry with
+  your own `base_url`. The Gemini adapter also always uses the Gemini API, even when
+  `GOOGLE_GENAI_USE_VERTEXAI` is set.
+
 ## [0.15.0] — 2026-11-26
 
 Pick the newest model at a rung, and Python 3.11 as the floor.

@@ -23,7 +23,9 @@ you open a PR:
   pass a `key_provider`.
 - It contains **no logging**. Please keep it that way — it is what makes "keys
   are never logged" a structural guarantee rather than a promise.
-- Base URLs come from the static registry and are not caller-injectable.
+- Base URLs come from the static registry (or a deployment's `Gateway`) and are
+  not caller-injectable. Every adapter passes its address to its SDK explicitly,
+  so an SDK's own environment variable never chooses where a key goes.
 
 ## Adding a provider
 

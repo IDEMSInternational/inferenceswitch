@@ -10,6 +10,10 @@ environment by default and takes plaintext keys from a caller-supplied
 ``key_provider`` otherwise. It does NOT own key storage or encryption — an app
 with per-user BYOK keys passes a ``key_provider`` (or a per-call ``api_key``)
 that decrypts on its side.
+
+A deployment that keeps keys out of the process passes a :class:`Gateway`: its
+hosted providers' calls then go to the gateway with the gateway's token, and the
+``key_provider`` is never asked for their keys.
 """
 from __future__ import annotations
 
@@ -23,6 +27,7 @@ from .adapters import Adapter, build_adapter
 from .capabilities import Capabilities, Capability
 from .cards import ModelCard, ModelCards, Reliability, Rung, default_cards
 from .errors import (
+    GatewayKeyError,
     InferenceSwitchError,
     MissingAPIKeyError,
     ProviderResolutionError,
@@ -45,6 +50,7 @@ from .messages import (
     ToolUse,
     Usage,
 )
+from .gateway import Gateway
 from .registry import LOCAL_PLACEHOLDER_KEY, ProviderSpec, Registry, default_registry
 from .selection import (
     AvailabilityCheck,
@@ -73,6 +79,18 @@ def env_key_provider(spec: ProviderSpec) -> str:
             "or pass api_key=/key_provider."
         )
     return key
+
+
+def gateway_availability(gateway: Gateway, others: AvailabilityCheck) -> AvailabilityCheck:
+    """A provider ``gateway`` routes is available through it (the gateway holds
+    the key); any other is checked by ``others``."""
+
+    def check(spec: ProviderSpec) -> ProviderAvailability:
+        if gateway.routes(spec):
+            return ProviderAvailability(spec.name, True, "through the gateway")
+        return others(spec)
+
+    return check
 
 
 def _streaming(on_stream: StreamCallback | None) -> dict[str, Any]:
@@ -167,6 +185,7 @@ class Client:
         cards: ModelCards | None = None,
         availability: AvailabilityCheck | Mapping[str, bool | Iterable[str]] | None = None,
         stream_silence: Mapping[str, float | None] | None = None,
+        gateway: Gateway | None = None,
     ) -> None:
         """``cards`` replaces the shipped model cards; to add to or override
         them, pass ``default_cards().merged(...)``. ``availability`` replaces the
@@ -180,12 +199,25 @@ class Client:
         left out, or mapped to ``None``, keeps its SDK's default (ten minutes for Anthropic and
         OpenAI), so a caller that does not set it sees no change. A call that does not stream
         is never cut short by it. A local model can take minutes to a first token: leave
-        local providers out, or give them a long limit."""
+        local providers out, or give them a long limit.
+
+        ``gateway`` sends the hosted providers' calls (or those it names) to a
+        deployment's gateway, with its token in place of each key (#50): see
+        :class:`Gateway`. Only the code that builds the client sets it; a routed
+        provider's ``key_provider`` is never called. By default a routed provider
+        counts as available, since the gateway holds its key."""
         self.registry = registry or default_registry()
         self.key_provider = key_provider or env_key_provider
+        self.gateway = gateway
+        if gateway is not None and gateway.providers is not None:
+            for name in gateway.providers:
+                if self.registry.get(name).is_local:
+                    raise ValueError(f"A gateway doesn't route the local server {name!r}.")
         self.cards = default_cards() if cards is None else cards
         if availability is None:
             availability = key_availability(self.key_provider)
+            if gateway is not None:
+                availability = gateway_availability(gateway, availability)
         elif isinstance(availability, Mapping):
             availability = static_availability(availability)
         self._availability_check: AvailabilityCheck = availability
@@ -409,12 +441,28 @@ class Client:
     # ── adapters ──────────────────────────────────────────────────────────────
 
     def _adapter(self, spec: ProviderSpec, api_key: str | None) -> Adapter:
-        key = api_key or self.key_provider(spec)
+        base_url: str | None = None
+        if self.gateway is not None and self.gateway.routes(spec):
+            # Routed: the gateway's token, or a person's own key where the deployment
+            # allows it. Never the key_provider's: no real key goes to the gateway
+            # unless the caller handed it over for this call.
+            if api_key and not self.gateway.own_keys:
+                raise GatewayKeyError(
+                    f"Provider {spec.name!r} goes through the gateway, which takes no "
+                    "own keys: drop api_key=, or build the Gateway with own_keys=True."
+                )
+            key = api_key or self.gateway.token
+            base_url = self.gateway.address(spec)
+        else:
+            key = api_key or self.key_provider(spec)
         cache_key = (spec.name, key)
         adapter = self._adapters.get(cache_key)
         if adapter is None:
             adapter = build_adapter(
-                spec, key, stream_silence=self._stream_silence.get(spec.name)
+                spec,
+                key,
+                stream_silence=self._stream_silence.get(spec.name),
+                base_url=base_url,
             )
             self._adapters[cache_key] = adapter
         return adapter

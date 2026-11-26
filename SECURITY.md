@@ -24,8 +24,14 @@ the boundaries:
   keys is expected to own that, and to pass a `key_provider` that decrypts on
   its side.
 - **No network destinations are caller-injectable.** Base URLs come from the
-  static registry, so a malicious model string cannot redirect a request to an
-  attacker-controlled host.
+  static registry, and every adapter passes its address to the provider SDK
+  explicitly. A malicious model string or per-call argument can't redirect a
+  request to an attacker-controlled host, and neither can an SDK's own
+  base-URL environment variable.
+- **A gateway gets a token, not a key.** A `Gateway` is set only by the code
+  that builds the `Client`. A provider it routes is sent the gateway's token,
+  and its key is never looked up. A person's own per-call key goes to the gateway
+  only if the deployment sets `own_keys=True`.
 
 ## Scope
 
